@@ -219,7 +219,7 @@ if (isset($_GET['logout'])) {
                                     echo $data['total'];
                                     ?>
                                 </h3>
-                                <p>الأنظمة والقوانين</p>
+                                <p style="color:#FFF">الأنظمة والقوانين</p>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -233,7 +233,7 @@ if (isset($_GET['logout'])) {
                                     echo $data['total'];
                                     ?>
                                 </h3>
-                                <p>المدونات</p>
+                                <p style="color:#FFF">المدونات</p>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -247,7 +247,7 @@ if (isset($_GET['logout'])) {
                                     echo $data['total'];
                                     ?>
                                 </h3>
-                                <p>المستخدمين</p>
+                                <p style="color:#FFF">المستخدمين</p>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -261,7 +261,7 @@ if (isset($_GET['logout'])) {
                                     echo $data['total'];
                                     ?>
                                 </h3>
-                                <p>المواد القانونية</p>
+                                <p style="color:#FFF">المواد القانونية</p>
                             </div>
                         </div>
                     </div>
