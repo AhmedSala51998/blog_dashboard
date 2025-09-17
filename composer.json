@@ -1,0 +1,13 @@
+
+{
+    "name": "blog/dashboard",
+    "description": "Blog Dashboard System",
+    "require": {
+        "smalot/pdfparser": "^0.17.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    }
+}
