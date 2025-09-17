@@ -1,0 +1,41 @@
+<?php return array(
+    'root' => array(
+        'name' => 'blog/dashboard',
+        'pretty_version' => 'dev-master',
+        'version' => 'dev-master',
+        'reference' => '36a7cc70227cd1690843e7d3449bd317e95b832b',
+        'type' => 'library',
+        'install_path' => __DIR__ . '/../../',
+        'aliases' => array(),
+        'dev' => true,
+    ),
+    'versions' => array(
+        'blog/dashboard' => array(
+            'pretty_version' => 'dev-master',
+            'version' => 'dev-master',
+            'reference' => '36a7cc70227cd1690843e7d3449bd317e95b832b',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../../',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'smalot/pdfparser' => array(
+            'pretty_version' => 'v0.17.1',
+            'version' => '0.17.1.0',
+            'reference' => 'dc1e42293e7774353003b754cce9c64dd9546c2d',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../smalot/pdfparser',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'symfony/polyfill-mbstring' => array(
+            'pretty_version' => 'v1.33.0',
+            'version' => '1.33.0.0',
+            'reference' => '6d857f4d76bd4b343eac26d6b539585d2bc56493',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../symfony/polyfill-mbstring',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+    ),
+);
