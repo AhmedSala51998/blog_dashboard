@@ -301,7 +301,7 @@ $users_result = mysqli_query($conn, $sql);
                     <a class="nav-link active" href="users.php">
                         <i class="fas fa-users"></i> المستخدمين والصلاحيات
                     </a>
-                    <a class="nav-link" href="?logout=true">
+                    <a class="nav-link" href="home.php?logout=true">
                         <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
                     </a>
                 </nav>

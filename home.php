@@ -175,6 +175,7 @@ if (isset($_GET['logout'])) {
                     <a class="nav-link" href="systems.php">
                         <i class="fas fa-gavel"></i> الأنظمة والقوانين
                     </a>
+                    
                     <a class="nav-link" href="blogs.php">
                         <i class="fas fa-newspaper"></i> المدونات
                     </a>
