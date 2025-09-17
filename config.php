@@ -47,7 +47,7 @@ function requireLogin() {
 function requireAdmin() {
     requireLogin();
     if (!isAdmin()) {
-        header("Location: index.php");
+        header("Location: home.php");
         exit();
     }
 }
@@ -56,7 +56,7 @@ function requireAdmin() {
 function requireEditor() {
     requireLogin();
     if (!isEditor()) {
-        header("Location: index.php");
+        header("Location: home.php");
         exit();
     }
 }

@@ -289,7 +289,7 @@ $users_result = mysqli_query($conn, $sql);
                     <h4><i class="fas fa-blog"></i> لوحة التحكم</h4>
                 </div>
                 <nav class="nav flex-column p-3">
-                    <a class="nav-link" href="index.php">
+                    <a class="nav-link" href="home.php">
                         <i class="fas fa-home"></i> الرئيسية
                     </a>
                     <a class="nav-link" href="systems.php">

@@ -1,0 +1,14 @@
+DirectoryIndex home.php
+
+RewriteEngine On
+
+# لو دخل المستخدم الرابط مع .php، حوله للرابط بدون .php
+RewriteCond %{THE_REQUEST} \s([^.]+)\.php[?\s] [NC]
+RewriteRule ^ %1 [R=301,L]
+
+# لو الملف أو المجلد موجود، خليه يشتغل طبيعي
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# روابط بدون .php تتحول لملفات .php
+RewriteRule ^([a-zA-Z0-9_-]+)$ $1.php [L,QSA]
