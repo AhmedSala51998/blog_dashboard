@@ -24,7 +24,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $user = mysqli_fetch_assoc($result);
 
         // التحقق من كلمة المرور
-        if (password_verify($password, $user['password'])) {
+        if ($password == $user['password']) {
             // حفظ بيانات المستخدم في الجلسة
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
