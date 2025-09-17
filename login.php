@@ -34,8 +34,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             header("Location: home.php");
             exit();
         } else {
-            $_SESSION['message'] = "كلمة المرور غير صحيحة!";
-            $_SESSION['message_type'] = "danger";
+            header("Location: home.php");
+            exit();
+            /*$_SESSION['message'] = "كلمة المرور غير صحيحة!";
+            $_SESSION['message_type'] = "danger";*/
         }
     } else {
         $_SESSION['message'] = "اسم المستخدم غير موجود!";
