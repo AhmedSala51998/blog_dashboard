@@ -737,100 +737,100 @@ $systems_result = mysqli_query($conn, $sql);
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <script>
-        $(document).ready(function() {
-            let articleCount = 0;
-            let sectionCount = {};
+$(document).ready(function () {
+    let articleCount = 0;
+    const sectionCount = {};
 
-            // Add Article Button Click
-            $('#addArticleBtn').click(function() {
-                articleCount++;
-                let articleHtml = `
-                    <div class="article-form active" id="article-${articleCount}">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6>مادة ${articleCount}</h6>
-                            <button type="button" class="btn btn-sm btn-outline-danger remove-article" data-article="${articleCount}">
-                                <i class="fas fa-times"></i> إزالة
-                            </button>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">عنوان المادة</label>
-                            <input type="text" class="form-control" name="articles[${articleCount}][title]" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">محتوى المادة</label>
-                            <textarea class="form-control" name="articles[${articleCount}][content]" rows="3"></textarea>
-                        </div>
+    // 🟢 إضافة مادة جديدة
+    $('#addArticleBtn').on('click', function () {
+        articleCount++;
+        sectionCount[articleCount] = 0; // تهيئة عداد الأجزاء للمادة
 
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="form-label mb-0">الأجزاء</label>
-                                <button type="button" class="btn btn-sm btn-outline-primary add-section-btn" data-article="${articleCount}">
-                                    <i class="fas fa-plus"></i> إضافة جزء
-                                </button>
-                            </div>
-                            <div id="sections-container-${articleCount}">
-                                <!-- Sections will be added here dynamically -->
-                            </div>
-                        </div>
+        const articleHtml = `
+            <div class="article-form active border p-3 mb-3 rounded" id="article-${articleCount}">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="m-0">مادة ${articleCount}</h6>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-article" data-article="${articleCount}">
+                        <i class="fas fa-times"></i> إزالة
+                    </button>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">عنوان المادة</label>
+                    <input type="text" class="form-control" name="articles[${articleCount}][title]" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">محتوى المادة</label>
+                    <textarea class="form-control" name="articles[${articleCount}][content]" rows="3"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label mb-0">الأجزاء</label>
+                        <button type="button" class="btn btn-sm btn-outline-primary add-section-btn" data-article="${articleCount}">
+                            <i class="fas fa-plus"></i> إضافة جزء
+                        </button>
                     </div>
-                `;
+                    <div id="sections-container-${articleCount}"></div>
+                </div>
+            </div>
+        `;
 
-                $('#articles-container').append(articleHtml);
-                sectionCount[articleCount] = 0;
-            });
+        $('#articles-container').append(articleHtml);
+    });
 
-            // Remove Article Button Click
-            $(document).on('click', '.remove-article', function() {
-                let articleId = $(this).data('article');
-                $(`#article-${articleId}`).remove();
-            });
+    // 🟠 إزالة مادة
+    $(document).on('click', '.remove-article', function () {
+        const articleId = $(this).data('article');
+        $(`#article-${articleId}`).remove();
+        delete sectionCount[articleId]; // تنظيف عداد الأجزاء للمادة المحذوفة
+    });
 
-            // Add Section Button Click
-            // Add Section Button Click
-            $(document).on('click', '.add-section-btn', function() {
-                let articleId = $(this).data('article');
+    // 🔵 إضافة جزء لمادة معينة
+    $(document).on('click', '.add-section-btn', function () {
+        const articleId = $(this).data('article');
 
-                // استخدم hasOwnProperty للتحقق من وجود المفتاح بدل falsy check
-                if (!sectionCount.hasOwnProperty(articleId)) {
-                    sectionCount[articleId] = 0;
-                }
+        // تحقق بشكل صحيح إذا لم تتم تهيئة العداد
+        if (!Object.prototype.hasOwnProperty.call(sectionCount, articleId)) {
+            sectionCount[articleId] = 0;
+        }
 
-                sectionCount[articleId]++;
+        sectionCount[articleId]++;
 
-                const sectionHtml = `
-                    <div class="section-form active" id="section-${articleId}-${sectionCount[articleId]}">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6>جزء ${sectionCount[articleId]}</h6>
-                            <button type="button" class="btn btn-sm btn-outline-danger remove-section" 
-                                    data-article="${articleId}" data-section="${sectionCount[articleId]}">
-                                <i class="fas fa-times"></i> إزالة
-                            </button>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">عنوان الجزء</label>
-                            <input type="text" class="form-control" 
-                                name="articles[${articleId}][sections][${sectionCount[articleId]}][title]">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">محتوى الجزء</label>
-                            <textarea class="form-control" 
-                                    name="articles[${articleId}][sections][${sectionCount[articleId]}][content]" rows="3"></textarea>
-                        </div>
-                    </div>
-                `;
+        const sectionHtml = `
+            <div class="section-form border p-2 mb-2 rounded" id="section-${articleId}-${sectionCount[articleId]}">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="m-0">جزء ${sectionCount[articleId]}</h6>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-section"
+                            data-article="${articleId}" data-section="${sectionCount[articleId]}">
+                        <i class="fas fa-times"></i> إزالة
+                    </button>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">عنوان الجزء</label>
+                    <input type="text" class="form-control"
+                           name="articles[${articleId}][sections][${sectionCount[articleId]}][title]" required>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">محتوى الجزء</label>
+                    <textarea class="form-control"
+                              name="articles[${articleId}][sections][${sectionCount[articleId]}][content]" rows="2"></textarea>
+                </div>
+            </div>
+        `;
 
-                $(`#sections-container-${articleId}`).append(sectionHtml);
-            });
+        $(`#sections-container-${articleId}`).append(sectionHtml);
+    });
 
+    // 🔴 إزالة جزء
+    $(document).on('click', '.remove-section', function () {
+        const articleId = $(this).data('article');
+        const sectionId = $(this).data('section');
+        $(`#section-${articleId}-${sectionId}`).remove();
+    });
+});
+</script>
 
-            // Remove Section Button Click
-            $(document).on('click', '.remove-section', function() {
-                let articleId = $(this).data('article');
-                let sectionId = $(this).data('section');
-                $(`#section-${articleId}-${sectionId}`).remove();
-            });
-        });
-    </script>
    <script>
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.add-section-btn').forEach(btn => {
