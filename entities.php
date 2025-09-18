@@ -228,10 +228,10 @@ $result = mysqli_query($conn, "SELECT * FROM concerned_entities ORDER BY created
                 <a class="nav-link" href="blogs.php">
                     <i class="fas fa-newspaper"></i> المدونات
                 </a>
-                <a class="nav-link active" href="users.php">
+                <a class="nav-link" href="users.php">
                     <i class="fas fa-users"></i> المستخدمين والصلاحيات
                 </a>
-                <a class="nav-link" href="entities.php">
+                <a class="nav-link active" href="entities.php">
                       <i class="fas fa-building"></i> الجهات المعنية
                 </a>
                 <a class="nav-link" href="home.php?logout=true">
@@ -253,7 +253,6 @@ $result = mysqli_query($conn, "SELECT * FROM concerned_entities ORDER BY created
                 </div>
             </div>
 
-  <h2 class="mb-4">الجهات المعنية</h2>
 
   <!-- زر إضافة -->
   <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addModal">
