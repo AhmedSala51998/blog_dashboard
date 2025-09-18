@@ -28,20 +28,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         $article_title = cleanInput($article['title']);
                         $article_content = cleanInput($article['content']);
 
-                        $entity_id = !empty($article['entity_id']) ? $article['entity_id'] : NULL;
-                        $sql = "INSERT INTO articles (system_id,title,content,entity_id) VALUES (?,?,?,?)";
-                        $stmt = mysqli_prepare($conn,$sql);
-                        mysqli_stmt_bind_param($stmt,"issi",$system_id,$article_title,$article_content,$entity_id);
+                        $sql = "INSERT INTO articles (system_id, title, content) VALUES (?, ?, ?)";
+                        $stmt = mysqli_prepare($conn, $sql);
+                        mysqli_stmt_bind_param($stmt, "iss", $system_id, $article_title, $article_content);
                         mysqli_stmt_execute($stmt);
+
                         $article_id = mysqli_insert_id($conn);
-
-                        // حفظ المواد المرجعية
-                        if (!empty($article['references'])) {
-                            foreach ($article['references'] as $ref) {
-                                mysqli_query($conn, "INSERT INTO article_references (article_id,reference_article_id) VALUES ($article_id,$ref)");
-                            }
-                        }
-
 
                         // معالجة الأجزاء داخل المادة
                         if (isset($article['sections']) && is_array($article['sections'])) {
@@ -50,19 +42,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     $section_title = cleanInput($section['title']);
                                     $section_content = cleanInput($section['content']);
 
-                                    $section_entity = !empty($section['entity_id']) ? $section['entity_id'] : NULL;
-                                    $sql = "INSERT INTO sections (article_id,title,content,entity_id) VALUES (?,?,?,?)";
-                                    $stmt = mysqli_prepare($conn,$sql);
-                                    mysqli_stmt_bind_param($stmt,"issi",$article_id,$section_title,$section_content,$section_entity);
+                                    $sql = "INSERT INTO sections (article_id, title, content) VALUES (?, ?, ?)";
+                                    $stmt = mysqli_prepare($conn, $sql);
+                                    mysqli_stmt_bind_param($stmt, "iss", $article_id, $section_title, $section_content);
                                     mysqli_stmt_execute($stmt);
-                                    $section_id = mysqli_insert_id($conn);
-
-                                    if (!empty($section['references'])) {
-                                        foreach ($section['references'] as $ref) {
-                                            mysqli_query($conn, "INSERT INTO section_references (section_id,reference_section_id) VALUES ($section_id,$ref)");
-                                        }
-                                    }
-
                                 }
                             }
                         }
@@ -189,20 +172,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $title = cleanInput($_POST['article_title']);
         $content = cleanInput($_POST['article_content']);
 
-        $entity_id = !empty($article['entity_id']) ? $article['entity_id'] : NULL;
-        $sql = "INSERT INTO articles (system_id,title,content,entity_id) VALUES (?,?,?,?)";
-        $stmt = mysqli_prepare($conn,$sql);
-        mysqli_stmt_bind_param($stmt,"issi",$system_id,$article_title,$article_content,$entity_id);
-        mysqli_stmt_execute($stmt);
-        $article_id = mysqli_insert_id($conn);
-
-        // حفظ المواد المرجعية
-        if (!empty($article['references'])) {
-            foreach ($article['references'] as $ref) {
-                mysqli_query($conn, "INSERT INTO article_references (article_id,reference_article_id) VALUES ($article_id,$ref)");
-            }
-        }
-
+        $sql = "INSERT INTO articles (system_id, title, content) VALUES (?, ?, ?)";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "iss", $system_id, $title, $content);
 
         if (mysqli_stmt_execute($stmt)) {
             $article_id = mysqli_insert_id($conn);
@@ -232,19 +204,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 // استعلام لجلب الأنظمة والقوانين
 $sql = "SELECT * FROM systems ORDER BY created_at DESC";
 $systems_result = mysqli_query($conn, $sql);
-
-
-// الجهات المعنية
-$entities = mysqli_query($conn, "SELECT id, name FROM entities");
-
-// كل المواد
-$all_articles = mysqli_query($conn, "SELECT id, title FROM articles");
-
-// كل الأجزاء
-$all_sections = mysqli_query($conn, "SELECT s.id, CONCAT(a.title,' - ',s.title) AS full_title 
-    FROM sections s 
-    JOIN articles a ON a.id = s.article_id");
-
 ?>
 
 <!DOCTYPE html>
@@ -625,26 +584,6 @@ $all_sections = mysqli_query($conn, "SELECT s.id, CONCAT(a.title,' - ',s.title) 
                                                 </div>
 
                                                 <div class="mb-3">
-                                                    <label class="form-label">الجهة المعنية (اختياري)</label>
-                                                    <select class="form-select" name="articles[${articleCount}][entity_id]">
-                                                        <option value="">-- اختر جهة --</option>
-                                                        <?php while($e = mysqli_fetch_assoc($entities)): ?>
-                                                        <option value="<?= $e['id'] ?>"><?= $e['name'] ?></option>
-                                                        <?php endwhile; ?>
-                                                    </select>
-                                                    </div>
-
-                                                    <div class="mb-3">
-                                                    <label class="form-label">مواد مرجعية</label>
-                                                    <select class="form-select" name="articles[${articleCount}][references][]" multiple>
-                                                        <?php while($a = mysqli_fetch_assoc($all_articles)): ?>
-                                                        <option value="<?= $a['id'] ?>"><?= $a['title'] ?></option>
-                                                        <?php endwhile; ?>
-                                                    </select>
-                                                </div>
-
-
-                                                <div class="mb-3">
                                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                                         <label class="form-label mb-0">الأجزاء</label>
                                                         <button type="button" class="btn btn-sm btn-outline-primary add-section-btn" data-system="<?php echo $system['id']; ?>">
@@ -873,25 +812,6 @@ $all_sections = mysqli_query($conn, "SELECT s.id, CONCAT(a.title,' - ',s.title) 
                         <div class="mb-3">
                             <label class="form-label">محتوى الجزء</label>
                             <textarea class="form-control" name="articles[${articleId}][sections][${sectionCount[articleId]}][content]" rows="3"></textarea>
-                        </div>
-                        <div class="section-form active" id="section-${articleId}-${sectionCount[articleId]}">
-                        <div class="mb-3">
-                            <label class="form-label">الجهة المعنية (اختياري)</label>
-                            <select class="form-select" name="articles[${articleId}][sections][${sectionCount[articleId]}][entity_id]">
-                            <option value="">-- اختر جهة --</option>
-                            <?php mysqli_data_seek($entities,0); while($e=mysqli_fetch_assoc($entities)): ?>
-                                <option value="<?= $e['id'] ?>"><?= $e['name'] ?></option>
-                            <?php endwhile; ?>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">أجزاء مرجعية</label>
-                            <select class="form-select" name="articles[${articleId}][sections][${sectionCount[articleId]}][references][]" multiple>
-                            <?php mysqli_data_seek($all_sections,0); while($s=mysqli_fetch_assoc($all_sections)): ?>
-                                <option value="<?= $s['id'] ?>"><?= $s['full_title'] ?></option>
-                            <?php endwhile; ?>
-                            </select>
-                        </div>
                         </div>
                     </div>
                 `;
