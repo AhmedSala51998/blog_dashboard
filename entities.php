@@ -38,8 +38,55 @@ $result = mysqli_query($conn, "SELECT * FROM concerned_entities ORDER BY created
   <title>الجهات المعنية</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
 </head>
-<body class="bg-light">
-<div class="container py-4">
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-2 sidebar p-0">
+            <div class="p-3 text-center">
+                <h4><i class="fas fa-blog"></i> لوحة التحكم</h4>
+            </div>
+            <nav class="nav flex-column p-3">
+                <a class="nav-link" href="home.php">
+                    <i class="fas fa-home"></i> الرئيسية
+                </a>
+                <a class="nav-link" href="systems.php">
+                    <i class="fas fa-gavel"></i> الأنظمة والقوانين
+                </a>
+                <a class="nav-link" href="blogs.php">
+                    <i class="fas fa-newspaper"></i> المدونات
+                </a>
+                <a class="nav-link active" href="users.php">
+                    <i class="fas fa-users"></i> المستخدمين والصلاحيات
+                </a>
+                <a class="nav-link" href="home.php?logout=true">
+                    <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-10">
+            <!-- Top Navbar -->
+            <div class="top-navbar">
+                <div class="d-flex justify-content-between align-items-center px-4">
+                    <h2>المستخدمين والصلاحيات</h2>
+                    <div class="user-info">
+                        <span>مرحباً، <?php echo $_SESSION['username']; ?></span>
+                        <img src="https://picsum.photos/seed/user<?php echo $_SESSION['user_id']; ?>/40/40.jpg" alt="User Avatar">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="content">
+                <?php showMessage(); ?>
+
+                <!-- Add User Button -->
+                <div class="mb-4">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                        <i class="fas fa-plus"></i> إضافة مستخدم جديد
+                    </button>
+                </div>
   <h2 class="mb-4">الجهات المعنية</h2>
 
   <!-- زر إضافة -->
