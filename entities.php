@@ -252,12 +252,17 @@ $result = mysqli_query($conn, "SELECT * FROM concerned_entities ORDER BY created
                     </div>
                 </div>
             </div>
+<div class="content">
+        <?php showMessage(); ?>
 
+        <!-- Add User Button -->
+        <div class="mb-4">
+                <!-- زر إضافة -->
+            <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addModal">
+                <i class="fas fa-plus"></i> إضافة جهة
+            </button>
+        </div>
 
-  <!-- زر إضافة -->
-  <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addModal">
-    <i class="fas fa-plus"></i> إضافة جهة
-  </button>
 
   <!-- الجدول -->
   <div class="card">
