@@ -177,17 +177,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         mysqli_stmt_bind_param($stmt, "iss", $system_id, $title, $content);
 
         if (mysqli_stmt_execute($stmt)) {
-            // جلب ID المادة المضافة
             $article_id = mysqli_insert_id($conn);
 
-            // لو فيه أجزاء مرسلة
-            if (!empty($_POST['sections']) && is_array($_POST['sections'])) {
-                $section_sql = "INSERT INTO article_sections (article_id, content) VALUES (?, ?)";
+            if (!empty($_POST['sections_title']) && !empty($_POST['sections_content'])) {
+                $section_sql = "INSERT INTO sections (article_id, title, content) VALUES (?, ?, ?)";
                 $section_stmt = mysqli_prepare($conn, $section_sql);
 
-                foreach ($_POST['sections'] as $section_content) {
-                    $section_content = cleanInput($section_content);
-                    mysqli_stmt_bind_param($section_stmt, "is", $article_id, $section_content);
+                foreach ($_POST['sections_title'] as $i => $sec_title) {
+                    $sec_title = cleanInput($sec_title);
+                    $sec_content = cleanInput($_POST['sections_content'][$i]);
+                    mysqli_stmt_bind_param($section_stmt, "iss", $article_id, $sec_title, $sec_content);
                     mysqli_stmt_execute($section_stmt);
                 }
             }
@@ -199,7 +198,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['message_type'] = "danger";
         }
     }
-
 
 }
 
@@ -825,9 +823,8 @@ $systems_result = mysqli_query($conn, $sql);
             });
         });
     </script>
-    <script>
+   <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // عند الضغط على زر "إضافة جزء"
             document.querySelectorAll('.add-section-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const systemId = btn.dataset.system;
@@ -839,13 +836,12 @@ $systems_result = mysqli_query($conn, $sql);
                     div.className = 'section-item mb-2 input-group';
                     div.innerHTML = `
                         <span class="input-group-text">${index}</span>
-                        <input type="text" name="sections[]" class="form-control" placeholder="نص الجزء ${index}" required>
+                        <!-- العنوان (الرقم) مخزن في حقل مخفي -->
+                        <input type="hidden" name="sections_title[]" value="${index}">
+                        <input type="text" name="sections_content[]" class="form-control" placeholder="نص الجزء ${index}" required>
                         <button type="button" class="btn btn-danger remove-section">×</button>
                     `;
-
-                    // حذف الجزء عند الضغط على ×
                     div.querySelector('.remove-section').addEventListener('click', () => div.remove());
-
                     container.appendChild(div);
                 });
             });
