@@ -165,6 +165,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['message_type'] = "danger";
         }
     }
+    //************************ */
+    // إضافة مادة قانونية مستقلة لنظام معين
+    if (isset($_POST['add_article'])) {
+        $system_id = cleanInput($_POST['system_id']);
+        $title = cleanInput($_POST['article_title']);
+        $content = cleanInput($_POST['article_content']);
+
+        $sql = "INSERT INTO articles (system_id, title, content) VALUES (?, ?, ?)";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "iss", $system_id, $title, $content);
+
+        if (mysqli_stmt_execute($stmt)) {
+            // جلب ID المادة المضافة
+            $article_id = mysqli_insert_id($conn);
+
+            // لو فيه أجزاء مرسلة
+            if (!empty($_POST['sections']) && is_array($_POST['sections'])) {
+                $section_sql = "INSERT INTO article_sections (article_id, content) VALUES (?, ?)";
+                $section_stmt = mysqli_prepare($conn, $section_sql);
+
+                foreach ($_POST['sections'] as $section_content) {
+                    $section_content = cleanInput($section_content);
+                    mysqli_stmt_bind_param($section_stmt, "is", $article_id, $section_content);
+                    mysqli_stmt_execute($section_stmt);
+                }
+            }
+
+            $_SESSION['message'] = "تمت إضافة المادة والأجزاء بنجاح";
+            $_SESSION['message_type'] = "success";
+        } else {
+            $_SESSION['message'] = "خطأ أثناء إضافة المادة: " . mysqli_error($conn);
+            $_SESSION['message_type'] = "danger";
+        }
+    }
+
+
 }
 
 // استعلام لجلب الأنظمة والقوانين
@@ -789,5 +825,32 @@ $systems_result = mysqli_query($conn, $sql);
             });
         });
     </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // عند الضغط على زر "إضافة جزء"
+            document.querySelectorAll('.add-section-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const systemId = btn.dataset.system;
+                    const container = document.getElementById(`sections-container-${systemId}`);
+
+                    const index = container.querySelectorAll('.section-item').length + 1;
+
+                    const div = document.createElement('div');
+                    div.className = 'section-item mb-2 input-group';
+                    div.innerHTML = `
+                        <span class="input-group-text">${index}</span>
+                        <input type="text" name="sections[]" class="form-control" placeholder="نص الجزء ${index}" required>
+                        <button type="button" class="btn btn-danger remove-section">×</button>
+                    `;
+
+                    // حذف الجزء عند الضغط على ×
+                    div.querySelector('.remove-section').addEventListener('click', () => div.remove());
+
+                    container.appendChild(div);
+                });
+            });
+        });
+    </script>
+
 </body>
 </html>
