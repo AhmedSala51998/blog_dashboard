@@ -2,17 +2,6 @@
 <?php
 require_once 'config.php';
 
-// كل الجهات
-$entities = mysqli_query($conn, "SELECT id, name FROM entities");
-
-// كل المواد (لاستخدامها كمرجع)
-$all_articles = mysqli_query($conn, "SELECT id, title FROM articles");
-
-// كل الأجزاء
-$all_sections = mysqli_query($conn, "SELECT sections.id, sections.title, articles.title AS article_title 
-                                     FROM sections 
-                                     JOIN articles ON sections.article_id = articles.id");
-
 // التحقق من تسجيل دخول المستخدم
 requireLogin();
 
@@ -234,6 +223,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 // استعلام لجلب الأنظمة والقوانين
 $sql = "SELECT * FROM systems ORDER BY created_at DESC";
 $systems_result = mysqli_query($conn, $sql);
+
+
+// كل الجهات
+$entities = mysqli_query($conn, "SELECT id, name FROM entities");
+
+// كل المواد (لاستخدامها كمرجع)
+$all_articles = mysqli_query($conn, "SELECT id, title FROM articles");
+
+// كل الأجزاء
+$all_sections = mysqli_query($conn, "SELECT sections.id, sections.title, articles.title AS article_title 
+                                     FROM sections 
+                                     JOIN articles ON sections.article_id = articles.id");
+
 ?>
 
 <!DOCTYPE html>
