@@ -219,7 +219,7 @@ $result = mysqli_query($conn, "SELECT * FROM concerned_entities ORDER BY created
                 <h4><i class="fas fa-blog"></i> لوحة التحكم</h4>
             </div>
             <nav class="nav flex-column p-3">
-                <a class="nav-link" href="home.php">
+                <a class="nav-link" href="index.php">
                     <i class="fas fa-home"></i> الرئيسية
                 </a>
                 <a class="nav-link" href="systems.php">
@@ -234,7 +234,7 @@ $result = mysqli_query($conn, "SELECT * FROM concerned_entities ORDER BY created
                 <a class="nav-link active" href="entities.php">
                       <i class="fas fa-building"></i> الجهات المعنية
                 </a>
-                <a class="nav-link" href="home.php?logout=true">
+                <a class="nav-link" href="index.php?logout=true">
                     <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
                 </a>
             </nav>

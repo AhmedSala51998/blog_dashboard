@@ -4,7 +4,7 @@ require_once 'config.php';
 
 // إذا كان المستخدم مسجل دخوله بالفعل، قم بتحويله للصفحة الرئيسية
 if (isLoggedIn()) {
-    header("Location: home.php");
+    header("Location: index.php");
     exit();
 }
 
@@ -31,7 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['role'] = $user['role'];
 
             // توجيه المستخدم للصفحة الرئيسية
-            header("Location: home.php");
+            header("Location: index.php");
             exit();
         /*} else {
             $_SESSION['message'] = "كلمة المرور غير صحيحة!";
