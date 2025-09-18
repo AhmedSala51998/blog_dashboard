@@ -823,30 +823,7 @@ $systems_result = mysqli_query($conn, $sql);
             });
         });
     </script>
-   <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.add-section-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const systemId = btn.dataset.system;
-                    const container = document.getElementById(`sections-container-${systemId}`);
 
-                    const index = container.querySelectorAll('.section-item').length + 1;
-
-                    const div = document.createElement('div');
-                    div.className = 'section-item mb-2 input-group';
-                    div.innerHTML = `
-                        <span class="input-group-text">${index}</span>
-                        <!-- العنوان (الرقم) مخزن في حقل مخفي -->
-                        <input type="hidden" name="sections_title[]" value="${index}">
-                        <input type="text" name="sections_content[]" class="form-control" placeholder="نص الجزء ${index}" required>
-                        <button type="button" class="btn btn-danger remove-section">×</button>
-                    `;
-                    div.querySelector('.remove-section').addEventListener('click', () => div.remove());
-                    container.appendChild(div);
-                });
-            });
-        });
-    </script>
 
 </body>
 </html>
