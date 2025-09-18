@@ -231,6 +231,9 @@ $result = mysqli_query($conn, "SELECT * FROM concerned_entities ORDER BY created
                 <a class="nav-link active" href="users.php">
                     <i class="fas fa-users"></i> المستخدمين والصلاحيات
                 </a>
+                <a class="nav-link" href="entities.php">
+                      <i class="fas fa-building"></i> الجهات المعنية
+                </a>
                 <a class="nav-link" href="home.php?logout=true">
                     <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
                 </a>
@@ -242,7 +245,7 @@ $result = mysqli_query($conn, "SELECT * FROM concerned_entities ORDER BY created
             <!-- Top Navbar -->
             <div class="top-navbar">
                 <div class="d-flex justify-content-between align-items-center px-4">
-                    <h2>المستخدمين والصلاحيات</h2>
+                    <h2>الجهات المعنيه</h2>
                     <div class="user-info">
                         <span>مرحباً، <?php echo $_SESSION['username']; ?></span>
                         <img src="https://picsum.photos/seed/user<?php echo $_SESSION['user_id']; ?>/40/40.jpg" alt="User Avatar">
@@ -250,16 +253,6 @@ $result = mysqli_query($conn, "SELECT * FROM concerned_entities ORDER BY created
                 </div>
             </div>
 
-            <!-- Content -->
-            <div class="content">
-                <?php showMessage(); ?>
-
-                <!-- Add User Button -->
-                <div class="mb-4">
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
-                        <i class="fas fa-plus"></i> إضافة مستخدم جديد
-                    </button>
-                </div>
   <h2 class="mb-4">الجهات المعنية</h2>
 
   <!-- زر إضافة -->

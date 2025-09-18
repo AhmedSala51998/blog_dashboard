@@ -397,6 +397,9 @@ $systems_result = mysqli_query($conn, $sql);
                         <i class="fas fa-users"></i> المستخدمين والصلاحيات
                     </a>
                     <?php endif; ?>
+                    <a class="nav-link" href="entities.php">
+                      <i class="fas fa-building"></i> الجهات المعنية
+                    </a>
                     <a class="nav-link" href="home.php?logout=true">
                         <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
                     </a>
