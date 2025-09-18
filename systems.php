@@ -786,34 +786,42 @@ $systems_result = mysqli_query($conn, $sql);
             });
 
             // Add Section Button Click
+            // Add Section Button Click
             $(document).on('click', '.add-section-btn', function() {
                 let articleId = $(this).data('article');
-                if (!sectionCount[articleId]) {
+
+                // استخدم hasOwnProperty للتحقق من وجود المفتاح بدل falsy check
+                if (!sectionCount.hasOwnProperty(articleId)) {
                     sectionCount[articleId] = 0;
                 }
+
                 sectionCount[articleId]++;
 
-                let sectionHtml = `
+                const sectionHtml = `
                     <div class="section-form active" id="section-${articleId}-${sectionCount[articleId]}">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h6>جزء ${sectionCount[articleId]}</h6>
-                            <button type="button" class="btn btn-sm btn-outline-danger remove-section" data-article="${articleId}" data-section="${sectionCount[articleId]}">
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-section" 
+                                    data-article="${articleId}" data-section="${sectionCount[articleId]}">
                                 <i class="fas fa-times"></i> إزالة
                             </button>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">عنوان الجزء</label>
-                            <input type="text" class="form-control" name="articles[${articleId}][sections][${sectionCount[articleId]}][title]">
+                            <input type="text" class="form-control" 
+                                name="articles[${articleId}][sections][${sectionCount[articleId]}][title]">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">محتوى الجزء</label>
-                            <textarea class="form-control" name="articles[${articleId}][sections][${sectionCount[articleId]}][content]" rows="3"></textarea>
+                            <textarea class="form-control" 
+                                    name="articles[${articleId}][sections][${sectionCount[articleId]}][content]" rows="3"></textarea>
                         </div>
                     </div>
                 `;
 
                 $(`#sections-container-${articleId}`).append(sectionHtml);
             });
+
 
             // Remove Section Button Click
             $(document).on('click', '.remove-section', function() {
