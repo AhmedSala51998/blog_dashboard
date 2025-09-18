@@ -813,8 +813,11 @@ $systems_result = mysqli_query($conn, $sql);
                     </div>
                 `;
 
-                $(`#sections-container-${articleId}`).append(sectionHtml);
-                console.log("Added section to article:", articleId, "HTML:", sectionHtml);
+                let container = $(`#sections-container-${articleId}`);
+                container.append(sectionHtml);
+
+                // اطبع العنصر اللي اتضاف والـ container بعد الإضافة
+                console.log("Container for article", articleId, container);
             });
 
             // Remove Section Button Click
