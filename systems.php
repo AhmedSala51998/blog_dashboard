@@ -814,6 +814,7 @@ $systems_result = mysqli_query($conn, $sql);
                 `;
 
                 $(`#sections-container-${articleId}`).append(sectionHtml);
+                console.log("Added section to article:", articleId, "HTML:", sectionHtml);
             });
 
             // Remove Section Button Click
