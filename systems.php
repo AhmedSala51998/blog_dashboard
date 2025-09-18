@@ -790,7 +790,6 @@ $systems_result = mysqli_query($conn, $sql);
                 let articleId = $(this).data('article');
                 if (!sectionCount[articleId]) {
                     sectionCount[articleId] = 0;
-                    console.log(1);
                 }
                 console.log(sectionCount[articleId]);
                 sectionCount[articleId]++;
