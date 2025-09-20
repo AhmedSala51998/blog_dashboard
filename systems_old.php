@@ -5,88 +5,6 @@ require_once 'config.php';
 // التحقق من تسجيل دخول المستخدم
 requireLogin();
 
-// دالة معالجة الأجزاء بشكل متكرر
-function processSections($sections, $article_id, $parent_id = null) {
-    global $conn;
-
-    foreach ($sections as $section) {
-        if (!empty($section['title'])) {
-            $section_title = cleanInput($section['title']);
-            $section_content = cleanInput($section['content']);
-
-            $sql = "INSERT INTO sections (article_id, parent_id, title, content) VALUES (?, ?, ?, ?)";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "iiss", $article_id, $parent_id, $section_title, $section_content);
-            mysqli_stmt_execute($stmt);
-
-            $section_id = mysqli_insert_id($conn);
-
-            // معالجة الأجزاء الفرعية
-            if (isset($section['subsections']) && is_array($section['subsections'])) {
-                processSections($section['subsections'], $article_id, $section_id);
-            }
-        }
-    }
-}
-
-// دالة لجلب الأجزاء بشكل متكرر
-function getSectionsRecursive($article_id, $parent_id = null, $level = 0) {
-    global $conn;
-
-    $sections = [];
-
-    $sql = "SELECT * FROM sections WHERE article_id = ? AND parent_id " . ($parent_id === null ? "IS NULL" : "= ?");
-    $stmt = mysqli_prepare($conn, $sql);
-
-    if ($parent_id === null) {
-        mysqli_stmt_bind_param($stmt, "i", $article_id);
-    } else {
-        mysqli_stmt_bind_param($stmt, "ii", $article_id, $parent_id);
-    }
-
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-
-    while ($section = mysqli_fetch_assoc($result)) {
-        $section['level'] = $level;
-        $section['subsections'] = getSectionsRecursive($article_id, $section['id'], $level + 1);
-        $sections[] = $section;
-    }
-
-    return $sections;
-}
-
-// دالة لعرض الأجزاء بشكل متكرر
-function displaySectionsRecursive($sections, $article_id) {
-    foreach ($sections as $section) {
-        $margin = $section['level'] * 20;
-        echo '<div class="section-card" style="margin-right: ' . $margin . 'px;">';
-        echo '<div class="d-flex justify-content-between align-items-start">';
-        echo '<div>';
-        echo '<h6>' . $section['title'] . '</h6>';
-        echo '<p>' . nl2br(substr($section['content'], 0, 150)) . (strlen($section['content']) > 150 ? '...' : '') . '</p>';
-        echo '</div>';
-        echo '<div>';
-        echo '<button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#editSectionModal' . $section['id'] . '">';
-        echo '<i class="fas fa-edit"></i>';
-        echo '</button>';
-        echo '<form method="post" style="display: inline;">';
-        echo '<input type="hidden" name="section_id" value="' . $section['id'] . '">';
-        echo '<button type="submit" name="delete_section" class="btn btn-danger btn-sm" onclick="return confirm(\'هل أنت متأكد من حذف هذا الجزء؟\')">';
-        echo '<i class="fas fa-trash"></i>';
-        echo '</button>';
-        echo '</form>';
-        echo '</div>';
-        echo '</div>';
-        echo '</div>';
-
-        // عرض الأجزاء الفرعية بشكل متكرر
-        if (!empty($section['subsections'])) {
-            displaySectionsRecursive($section['subsections'], $article_id);
-        }
-    }
-}
-
 // معالجة طلبات الإضافة والحذف والتعديل
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // إضافة نظام جديد
@@ -237,7 +155,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['message_type'] = "danger";
         }
     }
-
+    //************************ */
     // إضافة مادة قانونية مستقلة لنظام معين
     if (isset($_POST['add_article'])) {
         $system_id = cleanInput($_POST['system_id']);
@@ -251,9 +169,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (mysqli_stmt_execute($stmt)) {
             $article_id = mysqli_insert_id($conn);
 
-            // معالجة الأجزاء بشكل متكرر
-            if (isset($_POST['sections']) && is_array($_POST['sections'])) {
-                processSections($_POST['sections'], $article_id, null);
+            if (!empty($_POST['sections_title']) && !empty($_POST['sections_content'])) {
+                $section_sql = "INSERT INTO sections (article_id, title, content) VALUES (?, ?, ?)";
+                $section_stmt = mysqli_prepare($conn, $section_sql);
+
+                foreach ($_POST['sections_title'] as $i => $sec_title) {
+                    $sec_title = cleanInput($sec_title);
+                    $sec_content = cleanInput($_POST['sections_content'][$i]);
+                    mysqli_stmt_bind_param($section_stmt, "iss", $article_id, $sec_title, $sec_content);
+                    mysqli_stmt_execute($section_stmt);
+                }
             }
 
             $_SESSION['message'] = "تمت إضافة المادة والأجزاء بنجاح";
@@ -263,6 +188,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['message_type'] = "danger";
         }
     }
+
 }
 
 // استعلام لجلب الأنظمة والقوانين
@@ -398,7 +324,6 @@ $systems_result = mysqli_query($conn, $sql);
             margin-bottom: 10px;
             border-right: 4px solid var(--info-color);
             margin-right: 20px;
-            transition: all 0.3s;
         }
 
         .btn-group-sm > .btn, .btn-sm {
@@ -408,9 +333,21 @@ $systems_result = mysqli_query($conn, $sql);
             margin-left: 5px;
         }
 
-        .add-article-btn, .add-section-btn, .add-subsection-btn {
+        .add-article-btn, .add-section-btn {
             margin-top: 10px;
             margin-bottom: 10px;
+        }
+
+        .article-form, .section-form {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .article-form.active, .section-form.active {
+            display: block;
         }
 
         .form-control, .form-select {
@@ -424,57 +361,6 @@ $systems_result = mysqli_query($conn, $sql);
 
         .modal-header .btn-close {
             filter: invert(1);
-        }
-
-        .nested-sections {
-            margin-right: 20px;
-            border-right: 1px dashed #ddd;
-            padding-right: 15px;
-        }
-
-        .section-level-1 {
-            border-right-color: var(--info-color);
-        }
-
-        .section-level-2 {
-            border-right-color: var(--success-color);
-        }
-
-        .section-level-3 {
-            border-right-color: var(--warning-color);
-        }
-
-        .section-level-4 {
-            border-right-color: var(--danger-color);
-        }
-
-        .section-item {
-            position: relative;
-            margin-bottom: 15px;
-        }
-
-        .section-item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .section-item-title {
-            font-weight: 600;
-            color: var(--dark-color);
-        }
-
-        .section-item-actions {
-            display: flex;
-            gap: 5px;
-        }
-
-        .subsection-container {
-            margin-right: 20px;
-            margin-top: 10px;
-            padding-right: 15px;
-            border-right: 1px dashed #ddd;
         }
     </style>
 </head>
@@ -501,6 +387,9 @@ $systems_result = mysqli_query($conn, $sql);
                         <i class="fas fa-users"></i> المستخدمين والصلاحيات
                     </a>
                     <?php endif; ?>
+                    <a class="nav-link" href="entities.php">
+                      <i class="fas fa-building"></i> الجهات المعنية
+                    </a>
                     <a class="nav-link" href="index.php?logout=true">
                         <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
                     </a>
@@ -588,14 +477,38 @@ $systems_result = mysqli_query($conn, $sql);
 
                                                 <!-- Sections -->
                                                 <?php
-                                                $sections = getSectionsRecursive($article['id']);
+                                                $sql = "SELECT * FROM sections WHERE article_id = ? ORDER BY id ASC";
+                                                $stmt = mysqli_prepare($conn, $sql);
+                                                mysqli_stmt_bind_param($stmt, "i", $article['id']);
+                                                mysqli_stmt_execute($stmt);
+                                                $sections_result = mysqli_stmt_get_result($stmt);
 
-                                                if (!empty($sections)):
-                                                    displaySectionsRecursive($sections, $article['id']);
-                                                else:
+                                                if (mysqli_num_rows($sections_result) > 0):
+                                                    while ($section = mysqli_fetch_assoc($sections_result)):
                                                 ?>
-                                                    <p class="text-muted">لا توجد أجزاء لهذه المادة.</p>
-                                                <?php endif; ?>
+                                                    <div class="section-card">
+                                                        <div class="d-flex justify-content-between align-items-start">
+                                                            <div>
+                                                                <h6><?php echo $section['title']; ?></h6>
+                                                                <p><?php echo nl2br(substr($section['content'], 0, 150)) . (strlen($section['content']) > 150 ? '...' : ''); ?></p>
+                                                            </div>
+                                                            <div>
+                                                                <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#editSectionModal<?php echo $section['id']; ?>">
+                                                                    <i class="fas fa-edit"></i>
+                                                                </button>
+                                                                <form method="post" style="display: inline;">
+                                                                    <input type="hidden" name="section_id" value="<?php echo $section['id']; ?>">
+                                                                    <button type="submit" name="delete_section" class="btn btn-danger btn-sm" onclick="return confirm('هل أنت متأكد من حذف هذا الجزء؟')">
+                                                                        <i class="fas fa-trash"></i>
+                                                                    </button>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                <?php
+                                                    endwhile;
+                                                endif;
+                                                ?>
                                             </div>
                                         <?php
                                             endwhile;
@@ -820,7 +733,6 @@ $systems_result = mysqli_query($conn, $sql);
         $(document).ready(function() {
             let articleCount = 0;
             let sectionCount = {};
-            let subsectionCount = {};
 
             // Add Article Button Click
             $('#addArticleBtn').click(function() {
@@ -858,7 +770,6 @@ $systems_result = mysqli_query($conn, $sql);
 
                 $('#articles-container').append(articleHtml);
                 sectionCount[articleCount] = 0;
-                subsectionCount[articleCount] = {};
             });
 
             // Remove Article Button Click
@@ -873,17 +784,16 @@ $systems_result = mysqli_query($conn, $sql);
                 if (!sectionCount[articleId]) {
                     sectionCount[articleId] = 0;
                 }
+                console.log(sectionCount[articleId]);
                 sectionCount[articleId]++;
 
                 let sectionHtml = `
-                    <div class="section-item" id="section-${articleId}-${sectionCount[articleId]}">
-                        <div class="section-item-header">
+                    <div class="section-form active" id="section-${articleId}-${sectionCount[articleId]}">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
                             <h6>جزء ${sectionCount[articleId]}</h6>
-                            <div>
-                                <button type="button" class="btn btn-sm btn-outline-danger remove-section" data-article="${articleId}" data-section="${sectionCount[articleId]}">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-section" data-article="${articleId}" data-section="${sectionCount[articleId]}">
+                                <i class="fas fa-times"></i> إزالة
+                            </button>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">عنوان الجزء</label>
@@ -893,25 +803,11 @@ $systems_result = mysqli_query($conn, $sql);
                             <label class="form-label">محتوى الجزء</label>
                             <textarea class="form-control" name="articles[${articleId}][sections][${sectionCount[articleId]}][content]" rows="3"></textarea>
                         </div>
-
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="form-label mb-0">الأجزاء الفرعية</label>
-                                <button type="button" class="btn btn-sm btn-outline-info add-subsection-btn" data-article="${articleId}" data-section="${sectionCount[articleId]}">
-                                    <i class="fas fa-plus"></i> إضافة جزء فرعي
-                                </button>
-                            </div>
-                            <div id="subsections-container-${articleId}-${sectionCount[articleId]}">
-                                <!-- Subsections will be added here dynamically -->
-                            </div>
-                        </div>
                     </div>
                 `;
 
                 $(`#sections-container-${articleId}`).append(sectionHtml);
-
-                // Initialize subsection count for this section
-                subsectionCount[articleId][sectionCount[articleId]] = 0;
+                console.log("Added section to article:", articleId, "HTML:", sectionHtml);
             });
 
             // Remove Section Button Click
@@ -920,74 +816,9 @@ $systems_result = mysqli_query($conn, $sql);
                 let sectionId = $(this).data('section');
                 $(`#section-${articleId}-${sectionId}`).remove();
             });
-
-            // Add Subsection Button Click
-            $(document).on('click', '.add-subsection-btn', function() {
-                let articleId = $(this).data('article');
-                let sectionId = $(this).data('section');
-
-                if (!subsectionCount[articleId][sectionId]) {
-                    subsectionCount[articleId][sectionId] = 0;
-                }
-                subsectionCount[articleId][sectionId]++;
-
-                let subsectionHtml = `
-                    <div class="subsection-container" id="subsection-${articleId}-${sectionId}-${subsectionCount[articleId][sectionId]}">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6>جزء فرعي ${subsectionCount[articleId][sectionId]}</h6>
-                            <button type="button" class="btn btn-sm btn-outline-danger remove-subsection" data-article="${articleId}" data-section="${sectionId}" data-subsection="${subsectionCount[articleId][sectionId]}">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">عنوان الجزء الفرعي</label>
-                            <input type="text" class="form-control" name="articles[${articleId}][sections][${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][title]">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">محتوى الجزء الفرعي</label>
-                            <textarea class="form-control" name="articles[${articleId}][sections][${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][content]" rows="3"></textarea>
-                        </div>
-
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="form-label mb-0">أجزاء فرعية إضافية</label>
-                                <button type="button" class="btn btn-sm btn-outline-info add-subsection-btn" data-article="${articleId}" data-section="${sectionId}" data-parent="${subsectionCount[articleId][sectionId]}">
-                                    <i class="fas fa-plus"></i> إضافة جزء فرعي
-                                </button>
-                            </div>
-                            <div id="subsubsections-container-${articleId}-${sectionId}-${subsectionCount[articleId][sectionId]}">
-                                <!-- Sub-subsections will be added here dynamically -->
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                if ($(this).data('parent') !== undefined) {
-                    // This is a nested subsection
-                    let parentId = $(this).data('parent');
-                    $(`#subsubsections-container-${articleId}-${sectionId}-${parentId}`).append(subsectionHtml);
-                } else {
-                    // This is a direct subsection of a section
-                    $(`#subsections-container-${articleId}-${sectionId}`).append(subsectionHtml);
-                }
-
-                // Initialize sub-subsection count for this subsection
-                if (!subsectionCount[articleId][sectionId + '_' + subsectionCount[articleId][sectionId]]) {
-                    subsectionCount[articleId][sectionId + '_' + subsectionCount[articleId][sectionId]] = 0;
-                }
-            });
-
-            // Remove Subsection Button Click
-            $(document).on('click', '.remove-subsection', function() {
-                let articleId = $(this).data('article');
-                let sectionId = $(this).data('section');
-                let subsectionId = $(this).data('subsection');
-                $(`#subsection-${articleId}-${sectionId}-${subsectionId}`).remove();
-            });
         });
     </script>
-
-    <script>
+   <script>
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.add-section-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -997,105 +828,16 @@ $systems_result = mysqli_query($conn, $sql);
                     const index = container.querySelectorAll('.section-item').length + 1;
 
                     const div = document.createElement('div');
-                    div.className = 'section-item mb-3';
+                    div.className = 'section-item mb-2 input-group';
                     div.innerHTML = `
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6>جزء ${index}</h6>
-                            <button type="button" class="btn btn-sm btn-outline-danger remove-section">إزالة</button>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">عنوان الجزء</label>
-                            <input type="text" class="form-control" name="sections[${index}][title]" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">محتوى الجزء</label>
-                            <textarea class="form-control" name="sections[${index}][content]" rows="3"></textarea>
-                        </div>
-
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="form-label mb-0">الأجزاء الفرعية</label>
-                                <button type="button" class="btn btn-sm btn-outline-info add-subsection-btn" data-section="${index}">
-                                    <i class="fas fa-plus"></i> إضافة جزء فرعي
-                                </button>
-                            </div>
-                            <div id="subsections-container-${index}">
-                                <!-- Subsections will be added here dynamically -->
-                            </div>
-                        </div>
+                        <span class="input-group-text">${index}</span>
+                        <!-- العنوان (الرقم) مخزن في حقل مخفي -->
+                        <input type="hidden" name="sections_title[]" value="${index}">
+                        <input type="text" name="sections_content[]" class="form-control" placeholder="نص الجزء ${index}" required>
+                        <button type="button" class="btn btn-danger remove-section">×</button>
                     `;
-
                     div.querySelector('.remove-section').addEventListener('click', () => div.remove());
                     container.appendChild(div);
-
-                    // Add subsection functionality
-                    const addSubsectionBtn = div.querySelector('.add-subsection-btn');
-                    addSubsectionBtn.addEventListener('click', () => {
-                        const sectionIndex = addSubsectionBtn.dataset.section;
-                        const subsectionContainer = document.getElementById(`subsections-container-${sectionIndex}`);
-                        const subsectionIndex = subsectionContainer.querySelectorAll('.subsection-container').length + 1;
-
-                        const subsectionDiv = document.createElement('div');
-                        subsectionDiv.className = 'subsection-container mb-3';
-                        subsectionDiv.innerHTML = `
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6>جزء فرعي ${subsectionIndex}</h6>
-                                <button type="button" class="btn btn-sm btn-outline-danger remove-subsection">إزالة</button>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">عنوان الجزء الفرعي</label>
-                                <input type="text" class="form-control" name="sections[${sectionIndex}][subsections][${subsectionIndex}][title]" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">محتوى الجزء الفرعي</label>
-                                <textarea class="form-control" name="sections[${sectionIndex}][subsections][${subsectionIndex}][content]" rows="3"></textarea>
-                            </div>
-
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <label class="form-label mb-0">أجزاء فرعية إضافية</label>
-                                    <button type="button" class="btn btn-sm btn-outline-info add-subsubsection-btn" data-section="${sectionIndex}" data-subsection="${subsectionIndex}">
-                                        <i class="fas fa-plus"></i> إضافة جزء فرعي
-                                    </button>
-                                </div>
-                                <div id="subsubsections-container-${sectionIndex}-${subsectionIndex}">
-                                    <!-- Sub-subsections will be added here dynamically -->
-                                </div>
-                            </div>
-                        `;
-
-                        subsectionDiv.querySelector('.remove-subsection').addEventListener('click', () => subsectionDiv.remove());
-                        subsectionContainer.appendChild(subsectionDiv);
-
-                        // Add sub-subsection functionality
-                        const addSubsubsectionBtn = subsectionDiv.querySelector('.add-subsubsection-btn');
-                        addSubsubsectionBtn.addEventListener('click', () => {
-                            const subSectionIndex = addSubsubsectionBtn.dataset.section;
-                            const subsubsectionIndex = addSubsubsectionBtn.dataset.subsection;
-                            const subsubsectionContainer = document.getElementById(`subsubsections-container-${subSectionIndex}-${subsubsectionIndex}`);
-                            const subsubsectionIdx = subsubsectionContainer.querySelectorAll('.subsubsection-container').length + 1;
-
-                            const subsubsectionDiv = document.createElement('div');
-                            subsubsectionDiv.className = 'subsubsection-container mb-3';
-                            subsubsectionDiv.innerHTML = `
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h6>جزء فرعي ${subsubsectionIdx}</h6>
-                                    <button type="button" class="btn btn-sm btn-outline-danger remove-subsubsection">إزالة</button>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">عنوان الجزء الفرعي</label>
-                                    <input type="text" class="form-control" name="sections[${subSectionIndex}][subsections][${subsubsectionIndex}][subsubsections][${subsubsectionIdx}][title]" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">محتوى الجزء الفرعي</label>
-                                    <textarea class="form-control" name="sections[${subSectionIndex}][subsections][${subsubsectionIndex}][subsubsections][${subsubsectionIdx}][content]" rows="3"></textarea>
-                                </div>
-                            `;
-
-                            subsubsectionDiv.querySelector('.remove-subsubsection').addEventListener('click', () => subsubsectionDiv.remove());
-                            subsubsectionContainer.appendChild(subsubsectionDiv);
-                        });
-                    });
                 });
             });
         });

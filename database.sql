@@ -35,11 +35,13 @@ CREATE TABLE IF NOT EXISTS articles (
 CREATE TABLE IF NOT EXISTS sections (
     id INT(11) AUTO_INCREMENT PRIMARY KEY,
     article_id INT(11) NOT NULL,
+    parent_id INT(11) NULL,
     title VARCHAR(255) NOT NULL,
     content TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE
+    FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id) REFERENCES sections(id) ON DELETE CASCADE
 );
 
 -- جدول المدونات
