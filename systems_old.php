@@ -37,7 +37,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                         // معالجة الأجزاء داخل المادة
                         if (isset($article['sections']) && is_array($article['sections'])) {
-                            processSections($article['sections'], $article_id, null);
+                            foreach ($article['sections'] as $section) {
+                                if (!empty($section['title'])) {
+                                    $section_title = cleanInput($section['title']);
+                                    $section_content = cleanInput($section['content']);
+
+                                    $sql = "INSERT INTO sections (article_id, title, content) VALUES (?, ?, ?)";
+                                    $stmt = mysqli_prepare($conn, $sql);
+                                    mysqli_stmt_bind_param($stmt, "iss", $article_id, $section_title, $section_content);
+                                    mysqli_stmt_execute($stmt);
+                                }
+                            }
                         }
                     }
                 }
