@@ -63,6 +63,28 @@ CREATE TABLE IF NOT EXISTS blogs (
     FOREIGN KEY (reference_section_id) REFERENCES sections(id) ON DELETE SET NULL
 );
 
+-- جدول مراجع المواد
+CREATE TABLE IF NOT EXISTS article_references (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    article_id INT(11) NOT NULL,
+    referenced_article_id INT(11) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE,
+    FOREIGN KEY (referenced_article_id) REFERENCES articles(id) ON DELETE CASCADE,
+    UNIQUE KEY (article_id, referenced_article_id)
+);
+
+-- جدول مراجع الأجزاء
+CREATE TABLE IF NOT EXISTS section_references (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    section_id INT(11) NOT NULL,
+    referenced_section_id INT(11) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (section_id) REFERENCES sections(id) ON DELETE CASCADE,
+    FOREIGN KEY (referenced_section_id) REFERENCES sections(id) ON DELETE CASCADE,
+    UNIQUE KEY (section_id, referenced_section_id)
+);
+
 -- إضافة مستخدم افتراضي (كلمة المرور: admin123)
 INSERT INTO users (username, password, email, role) VALUES 
 ('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin@example.com', 'admin');

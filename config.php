@@ -79,4 +79,116 @@ function showMessage() {
         unset($_SESSION['message_type']);
     }
 }
+
+// دالة للحصول على قائمة الجهات المعنية
+function getEntities() {
+    global $conn;
+    $entities = [];
+    $sql = "SELECT * FROM entities ORDER BY name ASC";
+    $result = mysqli_query($conn, $sql);
+    while ($row = mysqli_fetch_assoc($result)) {
+        $entities[] = $row;
+    }
+    return $entities;
+}
+
+// دالة للحصول على قائمة المواد
+function getArticles($exclude_id = null) {
+    global $conn;
+    $articles = [];
+    $sql = "SELECT a.*, s.title as system_title FROM articles a 
+            JOIN systems s ON a.system_id = s.id";
+    if ($exclude_id) {
+        $sql .= " WHERE a.id != " . intval($exclude_id);
+    }
+    $sql .= " ORDER BY s.title, a.title";
+    $result = mysqli_query($conn, $sql);
+    while ($row = mysqli_fetch_assoc($result)) {
+        $articles[] = $row;
+    }
+    return $articles;
+}
+
+// دالة للحصول على قائمة الأجزاء
+function getSections($exclude_id = null) {
+    global $conn;
+    $sections = [];
+    $sql = "SELECT s.*, a.title as article_title, sys.title as system_title FROM sections s 
+            JOIN articles a ON s.article_id = a.id 
+            JOIN systems sys ON a.system_id = sys.id";
+    if ($exclude_id) {
+        $sql .= " WHERE s.id != " . intval($exclude_id);
+    }
+    $sql .= " ORDER BY sys.title, a.title, s.title";
+    $result = mysqli_query($conn, $sql);
+    while ($row = mysqli_fetch_assoc($result)) {
+        $sections[] = $row;
+    }
+    return $sections;
+}
+
+// دالة للحصول على مراجع المادة
+function getArticleReferences($article_id) {
+    global $conn;
+    $references = [];
+    $sql = "SELECT ar.*, a.title as referenced_article_title, sys.title as system_title 
+            FROM article_references ar 
+            JOIN articles a ON ar.referenced_article_id = a.id 
+            JOIN systems sys ON a.system_id = sys.id 
+            WHERE ar.article_id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $article_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    while ($row = mysqli_fetch_assoc($result)) {
+        $references[] = $row;
+    }
+    return $references;
+}
+
+// دالة للحصول على مراجع الجزء
+function getSectionReferences($section_id) {
+    global $conn;
+    $references = [];
+    $sql = "SELECT sr.*, s.title as referenced_section_title, a.title as article_title, sys.title as system_title 
+            FROM section_references sr 
+            JOIN sections s ON sr.referenced_section_id = s.id 
+            JOIN articles a ON s.article_id = a.id 
+            JOIN systems sys ON a.system_id = sys.id 
+            WHERE sr.section_id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $section_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    while ($row = mysqli_fetch_assoc($result)) {
+        $references[] = $row;
+    }
+    return $references;
+}
+
+// دالة للحصول على الجهة المعنية للمادة
+function getArticleEntity($article_id) {
+    global $conn;
+    $sql = "SELECT e.* FROM entities e 
+            JOIN articles a ON e.id = a.entity_id 
+            WHERE a.id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $article_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    return mysqli_fetch_assoc($result);
+}
+
+// دالة للحصول على الجهة المعنية للجزء
+function getSectionEntity($section_id) {
+    global $conn;
+    $sql = "SELECT e.* FROM entities e 
+            JOIN sections s ON e.id = s.entity_id 
+            WHERE s.id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $section_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    return mysqli_fetch_assoc($result);
+}
 ?>

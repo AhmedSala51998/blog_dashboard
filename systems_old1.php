@@ -13,24 +13,13 @@ function processSections($sections, $article_id, $parent_id = null) {
         if (!empty($section['title'])) {
             $section_title = cleanInput($section['title']);
             $section_content = cleanInput($section['content']);
-            $entity_id = !empty($section['entity_id']) ? cleanInput($section['entity_id']) : null;
 
-            $sql = "INSERT INTO sections (article_id, parent_id, title, content, entity_id) VALUES (?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO sections (article_id, parent_id, title, content) VALUES (?, ?, ?, ?)";
             $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "iissi", $article_id, $parent_id, $section_title, $section_content, $entity_id);
+            mysqli_stmt_bind_param($stmt, "iiss", $article_id, $parent_id, $section_title, $section_content);
             mysqli_stmt_execute($stmt);
 
             $section_id = mysqli_insert_id($conn);
-
-            // معالجة مراجع الجزء
-            if (!empty($section['references']) && is_array($section['references'])) {
-                foreach ($section['references'] as $reference_id) {
-                    $sql = "INSERT INTO section_references (section_id, referenced_section_id) VALUES (?, ?)";
-                    $stmt = mysqli_prepare($conn, $sql);
-                    mysqli_stmt_bind_param($stmt, "ii", $section_id, $reference_id);
-                    mysqli_stmt_execute($stmt);
-                }
-            }
 
             // معالجة الأجزاء الفرعية
             if (isset($section['subsections']) && is_array($section['subsections'])) {
