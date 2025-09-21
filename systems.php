@@ -1123,7 +1123,7 @@ $systems_result = mysqli_query($conn, $sql);
                         </div>
                         <div class="mb-3">
                             <label class="form-label">الأجزاء المرتبطة</label>
-                            <select class="form-select select2-multiple" name="articles[${articleId}][sections][${sectionCount[articleId]}][references][]" multiple>
+                            <select class="form-select" name="articles[${articleId}][sections][${sectionCount[articleId]}][references][]" multiple>
                                 <?php
                                 $sections = getSections();
                                 foreach ($sections as $section_option) {
@@ -1209,7 +1209,7 @@ $systems_result = mysqli_query($conn, $sql);
                         </div>
                         <div class="mb-3">
                             <label class="form-label">الأجزاء المرتبطة</label>
-                            <select class="form-select select2-multiple" name="articles[${articleId}][sections][${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][references][]" multiple>
+                            <select class="form-select" name="articles[${articleId}][sections][${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][references][]" multiple>
                                 <?php
                                 $sections = getSections();
                                 foreach ($sections as $section_option) {
