@@ -199,12 +199,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $article_id = cleanInput($_POST['article_id']);
         $title = cleanInput($_POST['article_title']);
         $content = cleanInput($_POST['article_content']);
+        $entity_id = !empty($_POST['entity_id']) ? cleanInput($_POST['entity_id']) : null;
 
-        $sql = "UPDATE articles SET title = ?, content = ? WHERE id = ?";
+        $sql = "UPDATE articles SET title = ?, content = ?, entity_id = ? WHERE id = ?";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ssi", $title, $content, $article_id);
+        mysqli_stmt_bind_param($stmt, "ssii", $title, $content, $entity_id, $article_id);
 
         if (mysqli_stmt_execute($stmt)) {
+            // حذف المراجع القديمة
+            $sql = "DELETE FROM article_references WHERE article_id = ?";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "i", $article_id);
+            mysqli_stmt_execute($stmt);
+
+            // إضافة المراجع الجديدة
+            if (!empty($_POST['references']) && is_array($_POST['references'])) {
+                foreach ($_POST['references'] as $reference_id) {
+                    $sql = "INSERT INTO article_references (article_id, referenced_article_id) VALUES (?, ?)";
+                    $stmt = mysqli_prepare($conn, $sql);
+                    mysqli_stmt_bind_param($stmt, "ii", $article_id, $reference_id);
+                    mysqli_stmt_execute($stmt);
+                }
+            }
+
             $_SESSION['message'] = "تم تعديل المادة بنجاح!";
             $_SESSION['message_type'] = "success";
         } else {
@@ -235,12 +252,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $section_id = cleanInput($_POST['section_id']);
         $title = cleanInput($_POST['section_title']);
         $content = cleanInput($_POST['section_content']);
+        $entity_id = !empty($_POST['entity_id']) ? cleanInput($_POST['entity_id']) : null;
 
-        $sql = "UPDATE sections SET title = ?, content = ? WHERE id = ?";
+        $sql = "UPDATE sections SET title = ?, content = ?, entity_id = ? WHERE id = ?";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ssi", $title, $content, $section_id);
+        mysqli_stmt_bind_param($stmt, "ssii", $title, $content, $entity_id, $section_id);
 
         if (mysqli_stmt_execute($stmt)) {
+            // حذف المراجع القديمة
+            $sql = "DELETE FROM section_references WHERE section_id = ?";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "i", $section_id);
+            mysqli_stmt_execute($stmt);
+
+            // إضافة المراجع الجديدة
+            if (!empty($_POST['references']) && is_array($_POST['references'])) {
+                foreach ($_POST['references'] as $reference_id) {
+                    $sql = "INSERT INTO section_references (section_id, referenced_section_id) VALUES (?, ?)";
+                    $stmt = mysqli_prepare($conn, $sql);
+                    mysqli_stmt_bind_param($stmt, "ii", $section_id, $reference_id);
+                    mysqli_stmt_execute($stmt);
+                }
+            }
+
             $_SESSION['message'] = "تم تعديل الجزء بنجاح!";
             $_SESSION['message_type'] = "success";
         } else {
@@ -254,13 +288,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $system_id = cleanInput($_POST['system_id']);
         $title = cleanInput($_POST['article_title']);
         $content = cleanInput($_POST['article_content']);
+        $entity_id = !empty($_POST['entity_id']) ? cleanInput($_POST['entity_id']) : null;
 
-        $sql = "INSERT INTO articles (system_id, title, content) VALUES (?, ?, ?)";
+        $sql = "INSERT INTO articles (system_id, title, content, entity_id) VALUES (?, ?, ?, ?)";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "iss", $system_id, $title, $content);
+        mysqli_stmt_bind_param($stmt, "issi", $system_id, $title, $content, $entity_id);
 
         if (mysqli_stmt_execute($stmt)) {
             $article_id = mysqli_insert_id($conn);
+
+            // إضافة مراجع المادة
+            if (!empty($_POST['references']) && is_array($_POST['references'])) {
+                foreach ($_POST['references'] as $reference_id) {
+                    $sql = "INSERT INTO article_references (article_id, referenced_article_id) VALUES (?, ?)";
+                    $stmt = mysqli_prepare($conn, $sql);
+                    mysqli_stmt_bind_param($stmt, "ii", $article_id, $reference_id);
+                    mysqli_stmt_execute($stmt);
+                }
+            }
 
             // معالجة الأجزاء بشكل متكرر
             if (isset($_POST['sections']) && is_array($_POST['sections'])) {
@@ -673,6 +718,30 @@ $systems_result = mysqli_query($conn, $sql);
                                                     <label for="article_content<?php echo $system['id']; ?>" class="form-label">محتوى المادة</label>
                                                     <textarea class="form-control" id="article_content<?php echo $system['id']; ?>" name="article_content" rows="4"></textarea>
                                                 </div>
+                                                <div class="mb-3">
+                                                    <label for="article_entity<?php echo $system['id']; ?>" class="form-label">الجهة المعنية</label>
+                                                    <select class="form-select" id="article_entity<?php echo $system['id']; ?>" name="entity_id">
+                                                        <option value="">-- اختر جهة معنية --</option>
+                                                        <?php
+                                                        $entities = getEntities();
+                                                        foreach ($entities as $entity) {
+                                                            echo "<option value='" . $entity['id'] . "'>" . $entity['name'] . "</option>";
+                                                        }
+                                                        ?>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="article_references<?php echo $system['id']; ?>" class="form-label">المواد المرتبطة</label>
+                                                    <select class="form-select" id="article_references<?php echo $system['id']; ?>" name="references[]" multiple>
+                                                        <?php
+                                                        $articles = getArticles();
+                                                        foreach ($articles as $article) {
+                                                            echo "<option value='" . $article['id'] . "'>" . $article['system_title'] . " - " . $article['title'] . "</option>";
+                                                        }
+                                                        ?>
+                                                    </select>
+                                                    <div class="form-text">اختر المواد المرتبطة (يمكنك الاختيار المتعدد بالضغط على Ctrl)</div>
+                                                </div>
 
                                                 <div class="mb-3">
                                                     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -771,6 +840,39 @@ $systems_result = mysqli_query($conn, $sql);
                                 <label for="article_content<?php echo $article['id']; ?>" class="form-label">محتوى المادة</label>
                                 <textarea class="form-control" id="article_content<?php echo $article['id']; ?>" name="article_content" rows="4"><?php echo $article['content']; ?></textarea>
                             </div>
+                            <div class="mb-3">
+                                <label for="article_entity<?php echo $article['id']; ?>" class="form-label">الجهة المعنية</label>
+                                <select class="form-select" id="article_entity<?php echo $article['id']; ?>" name="entity_id">
+                                    <option value="">-- اختر جهة معنية --</option>
+                                    <?php
+                                    $entities = getEntities();
+                                    $current_entity = getArticleEntity($article['id']);
+                                    foreach ($entities as $entity) {
+                                        $selected = ($current_entity && $current_entity['id'] == $entity['id']) ? 'selected' : '';
+                                        echo "<option value='" . $entity['id'] . "' $selected>" . $entity['name'] . "</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="article_references<?php echo $article['id']; ?>" class="form-label">المواد المرتبطة</label>
+                                <select class="form-select" id="article_references<?php echo $article['id']; ?>" name="references[]" multiple>
+                                    <?php
+                                    $articles = getArticles($article['id']);
+                                    $references = getArticleReferences($article['id']);
+                                    $reference_ids = [];
+                                    foreach ($references as $ref) {
+                                        $reference_ids[] = $ref['referenced_article_id'];
+                                    }
+
+                                    foreach ($articles as $article_option) {
+                                        $selected = in_array($article_option['id'], $reference_ids) ? 'selected' : '';
+                                        echo "<option value='" . $article_option['id'] . "' $selected>" . $article_option['system_title'] . " - " . $article_option['title'] . "</option>";
+                                    }
+                                    ?>
+                                </select>
+                                <div class="form-text">اختر المواد المرتبطة (يمكنك الاختيار المتعدد بالضغط على Ctrl)</div>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
@@ -810,6 +912,39 @@ $systems_result = mysqli_query($conn, $sql);
                             <div class="mb-3">
                                 <label for="section_content<?php echo $section['id']; ?>" class="form-label">محتوى الجزء</label>
                                 <textarea class="form-control" id="section_content<?php echo $section['id']; ?>" name="section_content" rows="4"><?php echo $section['content']; ?></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="section_entity<?php echo $section['id']; ?>" class="form-label">الجهة المعنية</label>
+                                <select class="form-select" id="section_entity<?php echo $section['id']; ?>" name="entity_id">
+                                    <option value="">-- اختر جهة معنية --</option>
+                                    <?php
+                                    $entities = getEntities();
+                                    $current_entity = getSectionEntity($section['id']);
+                                    foreach ($entities as $entity) {
+                                        $selected = ($current_entity && $current_entity['id'] == $entity['id']) ? 'selected' : '';
+                                        echo "<option value='" . $entity['id'] . "' $selected>" . $entity['name'] . "</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="section_references<?php echo $section['id']; ?>" class="form-label">الأجزاء المرتبطة</label>
+                                <select class="form-select" id="section_references<?php echo $section['id']; ?>" name="references[]" multiple>
+                                    <?php
+                                    $sections = getSections($section['id']);
+                                    $references = getSectionReferences($section['id']);
+                                    $reference_ids = [];
+                                    foreach ($references as $ref) {
+                                        $reference_ids[] = $ref['referenced_section_id'];
+                                    }
+
+                                    foreach ($sections as $section_option) {
+                                        $selected = in_array($section_option['id'], $reference_ids) ? 'selected' : '';
+                                        echo "<option value='" . $section_option['id'] . "' $selected>" . $section_option['system_title'] . " - " . $section_option['article_title'] . " - " . $section_option['title'] . "</option>";
+                                    }
+                                    ?>
+                                </select>
+                                <div class="form-text">اختر الأجزاء المرتبطة (يمكنك الاختيار المتعدد بالضغط على Ctrl)</div>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -854,6 +989,30 @@ $systems_result = mysqli_query($conn, $sql);
                         <div class="mb-3">
                             <label class="form-label">محتوى المادة</label>
                             <textarea class="form-control" name="articles[${articleCount}][content]" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">الجهة المعنية</label>
+                            <select class="form-select" name="articles[${articleCount}][entity_id]">
+                                <option value="">-- اختر جهة معنية --</option>
+                                <?php
+                                $entities = getEntities();
+                                foreach ($entities as $entity) {
+                                    echo "<option value='" . $entity['id'] . "'>" . $entity['name'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">المواد المرتبطة</label>
+                            <select class="form-select" name="articles[${articleCount}][references][]" multiple>
+                                <?php
+                                $articles = getArticles();
+                                foreach ($articles as $article_option) {
+                                    echo "<option value='" . $article_option['id'] . "'>" . $article_option['system_title'] . " - " . $article_option['title'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                            <div class="form-text">اختر المواد المرتبطة (يمكنك الاختيار المتعدد بالضغط على Ctrl)</div>
                         </div>
 
                         <div class="mb-3">
@@ -906,6 +1065,30 @@ $systems_result = mysqli_query($conn, $sql);
                         <div class="mb-3">
                             <label class="form-label">محتوى الجزء</label>
                             <textarea class="form-control" name="articles[${articleId}][sections][${sectionCount[articleId]}][content]" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">الجهة المعنية</label>
+                            <select class="form-select" name="articles[${articleId}][sections][${sectionCount[articleId]}][entity_id]">
+                                <option value="">-- اختر جهة معنية --</option>
+                                <?php
+                                $entities = getEntities();
+                                foreach ($entities as $entity) {
+                                    echo "<option value='" . $entity['id'] . "'>" . $entity['name'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">الأجزاء المرتبطة</label>
+                            <select class="form-select" name="articles[${articleId}][sections][${sectionCount[articleId]}][references][]" multiple>
+                                <?php
+                                $sections = getSections();
+                                foreach ($sections as $section_option) {
+                                    echo "<option value='" . $section_option['id'] . "'>" . $section_option['system_title'] . " - " . $section_option['article_title'] . " - " . $section_option['title'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                            <div class="form-text">اختر الأجزاء المرتبطة (يمكنك الاختيار المتعدد بالضغط على Ctrl)</div>
                         </div>
 
                         <div class="mb-3">
@@ -960,6 +1143,30 @@ $systems_result = mysqli_query($conn, $sql);
                         <div class="mb-3">
                             <label class="form-label">محتوى الجزء الفرعي</label>
                             <textarea class="form-control" name="articles[${articleId}][sections][${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][content]" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">الجهة المعنية</label>
+                            <select class="form-select" name="articles[${articleId}][sections][${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][entity_id]">
+                                <option value="">-- اختر جهة معنية --</option>
+                                <?php
+                                $entities = getEntities();
+                                foreach ($entities as $entity) {
+                                    echo "<option value='" . $entity['id'] . "'>" . $entity['name'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">الأجزاء المرتبطة</label>
+                            <select class="form-select" name="articles[${articleId}][sections][${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][references][]" multiple>
+                                <?php
+                                $sections = getSections();
+                                foreach ($sections as $section_option) {
+                                    echo "<option value='" . $section_option['id'] . "'>" . $section_option['system_title'] . " - " . $section_option['article_title'] . " - " . $section_option['title'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                            <div class="form-text">اختر الأجزاء المرتبطة (يمكنك الاختيار المتعدد بالضغط على Ctrl)</div>
                         </div>
 
                         <div class="mb-3">
@@ -1025,6 +1232,30 @@ $systems_result = mysqli_query($conn, $sql);
                             <label class="form-label">محتوى الجزء</label>
                             <textarea class="form-control" name="sections[${index}][content]" rows="3"></textarea>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label">الجهة المعنية</label>
+                            <select class="form-select" name="sections[${index}][entity_id]">
+                                <option value="">-- اختر جهة معنية --</option>
+                                <?php
+                                $entities = getEntities();
+                                foreach ($entities as $entity) {
+                                    echo "<option value='" . $entity['id'] . "'>" . $entity['name'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">الأجزاء المرتبطة</label>
+                            <select class="form-select" name="sections[${index}][references][]" multiple>
+                                <?php
+                                $sections = getSections();
+                                foreach ($sections as $section_option) {
+                                    echo "<option value='" . $section_option['id'] . "'>" . $section_option['system_title'] . " - " . $section_option['article_title'] . " - " . $section_option['title'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                            <div class="form-text">اختر الأجزاء المرتبطة (يمكنك الاختيار المتعدد بالضغط على Ctrl)</div>
+                        </div>
 
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -1063,6 +1294,30 @@ $systems_result = mysqli_query($conn, $sql);
                             <div class="mb-3">
                                 <label class="form-label">محتوى الجزء الفرعي</label>
                                 <textarea class="form-control" name="sections[${sectionIndex}][subsections][${subsectionIndex}][content]" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">الجهة المعنية</label>
+                                <select class="form-select" name="sections[${sectionIndex}][subsections][${subsectionIndex}][entity_id]">
+                                    <option value="">-- اختر جهة معنية --</option>
+                                    <?php
+                                    $entities = getEntities();
+                                    foreach ($entities as $entity) {
+                                        echo "<option value='" . $entity['id'] . "'>" . $entity['name'] . "</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">الأجزاء المرتبطة</label>
+                                <select class="form-select" name="sections[${sectionIndex}][subsections][${subsectionIndex}][references][]" multiple>
+                                    <?php
+                                    $sections = getSections();
+                                    foreach ($sections as $section_option) {
+                                        echo "<option value='" . $section_option['id'] . "'>" . $section_option['system_title'] . " - " . $section_option['article_title'] . " - " . $section_option['title'] . "</option>";
+                                    }
+                                    ?>
+                                </select>
+                                <div class="form-text">اختر الأجزاء المرتبطة (يمكنك الاختيار المتعدد بالضغط على Ctrl)</div>
                             </div>
 
                             <div class="mb-3">
