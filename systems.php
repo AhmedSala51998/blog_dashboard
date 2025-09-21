@@ -719,7 +719,7 @@ $systems_result = mysqli_query($conn, $sql);
                                                         if (!empty($article['entity_id'])) {
                                                             $entity = getEntityById($article['entity_id']);
                                                             if ($entity) {
-                                                                $entity_name = $entity['name'];
+                                                                $entity_name = $entity['title'];
                                                             }
                                                         }
                                                         
@@ -1114,7 +1114,7 @@ $systems_result = mysqli_query($conn, $sql);
                 <?php
                 $entities = getEntities();
                 foreach ($entities as $entity) {
-                    echo "<option value='" . $entity['id'] . "'>" . $entity['name'] . "</option>";
+                    echo "<option value='" . $entity['id'] . "'>" . $entity['title'] . "</option>";
                 }
                 ?>
             `;
