@@ -729,7 +729,7 @@ $systems_result = mysqli_query($conn, $sql);
                                                         if (!empty($references)) {
                                                             $references_titles = [];
                                                             foreach ($references as $ref) {
-                                                                $ref_article = getArticleById($ref['reference_id']);
+                                                                $ref_article = getArticleById($ref['referenced_article_id']);
                                                                 if ($ref_article) {
                                                                     $references_titles[] = $ref_article['title'];
                                                                 }

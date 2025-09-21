@@ -191,4 +191,41 @@ function getSectionEntity($section_id) {
     $result = mysqli_stmt_get_result($stmt);
     return mysqli_fetch_assoc($result);
 }
+// دالة للحصول على جزء بواسطة المعرف
+function getSectionById($section_id) {
+    global $conn;
+    $sql = "SELECT s.*, a.title as article_title, sys.title as system_title FROM sections s
+            JOIN articles a ON s.article_id = a.id
+            JOIN systems sys ON a.system_id = sys.id
+            WHERE s.id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $section_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    return mysqli_fetch_assoc($result);
+}
+
+// دالة للحصول على مادة بواسطة المعرف
+function getArticleById($article_id) {
+    global $conn;
+    $sql = "SELECT a.*, s.title as system_title FROM articles a
+            JOIN systems s ON a.system_id = s.id
+            WHERE a.id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $article_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    return mysqli_fetch_assoc($result);
+}
+
+// دالة للحصول على جهة معنية بواسطة المعرف
+function getEntityById($entity_id) {
+    global $conn;
+    $sql = "SELECT * FROM concerned_entities WHERE id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $entity_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    return mysqli_fetch_assoc($result);
+}
 ?>
