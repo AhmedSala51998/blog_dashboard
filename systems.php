@@ -77,7 +77,7 @@ function displaySectionsRecursive($sections, $article_id) {
         if (!empty($section['entity_id'])) {
             $entity = getEntityById($section['entity_id']);
             if ($entity) {
-                $entity_name = $entity['name'];
+                $entity_name = $entity['title'];
             }
         }
         
@@ -87,7 +87,7 @@ function displaySectionsRecursive($sections, $article_id) {
         if (!empty($references)) {
             $references_titles = [];
             foreach ($references as $ref) {
-                $ref_section = getSectionById($ref['reference_id']);
+                $ref_section = getSectionById($ref['referenced_section_id']);
                 if ($ref_section) {
                     $references_titles[] = $ref_section['title'];
                 }
