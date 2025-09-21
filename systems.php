@@ -527,8 +527,83 @@ $systems_result = mysqli_query($conn, $sql);
         .btn-group-sm > .btn, .btn-sm {
             padding: .25rem .5rem;
             font-size: .875rem;
-            border-radius: .2rem;
-            margin-left: 5px;
+        }
+        
+        /* تصميم مخصص لقوائم الاختيار المتعدد */
+        .select2-container--default .select2-selection--multiple {
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+            min-height: calc(1.5em + 0.75rem + 2px);
+            padding: 0.375rem 0.75rem;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        
+        .select2-container--default.select2-container--focus .select2-selection--multiple {
+            border-color: #86b7fe;
+            outline: 0;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            margin: 0 0.25rem 0.25rem 0;
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.875rem;
+        }
+        
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+            color: white;
+            margin-right: 0.5rem;
+            font-weight: bold;
+            opacity: 0.8;
+            transition: opacity 0.15s ease-in-out;
+        }
+        
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+            opacity: 1;
+        }
+        
+        .select2-container--default .select2-search--inline .select2-search__field {
+            min-height: auto;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+        
+        .select2-container--default .select2-dropdown {
+            border-radius: 0.375rem;
+            border: 1px solid #ced4da;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+            background-color: #0d6efd;
+            color: white;
+        }
+        
+        .select2-container--default .select2-results__option--selected {
+            background-color: #e9ecef;
+            color: #212529;
+            font-weight: 500;
+        }
+        
+        .select2-container--default .select2-search--dropdown .select2-search__field {
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+            padding: 0.375rem 0.75rem;
         }
 
         .add-article-btn, .add-section-btn, .add-subsection-btn {
@@ -1105,8 +1180,31 @@ $systems_result = mysqli_query($conn, $sql);
                 placeholder: "اختر العناصر المرتبطة",
                 allowClear: true,
                 dir: "rtl",
-                width: "100%"
+                width: "100%",
+                closeOnSelect: false,
+                language: {
+                    noResults: function() {
+                        return "لا توجد نتائج";
+                    },
+                    searching: function() {
+                        return "جاري البحث...";
+                    },
+                    inputTooShort: function() {
+                        return "يرجى إدخال حرف واحد على الأقل";
+                    },
+                    removeAllItems: function() {
+                        return "إزالة الكل";
+                    }
+                }
             });
+            
+            // تحسين شكل العناصر المختارة
+            $(document).on('select2:open', function() {
+                document.querySelector('.select2-search__field').focus();
+            });
+            
+            // إضافة تصميم مخصص للعناصر المختارة
+            $('.select2-selection__rendered').addClass('d-flex flex-wrap gap-1');
             
             // تخزين قوائم الاختيار في متغيرات JavaScript
             let entitiesOptions = `
