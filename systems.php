@@ -975,9 +975,21 @@ $systems_result = mysqli_query($conn, $sql);
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script>
         $(document).ready(function() {
+            // تفعيل Select2 على جميع قوائم الاختيار المتعدد
+            $('.select2-multiple').select2({
+                placeholder: "اختر العناصر المرتبطة",
+                allowClear: true,
+                dir: "rtl",
+                width: "100%"
+            });
+            
             let articleCount = 0;
             let sectionCount = {};
             let subsectionCount = {};
@@ -1091,7 +1103,7 @@ $systems_result = mysqli_query($conn, $sql);
                         </div>
                         <div class="mb-3">
                             <label class="form-label">الأجزاء المرتبطة</label>
-                            <select class="form-select" name="articles[${articleId}][sections][${sectionCount[articleId]}][references][]" multiple>
+                            <select class="form-select select2-multiple" name="articles[${articleId}][sections][${sectionCount[articleId]}][references][]" multiple>
                                 <?php
                                 $sections = getSections();
                                 foreach ($sections as $section_option) {
@@ -1099,7 +1111,7 @@ $systems_result = mysqli_query($conn, $sql);
                                 }
                                 ?>
                             </select>
-                            <div class="form-text">اختر الأجزاء المرتبطة (يمكنك الاختيار المتعدد بالضغط على Ctrl)</div>
+                            <div class="form-text">اختر الأجزاء المرتبطة</div>
                         </div>
 
                         <div class="mb-3">
@@ -1117,6 +1129,14 @@ $systems_result = mysqli_query($conn, $sql);
                 `;
 
                 $(`#sections-container-${articleId}`).append(sectionHtml);
+                
+                // تفعيل Select2 على العناصر الجديدة
+                $('.select2-multiple').select2({
+                    placeholder: "اختر العناصر المرتبطة",
+                    allowClear: true,
+                    dir: "rtl",
+                    width: "100%"
+                });
 
                 // Initialize subsection count for this section
                 subsectionCount[articleId][sectionCount[articleId]] = 0;
@@ -1169,7 +1189,7 @@ $systems_result = mysqli_query($conn, $sql);
                         </div>
                         <div class="mb-3">
                             <label class="form-label">الأجزاء المرتبطة</label>
-                            <select class="form-select" name="articles[${articleId}][sections][${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][references][]" multiple>
+                            <select class="form-select select2-multiple" name="articles[${articleId}][sections][${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][references][]" multiple>
                                 <?php
                                 $sections = getSections();
                                 foreach ($sections as $section_option) {
@@ -1177,7 +1197,7 @@ $systems_result = mysqli_query($conn, $sql);
                                 }
                                 ?>
                             </select>
-                            <div class="form-text">اختر الأجزاء المرتبطة (يمكنك الاختيار المتعدد بالضغط على Ctrl)</div>
+                            <div class="form-text">اختر الأجزاء المرتبطة</div>
                         </div>
 
                         <div class="mb-3">
@@ -1202,6 +1222,14 @@ $systems_result = mysqli_query($conn, $sql);
                     // This is a direct subsection of a section
                     $(`#subsections-container-${articleId}-${sectionId}`).append(subsectionHtml);
                 }
+                
+                // تفعيل Select2 على العناصر الجديدة
+                $('.select2-multiple').select2({
+                    placeholder: "اختر العناصر المرتبطة",
+                    allowClear: true,
+                    dir: "rtl",
+                    width: "100%"
+                });
 
                 // Initialize sub-subsection count for this subsection
                 if (!subsectionCount[articleId][sectionId + '_' + subsectionCount[articleId][sectionId]]) {
