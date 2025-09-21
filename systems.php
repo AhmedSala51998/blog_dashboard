@@ -120,13 +120,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     if (!empty($article['title'])) {
                         $article_title = cleanInput($article['title']);
                         $article_content = cleanInput($article['content']);
+                        $entity_id = !empty($article['entity_id']) ? cleanInput($article['entity_id']) : null;
 
-                        $sql = "INSERT INTO articles (system_id, title, content) VALUES (?, ?, ?)";
+                        $sql = "INSERT INTO articles (system_id, title, content, entity_id) VALUES (?, ?, ?, ?)";
                         $stmt = mysqli_prepare($conn, $sql);
-                        mysqli_stmt_bind_param($stmt, "iss", $system_id, $article_title, $article_content);
+                        mysqli_stmt_bind_param($stmt, "issi", $system_id, $article_title, $article_content, $entity_id);
                         mysqli_stmt_execute($stmt);
 
                         $article_id = mysqli_insert_id($conn);
+
+                        // معالجة مراجع المادة
+                        if (!empty($article['references']) && is_array($article['references'])) {
+                            foreach ($article['references'] as $reference_id) {
+                                $sql = "INSERT INTO article_references (article_id, referenced_article_id) VALUES (?, ?)";
+                                $stmt = mysqli_prepare($conn, $sql);
+                                mysqli_stmt_bind_param($stmt, "ii", $article_id, $reference_id);
+                                mysqli_stmt_execute($stmt);
+                            }
+                        }
 
                         // معالجة الأجزاء داخل المادة
                         if (isset($article['sections']) && is_array($article['sections'])) {
