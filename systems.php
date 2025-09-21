@@ -736,7 +736,7 @@ $systems_result = mysqli_query($conn, $sql);
                                                         <?php
                                                         $entities = getEntities();
                                                         foreach ($entities as $entity) {
-                                                            echo "<option value='" . $entity['id'] . "'>" . $entity['name'] . "</option>";
+                                                            echo "<option value='" . $entity['id'] . "'>" . $entity['title'] . "</option>";
                                                         }
                                                         ?>
                                                     </select>
@@ -860,7 +860,7 @@ $systems_result = mysqli_query($conn, $sql);
                                     $current_entity = getArticleEntity($article['id']);
                                     foreach ($entities as $entity) {
                                         $selected = ($current_entity && $current_entity['id'] == $entity['id']) ? 'selected' : '';
-                                        echo "<option value='" . $entity['id'] . "' $selected>" . $entity['name'] . "</option>";
+                                        echo "<option value='" . $entity['id'] . "' $selected>" . $entity['title'] . "</option>";
                                     }
                                     ?>
                                 </select>
@@ -933,7 +933,7 @@ $systems_result = mysqli_query($conn, $sql);
                                     $current_entity = getSectionEntity($section['id']);
                                     foreach ($entities as $entity) {
                                         $selected = ($current_entity && $current_entity['id'] == $entity['id']) ? 'selected' : '';
-                                        echo "<option value='" . $entity['id'] . "' $selected>" . $entity['name'] . "</option>";
+                                        echo "<option value='" . $entity['id'] . "' $selected>" . $entity['title'] . "</option>";
                                     }
                                     ?>
                                 </select>
@@ -1008,7 +1008,7 @@ $systems_result = mysqli_query($conn, $sql);
                                 <?php
                                 $entities = getEntities();
                                 foreach ($entities as $entity) {
-                                    echo "<option value='" . $entity['id'] . "'>" . $entity['name'] . "</option>";
+                                    echo "<option value='" . $entity['id'] . "'>" . $entity['title'] . "</option>";
                                 }
                                 ?>
                             </select>
@@ -1084,7 +1084,7 @@ $systems_result = mysqli_query($conn, $sql);
                                 <?php
                                 $entities = getEntities();
                                 foreach ($entities as $entity) {
-                                    echo "<option value='" . $entity['id'] . "'>" . $entity['name'] . "</option>";
+                                    echo "<option value='" . $entity['id'] . "'>" . $entity['title'] . "</option>";
                                 }
                                 ?>
                             </select>
@@ -1162,7 +1162,7 @@ $systems_result = mysqli_query($conn, $sql);
                                 <?php
                                 $entities = getEntities();
                                 foreach ($entities as $entity) {
-                                    echo "<option value='" . $entity['id'] . "'>" . $entity['name'] . "</option>";
+                                    echo "<option value='" . $entity['id'] . "'>" . $entity['title'] . "</option>";
                                 }
                                 ?>
                             </select>
@@ -1250,7 +1250,7 @@ $systems_result = mysqli_query($conn, $sql);
                                 <?php
                                 $entities = getEntities();
                                 foreach ($entities as $entity) {
-                                    echo "<option value='" . $entity['id'] . "'>" . $entity['name'] . "</option>";
+                                    echo "<option value='" . $entity['id'] . "'>" . $entity['title'] . "</option>";
                                 }
                                 ?>
                             </select>
@@ -1313,7 +1313,7 @@ $systems_result = mysqli_query($conn, $sql);
                                     <?php
                                     $entities = getEntities();
                                     foreach ($entities as $entity) {
-                                        echo "<option value='" . $entity['id'] . "'>" . $entity['name'] . "</option>";
+                                        echo "<option value='" . $entity['id'] . "'>" . $entity['title'] . "</option>";
                                     }
                                     ?>
                                 </select>

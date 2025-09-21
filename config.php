@@ -84,7 +84,7 @@ function showMessage() {
 function getEntities() {
     global $conn;
     $entities = [];
-    $sql = "SELECT * FROM entities ORDER BY name ASC";
+    $sql = "SELECT * FROM concerned_entities ORDER BY title ASC";
     $result = mysqli_query($conn, $sql);
     while ($row = mysqli_fetch_assoc($result)) {
         $entities[] = $row;
@@ -169,7 +169,7 @@ function getSectionReferences($section_id) {
 // دالة للحصول على الجهة المعنية للمادة
 function getArticleEntity($article_id) {
     global $conn;
-    $sql = "SELECT e.* FROM entities e 
+    $sql = "SELECT e.* FROM concerned_entities e 
             JOIN articles a ON e.id = a.entity_id 
             WHERE a.id = ?";
     $stmt = mysqli_prepare($conn, $sql);
@@ -182,7 +182,7 @@ function getArticleEntity($article_id) {
 // دالة للحصول على الجهة المعنية للجزء
 function getSectionEntity($section_id) {
     global $conn;
-    $sql = "SELECT e.* FROM entities e 
+    $sql = "SELECT e.* FROM concerned_entities e 
             JOIN sections s ON e.id = s.entity_id 
             WHERE s.id = ?";
     $stmt = mysqli_prepare($conn, $sql);
