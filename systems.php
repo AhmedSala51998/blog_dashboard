@@ -71,22 +71,78 @@ function getSectionsRecursive($article_id, $parent_id = null, $level = 0) {
 function displaySectionsRecursive($sections, $article_id) {
     foreach ($sections as $section) {
         $margin = $section['level'] * 20;
-        echo '<div class="section-card" style="margin-right: ' . $margin . 'px;">';
-        echo '<div class="d-flex justify-content-between align-items-start">';
-        echo '<div>';
-        echo '<h6>' . $section['title'] . '</h6>';
-        echo '<p>' . nl2br(substr($section['content'], 0, 150)) . (strlen($section['content']) > 150 ? '...' : '') . '</p>';
-        echo '</div>';
+        
+        // الحصول على الجهة المعنية
+        $entity_name = '';
+        if (!empty($section['entity_id'])) {
+            $entity = getEntityById($section['entity_id']);
+            if ($entity) {
+                $entity_name = $entity['name'];
+            }
+        }
+        
+        // الحصول على الأجزاء المرتبطة
+        $references = getSectionReferences($section['id']);
+        $references_text = '';
+        if (!empty($references)) {
+            $references_titles = [];
+            foreach ($references as $ref) {
+                $ref_section = getSectionById($ref['reference_id']);
+                if ($ref_section) {
+                    $references_titles[] = $ref_section['title'];
+                }
+            }
+            if (!empty($references_titles)) {
+                $references_text = implode(', ', array_slice($references_titles, 0, 3));
+                if (count($references_titles) > 3) {
+                    $references_text .= ' و ' . (count($references_titles) - 3) . ' أخرى';
+                }
+            }
+        }
+        
+        echo '<div class="section-card mb-3" style="margin-right: ' . $margin . 'px;">';
+        echo '<div class="card">';
+        echo '<div class="card-body">';
+        echo '<div class="d-flex justify-content-between align-items-start mb-2">';
+        echo '<h5 class="card-title">' . $section['title'] . '</h5>';
         echo '<div>';
         echo '<button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#editSectionModal' . $section['id'] . '">';
         echo '<i class="fas fa-edit"></i>';
-        echo '</button>';
+        echo '</button> ';
         echo '<form method="post" style="display: inline;">';
         echo '<input type="hidden" name="section_id" value="' . $section['id'] . '">';
         echo '<button type="submit" name="delete_section" class="btn btn-danger btn-sm" onclick="return confirm(\'هل أنت متأكد من حذف هذا الجزء؟\')">';
         echo '<i class="fas fa-trash"></i>';
         echo '</button>';
         echo '</form>';
+        echo '</div>';
+        echo '</div>';
+        
+        echo '<p class="card-text">' . nl2br(substr($section['content'], 0, 150)) . (strlen($section['content']) > 150 ? '...' : '') . '</p>';
+        
+        // عرض الجهة المعنية والأجزاء المرتبطة
+        echo '<div class="row mt-3">';
+        
+        if (!empty($entity_name)) {
+            echo '<div class="col-md-6 mb-2">';
+            echo '<div class="d-flex align-items-center">';
+            echo '<span class="badge bg-primary me-2">الجهة المعنية</span>';
+            echo '<span>' . $entity_name . '</span>';
+            echo '</div>';
+            echo '</div>';
+        }
+        
+        if (!empty($references_text)) {
+            echo '<div class="col-md-6 mb-2">';
+            echo '<div class="d-flex align-items-center">';
+            echo '<span class="badge bg-info me-2">الأجزاء المرتبطة</span>';
+            echo '<span>' . $references_text . '</span>';
+            echo '</div>';
+            echo '</div>';
+        }
+        
+        echo '</div>';
+        
         echo '</div>';
         echo '</div>';
         echo '</div>';
@@ -637,35 +693,97 @@ $systems_result = mysqli_query($conn, $sql);
                                         if (mysqli_num_rows($articles_result) > 0):
                                             while ($article = mysqli_fetch_assoc($articles_result)):
                                         ?>
-                                            <div class="article-card">
-                                                <div class="d-flex justify-content-between align-items-start">
-                                                    <div>
-                                                        <h6><?php echo $article['title']; ?></h6>
-                                                        <p><?php echo nl2br(substr($article['content'], 0, 200)) . (strlen($article['content']) > 200 ? '...' : ''); ?></p>
-                                                    </div>
-                                                    <div>
-                                                        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#editArticleModal<?php echo $article['id']; ?>">
-                                                            <i class="fas fa-edit"></i>
-                                                        </button>
-                                                        <form method="post" style="display: inline;">
-                                                            <input type="hidden" name="article_id" value="<?php echo $article['id']; ?>">
-                                                            <button type="submit" name="delete_article" class="btn btn-danger btn-sm" onclick="return confirm('هل أنت متأكد من حذف هذه المادة؟')">
-                                                                <i class="fas fa-trash"></i>
-                                                            </button>
-                                                        </form>
+                                            <div class="article-card mb-4">
+                                                <div class="card">
+                                                    <div class="card-body">
+                                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                                            <h5 class="card-title"><?php echo $article['title']; ?></h5>
+                                                            <div>
+                                                                <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#editArticleModal<?php echo $article['id']; ?>">
+                                                                    <i class="fas fa-edit"></i>
+                                                                </button>
+                                                                <form method="post" style="display: inline;">
+                                                                    <input type="hidden" name="article_id" value="<?php echo $article['id']; ?>">
+                                                                    <button type="submit" name="delete_article" class="btn btn-danger btn-sm" onclick="return confirm('هل أنت متأكد من حذف هذه المادة؟')">
+                                                                        <i class="fas fa-trash"></i>
+                                                                    </button>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <p class="card-text"><?php echo nl2br(substr($article['content'], 0, 200)) . (strlen($article['content']) > 200 ? '...' : ''); ?></p>
+                                                        
+                                                        <?php
+                                                        // الحصول على الجهة المعنية
+                                                        $entity_name = '';
+                                                        if (!empty($article['entity_id'])) {
+                                                            $entity = getEntityById($article['entity_id']);
+                                                            if ($entity) {
+                                                                $entity_name = $entity['name'];
+                                                            }
+                                                        }
+                                                        
+                                                        // الحصول على الأجزاء المرتبطة
+                                                        $references = getArticleReferences($article['id']);
+                                                        $references_text = '';
+                                                        if (!empty($references)) {
+                                                            $references_titles = [];
+                                                            foreach ($references as $ref) {
+                                                                $ref_article = getArticleById($ref['reference_id']);
+                                                                if ($ref_article) {
+                                                                    $references_titles[] = $ref_article['title'];
+                                                                }
+                                                            }
+                                                            if (!empty($references_titles)) {
+                                                                $references_text = implode(', ', array_slice($references_titles, 0, 3));
+                                                                if (count($references_titles) > 3) {
+                                                                    $references_text .= ' و ' . (count($references_titles) - 3) . ' أخرى';
+                                                                }
+                                                            }
+                                                        }
+                                                        ?>
+                                                        
+                                                        <!-- عرض الجهة المعنية والأجزاء المرتبطة -->
+                                                        <div class="row mt-3">
+                                                            
+                                                            <?php if (!empty($entity_name)): ?>
+                                                            <div class="col-md-6 mb-2">
+                                                                <div class="d-flex align-items-center">
+                                                                    <span class="badge bg-primary me-2">الجهة المعنية</span>
+                                                                    <span><?php echo $entity_name; ?></span>
+                                                                </div>
+                                                            </div>
+                                                            <?php endif; ?>
+                                                            
+                                                            <?php if (!empty($references_text)): ?>
+                                                            <div class="col-md-6 mb-2">
+                                                                <div class="d-flex align-items-center">
+                                                                    <span class="badge bg-info me-2">المواد المرتبطة</span>
+                                                                    <span><?php echo $references_text; ?></span>
+                                                                </div>
+                                                            </div>
+                                                            <?php endif; ?>
+                                                            
+                                                        </div>
+
+                                                        
+                                                        <!-- Sections -->
+                                                        <?php
+                                                        $sections = getSectionsRecursive($article['id']);
+
+                                                        if (!empty($sections)):
+                                                        ?>
+                                                            <div class="mt-4">
+                                                                <h6 class="text-muted mb-3">أجزاء المادة:</h6>
+                                                                <div class="sections-container">
+                                                                    <?php displaySectionsRecursive($sections, $article['id']); ?>
+                                                                </div>
+                                                            </div>
+                                                        <?php else: ?>
+                                                            <p class="text-muted mt-3">لا توجد أجزاء لهذه المادة.</p>
+                                                        <?php endif; ?>
                                                     </div>
                                                 </div>
-
-                                                <!-- Sections -->
-                                                <?php
-                                                $sections = getSectionsRecursive($article['id']);
-
-                                                if (!empty($sections)):
-                                                    displaySectionsRecursive($sections, $article['id']);
-                                                else:
-                                                ?>
-                                                    <p class="text-muted">لا توجد أجزاء لهذه المادة.</p>
-                                                <?php endif; ?>
                                             </div>
                                         <?php
                                             endwhile;
