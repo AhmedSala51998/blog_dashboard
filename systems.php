@@ -1398,6 +1398,30 @@ $systems_result = mysqli_query($conn, $sql);
                                     <label class="form-label">محتوى الجزء الفرعي</label>
                                     <textarea class="form-control" name="sections[${subSectionIndex}][subsections][${subsubsectionIndex}][subsubsections][${subsubsectionIdx}][content]" rows="3"></textarea>
                                 </div>
+                                <div class="mb-3">
+                                <label class="form-label">الجهة المعنية</label>
+                                <select class="form-select" name="sections[${sectionIndex}][subsections][${subsectionIndex}][entity_id]">
+                                    <option value="">-- اختر جهة معنية --</option>
+                                    <?php
+                                    $entities = getEntities();
+                                    foreach ($entities as $entity) {
+                                        echo "<option value='" . $entity['id'] . "'>" . $entity['title'] . "</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">الأجزاء المرتبطة</label>
+                                <select class="form-select" name="sections[${sectionIndex}][subsections][${subsectionIndex}][references][]" multiple>
+                                    <?php
+                                    $sections = getSections();
+                                    foreach ($sections as $section_option) {
+                                        echo "<option value='" . $section_option['id'] . "'>" . $section_option['system_title'] . " - " . $section_option['article_title'] . " - " . $section_option['title'] . "</option>";
+                                    }
+                                    ?>
+                                </select>
+                                <div class="form-text">اختر الأجزاء المرتبطة (يمكنك الاختيار المتعدد بالضغط على Ctrl)</div>
+                            </div>
                             `;
 
                             subsubsectionDiv.querySelector('.remove-subsubsection').addEventListener('click', () => subsubsectionDiv.remove());
