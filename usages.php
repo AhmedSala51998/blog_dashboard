@@ -42,18 +42,33 @@ $result = mysqli_query($conn, "SELECT * FROM usages ORDER BY created_at DESC");
 <body style="background:#f8f9fa;">
 <div class="container-fluid">
   <div class="row">
-    <!-- الشريط الجانبي -->
-    <div class="col-md-2 sidebar p-3 bg-dark text-white">
-      <h4 class="text-center"><i class="fas fa-blog"></i> لوحة التحكم</h4>
-      <nav class="nav flex-column">
-        <a class="nav-link text-white" href="index.php"><i class="fas fa-home"></i> الرئيسية</a>
-        <a class="nav-link text-white" href="systems.php"><i class="fas fa-gavel"></i> الأنظمة</a>
-        <a class="nav-link text-white" href="blogs.php"><i class="fas fa-newspaper"></i> المدونات</a>
-        <a class="nav-link text-white" href="users.php"><i class="fas fa-users"></i> المستخدمين</a>
-        <a class="nav-link text-white" href="entities.php"><i class="fas fa-building"></i> الجهات المعنية</a>
-        <a class="nav-link active bg-primary text-white" href="usages.php"><i class="fas fa-cogs"></i> الاستخدامات</a>
-        <a class="nav-link text-white" href="index.php?logout=true"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a>
-      </nav>
+
+  <!-- Sidebar -->
+    <div class="col-md-2 sidebar p-0">
+        <div class="p-3 text-center">
+            <h4><i class="fas fa-blog"></i> لوحة التحكم</h4>
+        </div>
+        <nav class="nav flex-column p-3">
+            <a class="nav-link" href="index.php">
+                <i class="fas fa-home"></i> الرئيسية
+            </a>
+            <a class="nav-link" href="systems.php">
+                <i class="fas fa-gavel"></i> الأنظمة والقوانين
+            </a>
+            <a class="nav-link" href="blogs.php">
+                <i class="fas fa-newspaper"></i> المدونات
+            </a>
+            <a class="nav-link" href="users.php">
+                <i class="fas fa-users"></i> المستخدمين والصلاحيات
+            </a>
+            <a class="nav-link" href="entities.php">
+                <i class="fas fa-building"></i> الجهات المعنية
+            </a>
+            <a class="nav-link active bg-primary text-white" href="usages.php"><i class="fas fa-cogs"></i> الاستخدامات</a>
+            <a class="nav-link" href="index.php?logout=true">
+                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+            </a>
+        </nav>
     </div>
 
     <!-- المحتوى الرئيسي -->
