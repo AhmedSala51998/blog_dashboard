@@ -754,7 +754,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                     </div>
 
                                                     <div class="reference-section">
-                                                        <h6><i class="fas fa-link"></i> الاستدلال من الأنطمة والقوانين:</h6>
+                                                        <h6><i class="fas fa-link"></i> الاستدلال من الأنظمة والقوانين:</h6>
 
                                                         <div class="mb-3">
                                                             <label for="edit_reference_system<?php echo $blog['id']; ?>" class="form-label">اختر نظام/قانون</label>
