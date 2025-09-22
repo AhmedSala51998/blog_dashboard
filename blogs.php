@@ -13,16 +13,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $content = cleanInput($_POST['blog_content']);
         $video_url = cleanInput($_POST['video_url']);
         $external_link = cleanInput($_POST['external_link']);
-        
-        // معالجة الأنظمة والمواد والأجزاء المختارة
-        $reference_system_ids = !empty($_POST['reference_system_ids']) ? $_POST['reference_system_ids'] : [];
-        $reference_article_ids = !empty($_POST['reference_article_ids']) ? $_POST['reference_article_ids'] : [];
-        $reference_section_ids = !empty($_POST['reference_section_ids']) ? $_POST['reference_section_ids'] : [];
-        
-        // تحويل المصفوفات إلى نصوص للتخزين في قاعدة البيانات
-        $reference_systems = !empty($reference_system_ids) ? implode(',', $reference_system_ids) : null;
-        $reference_articles = !empty($reference_article_ids) ? implode(',', $reference_article_ids) : null;
-        $reference_sections = !empty($reference_section_ids) ? implode(',', $reference_section_ids) : null;
+        $reference_system_id = !empty($_POST['reference_system_id']) ? cleanInput($_POST['reference_system_id']) : null;
+        $reference_article_id = !empty($_POST['reference_article_id']) ? cleanInput($_POST['reference_article_id']) : null;
+        $reference_section_id = !empty($_POST['reference_section_id']) ? cleanInput($_POST['reference_section_id']) : null;
 
         // معالجة رفع الصورة
         $image_url = '';
@@ -223,20 +216,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 
-    // الحصول على المواد عند اختيار أنظمة متعددة
+    // الحصول على المواد عند اختيار نظام
     if (isset($_POST['get_articles'])) {
-        $system_ids = $_POST['system_ids'];
-        
-        // إنشاء placeholders للاستعلام
-        $placeholders = implode(',', array_fill(0, count($system_ids), '?'));
-        
-        $sql = "SELECT id, title, system_id FROM articles WHERE system_id IN ($placeholders) ORDER BY system_id, title";
+        $system_id = cleanInput($_POST['system_id']);
+
+        $sql = "SELECT id, title FROM articles WHERE system_id = ? ORDER BY title";
         $stmt = mysqli_prepare($conn, $sql);
-        
-        // تحويل المعرفات إلى أرقام صحيحة
-        $types = str_repeat('i', count($system_ids));
-        mysqli_stmt_bind_param($stmt, $types, ...$system_ids);
-        
+        mysqli_stmt_bind_param($stmt, "i", $system_id);
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
 
@@ -249,20 +235,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
     }
 
-    // الحصول على الأجزاء عند اختيار مواد متعددة
+    // الحصول على الأجزاء عند اختيار مادة
     if (isset($_POST['get_sections'])) {
-        $article_ids = $_POST['article_ids'];
-        
-        // إنشاء placeholders للاستعلام
-        $placeholders = implode(',', array_fill(0, count($article_ids), '?'));
-        
-        $sql = "SELECT id, title, article_id FROM sections WHERE article_id IN ($placeholders) ORDER BY article_id, title";
+        $article_id = cleanInput($_POST['article_id']);
+
+        $sql = "SELECT id, title FROM sections WHERE article_id = ? ORDER BY title";
         $stmt = mysqli_prepare($conn, $sql);
-        
-        // تحويل المعرفات إلى أرقام صحيحة
-        $types = str_repeat('i', count($article_ids));
-        mysqli_stmt_bind_param($stmt, $types, ...$article_ids);
-        
+        mysqli_stmt_bind_param($stmt, "i", $article_id);
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
 
@@ -991,17 +970,17 @@ $systems_result = mysqli_query($conn, $systems_sql);
                 }
             });
 
-            // تحميل المواد عند اختيار أنظمة
-            $('#reference_systems').change(function() {
-                const system_ids = $(this).val();
-                const article_select = $('#reference_articles');
-                const section_select = $('#reference_sections');
+            // تحميل المواد عند اختيار نظام
+            $('#reference_system').change(function() {
+                const system_id = $(this).val();
+                const article_select = $('#reference_article');
+                const section_select = $('#reference_section');
 
                 // إعادة تعيين حقول المادة والجزء
-                article_select.html('<option value="" disabled>-- اختر مواد --</option>');
-                section_select.html('<option value="" disabled>-- اختر أجزاء --</option>');
+                article_select.html('<option value="">-- اختر مادة --</option>');
+                section_select.html('<option value="">-- اختر جزء --</option>');
 
-                if (system_ids && system_ids.length > 0) {
+                if (system_id) {
                     article_select.prop('disabled', false);
 
                     // جلب المواد عبر AJAX
@@ -1010,7 +989,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
                         type: 'POST',
                         data: {
                             get_articles: 1,
-                            system_ids: system_ids
+                            system_id: system_id
                         },
                         dataType: 'json',
                         success: function(data) {
@@ -1019,11 +998,11 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                     article_select.append('<option value="' + article.id + '">' + article.title + '</option>');
                                 });
                             } else {
-                                article_select.append('<option value="" disabled>-- لا توجد مواد --</option>');
+                                article_select.append('<option value="">-- لا توجد مواد --</option>');
                             }
                         },
                         error: function() {
-                            article_select.append('<option value="" disabled>-- خطأ في تحميل المواد --</option>');
+                            article_select.append('<option value="">-- خطأ في تحميل المواد --</option>');
                         }
                     });
                 } else {
@@ -1032,15 +1011,15 @@ $systems_result = mysqli_query($conn, $systems_sql);
                 }
             });
 
-            // تحميل الأجزاء عند اختيار مواد
-            $('#reference_articles').change(function() {
-                const article_ids = $(this).val();
-                const section_select = $('#reference_sections');
+            // تحميل الأجزاء عند اختيار مادة
+            $('#reference_article').change(function() {
+                const article_id = $(this).val();
+                const section_select = $('#reference_section');
 
                 // إعادة تعيين حقل الجزء
-                section_select.html('<option value="" disabled>-- اختر أجزاء --</option>');
+                section_select.html('<option value="">-- اختر جزء --</option>');
 
-                if (article_ids && article_ids.length > 0) {
+                if (article_id) {
                     section_select.prop('disabled', false);
 
                     // جلب الأجزاء عبر AJAX
@@ -1049,7 +1028,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
                         type: 'POST',
                         data: {
                             get_sections: 1,
-                            article_ids: article_ids
+                            article_id: article_id
                         },
                         dataType: 'json',
                         success: function(data) {
@@ -1058,11 +1037,11 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                     section_select.append('<option value="' + section.id + '">' + section.title + '</option>');
                                 });
                             } else {
-                                section_select.append('<option value="" disabled>-- لا توجد أجزاء --</option>');
+                                section_select.append('<option value="">-- لا توجد أجزاء --</option>');
                             }
                         },
                         error: function() {
-                            section_select.append('<option value="" disabled>-- خطأ في تحميل الأجزاء --</option>');
+                            section_select.append('<option value="">-- خطأ في تحميل الأجزاء --</option>');
                         }
                     });
                 } else {
