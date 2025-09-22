@@ -104,11 +104,7 @@ function displaySectionsRecursive($sections, $article_id) {
         echo '<div class="card">';
         echo '<div class="card-body">';
         echo '<div class="d-flex justify-content-between align-items-start mb-2">';
-        echo '<h5 class="card-title">';
-        echo '<button class="btn btn-link p-0 text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#sectionCollapse' . $section['id'] . '" aria-expanded="true" aria-controls="sectionCollapse' . $section['id'] . '">';
-        echo '<i class="fas fa-chevron-down me-2"></i>' . $section['title'] . '';
-        echo '</button>';
-        echo '</h5>';
+        echo '<h5 class="card-title">' . $section['title'] . '</h5>';
         echo '<div>';
         echo '<button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#editSectionModal' . $section['id'] . '">';
         echo '<i class="fas fa-edit"></i>';
@@ -122,7 +118,6 @@ function displaySectionsRecursive($sections, $article_id) {
         echo '</div>';
         echo '</div>';
         
-        echo '<div class="collapse show" id="sectionCollapse' . $section['id'] . '">';
         echo '<p class="card-text">' . nl2br(substr($section['content'], 0, 150)) . (strlen($section['content']) > 150 ? '...' : '') . '</p>';
         
         // عرض الجهة المعنية والأجزاء المرتبطة
@@ -742,27 +737,20 @@ $systems_result = mysqli_query($conn, $sql);
                         <?php while ($system = mysqli_fetch_assoc($systems_result)): ?>
                             <div class="system-card">
                                 <div class="system-header">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <h4 class="mb-0">
-                                            <button class="btn btn-link text-white p-0 text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#systemCollapse<?php echo $system['id']; ?>" aria-expanded="true" aria-controls="systemCollapse<?php echo $system['id']; ?>">
-                                                <i class="fas fa-chevron-down me-2"></i>
-                                                <?php echo $system['title']; ?>
+                                    <h4 class="mb-0"><?php echo $system['title']; ?></h4>
+                                    <div>
+                                        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#editSystemModal<?php echo $system['id']; ?>">
+                                            <i class="fas fa-edit"></i> تعديل
+                                        </button>
+                                        <form method="post" style="display: inline;">
+                                            <input type="hidden" name="system_id" value="<?php echo $system['id']; ?>">
+                                            <button type="submit" name="delete_system" class="btn btn-danger btn-sm" onclick="return confirm('هل أنت متأكد من حذف هذا النظام؟')">
+                                                <i class="fas fa-trash"></i> حذف
                                             </button>
-                                        </h4>
-                                        <div>
-                                            <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#editSystemModal<?php echo $system['id']; ?>">
-                                                <i class="fas fa-edit"></i> تعديل
-                                            </button>
-                                            <form method="post" style="display: inline;">
-                                                <input type="hidden" name="system_id" value="<?php echo $system['id']; ?>">
-                                                <button type="submit" name="delete_system" class="btn btn-danger btn-sm" onclick="return confirm('هل أنت متأكد من حذف هذا النظام؟')">
-                                                    <i class="fas fa-trash"></i> حذف
-                                                </button>
-                                            </form>
-                                        </div>
+                                        </form>
                                     </div>
                                 </div>
-                                <div class="system-body collapse show" id="systemCollapse<?php echo $system['id']; ?>">
+                                <div class="system-body">
                                     <p><?php echo nl2br($system['description']); ?></p>
                                     <small class="text-muted">تم الإنشاء: <?php echo date('Y/m/d H:i', strtotime($system['created_at'])); ?></small>
 
@@ -784,12 +772,7 @@ $systems_result = mysqli_query($conn, $sql);
                                                 <div class="card">
                                                     <div class="card-body">
                                                         <div class="d-flex justify-content-between align-items-start mb-2">
-                                                            <h5 class="card-title">
-                                                                <button class="btn btn-link p-0 text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#articleCollapse<?php echo $article['id']; ?>" aria-expanded="true" aria-controls="articleCollapse<?php echo $article['id']; ?>">
-                                                                    <i class="fas fa-chevron-down me-2"></i>
-                                                                    <?php echo $article['title']; ?>
-                                                                </button>
-                                                            </h5>
+                                                            <h5 class="card-title"><?php echo $article['title']; ?></h5>
                                                             <div>
                                                                 <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#editArticleModal<?php echo $article['id']; ?>">
                                                                     <i class="fas fa-edit"></i>
@@ -803,8 +786,7 @@ $systems_result = mysqli_query($conn, $sql);
                                                             </div>
                                                         </div>
                                                         
-                                                        <div class="collapse show" id="articleCollapse<?php echo $article['id']; ?>">
-                                                            <p class="card-text"><?php echo nl2br(substr($article['content'], 0, 200)) . (strlen($article['content']) > 200 ? '...' : ''); ?></p>
+                                                        <p class="card-text"><?php echo nl2br(substr($article['content'], 0, 200)) . (strlen($article['content']) > 200 ? '...' : ''); ?></p>
                                                         
                                                         <?php
                                                         // الحصول على الجهة المعنية
@@ -867,13 +849,8 @@ $systems_result = mysqli_query($conn, $sql);
                                                         if (!empty($sections)):
                                                         ?>
                                                             <div class="mt-4">
-                                                                <h6 class="text-muted mb-3">
-                                                                    <button class="btn btn-link p-0 text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#sectionsCollapse<?php echo $article['id']; ?>" aria-expanded="true" aria-controls="sectionsCollapse<?php echo $article['id']; ?>">
-                                                                        <i class="fas fa-chevron-down me-2"></i>
-                                                                        أجزاء المادة:
-                                                                    </button>
-                                                                </h6>
-                                                                <div class="collapse show sections-container" id="sectionsCollapse<?php echo $article['id']; ?>">
+                                                                <h6 class="text-muted mb-3">أجزاء المادة:</h6>
+                                                                <div class="sections-container">
                                                                     <?php displaySectionsRecursive($sections, $article['id']); ?>
                                                                 </div>
                                                             </div>
