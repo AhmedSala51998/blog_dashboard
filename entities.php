@@ -68,7 +68,7 @@ $result = mysqli_query($conn, "SELECT * FROM concerned_entities ORDER BY created
 
         .sidebar .nav-link {
             color: rgba(255, 255, 255, 0.8);
-            padding: 12px 20px;
+            padding: 12px 5px;
             border-radius: 5px;
             margin-bottom: 5px;
             transition: all 0.3s;
