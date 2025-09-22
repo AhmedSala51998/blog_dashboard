@@ -736,21 +736,21 @@ $systems_result = mysqli_query($conn, $sql);
                     <?php if (mysqli_num_rows($systems_result) > 0): ?>
                         <?php while ($system = mysqli_fetch_assoc($systems_result)): ?>
                             <div class="system-card">
-                                <div class="system-header">
-                                    <h4 class="mb-0"><?php echo $system['title']; ?></h4>
+                                <div class="system-header" data-bs-toggle="collapse" data-bs-target="#systemBody<?php echo $system['id']; ?>" style="cursor: pointer;">
+                                    <h4 class="mb-0"><?php echo $system['title']; ?> <i class="fas fa-chevron-down ms-2"></i></h4>
                                     <div>
-                                        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#editSystemModal<?php echo $system['id']; ?>">
+                                        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#editSystemModal<?php echo $system['id']; ?>" onclick="event.stopPropagation();">
                                             <i class="fas fa-edit"></i> تعديل
                                         </button>
                                         <form method="post" style="display: inline;">
                                             <input type="hidden" name="system_id" value="<?php echo $system['id']; ?>">
-                                            <button type="submit" name="delete_system" class="btn btn-danger btn-sm" onclick="return confirm('هل أنت متأكد من حذف هذا النظام؟')">
+                                            <button type="submit" name="delete_system" class="btn btn-danger btn-sm" onclick="return confirm('هل أنت متأكد من حذف هذا النظام؟'); event.stopPropagation();">
                                                 <i class="fas fa-trash"></i> حذف
                                             </button>
                                         </form>
                                     </div>
                                 </div>
-                                <div class="system-body">
+                                <div class="system-body collapse show" id="systemBody<?php echo $system['id']; ?>">
                                     <p><?php echo nl2br($system['description']); ?></p>
                                     <small class="text-muted">تم الإنشاء: <?php echo date('Y/m/d H:i', strtotime($system['created_at'])); ?></small>
 
@@ -771,20 +771,21 @@ $systems_result = mysqli_query($conn, $sql);
                                             <div class="article-card mb-4">
                                                 <div class="card">
                                                     <div class="card-body">
-                                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                                            <h5 class="card-title"><?php echo $article['title']; ?></h5>
+                                                        <div class="d-flex justify-content-between align-items-start mb-2" data-bs-toggle="collapse" data-bs-target="#articleBody<?php echo $article['id']; ?>" style="cursor: pointer;">
+                                                            <h5 class="card-title"><?php echo $article['title']; ?> <i class="fas fa-chevron-down ms-2"></i></h5>
                                                             <div>
-                                                                <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#editArticleModal<?php echo $article['id']; ?>">
+                                                                <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#editArticleModal<?php echo $article['id']; ?>" onclick="event.stopPropagation();">
                                                                     <i class="fas fa-edit"></i>
                                                                 </button>
                                                                 <form method="post" style="display: inline;">
                                                                     <input type="hidden" name="article_id" value="<?php echo $article['id']; ?>">
-                                                                    <button type="submit" name="delete_article" class="btn btn-danger btn-sm" onclick="return confirm('هل أنت متأكد من حذف هذه المادة؟')">
+                                                                    <button type="submit" name="delete_article" class="btn btn-danger btn-sm" onclick="return confirm('هل أنت متأكد من حذف هذه المادة؟'); event.stopPropagation();">
                                                                         <i class="fas fa-trash"></i>
                                                                     </button>
                                                                 </form>
                                                             </div>
                                                         </div>
+                                                        <div class="collapse show" id="articleBody<?php echo $article['id']; ?>">
                                                         
                                                         <p class="card-text"><?php echo nl2br(substr($article['content'], 0, 200)) . (strlen($article['content']) > 200 ? '...' : ''); ?></p>
                                                         
@@ -857,6 +858,7 @@ $systems_result = mysqli_query($conn, $sql);
                                                         <?php else: ?>
                                                             <p class="text-muted mt-3">لا توجد أجزاء لهذه المادة.</p>
                                                         <?php endif; ?>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
