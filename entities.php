@@ -234,6 +234,7 @@ $result = mysqli_query($conn, "SELECT * FROM concerned_entities ORDER BY created
                 <a class="nav-link active" href="entities.php">
                       <i class="fas fa-building"></i> الجهات المعنية
                 </a>
+                <a class="nav-link" href="usages.php"><i class="fas fa-cogs"></i> الاستخدامات</a>
                 <a class="nav-link" href="index.php?logout=true">
                     <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
                 </a>

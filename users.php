@@ -304,6 +304,7 @@ $users_result = mysqli_query($conn, $sql);
                     <a class="nav-link" href="entities.php">
                       <i class="fas fa-building"></i> الجهات المعنية
                     </a>
+                    <a class="nav-link" href="usages.php"><i class="fas fa-cogs"></i> الاستخدامات</a>
                     <a class="nav-link" href="index.php?logout=true">
                         <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
                     </a>

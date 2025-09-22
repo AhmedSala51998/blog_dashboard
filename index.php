@@ -187,6 +187,7 @@ if (isset($_GET['logout'])) {
                     <a class="nav-link" href="entities.php">
                       <i class="fas fa-building"></i> الجهات المعنية
                     </a>
+                    <a class="nav-link" href="usages.php"><i class="fas fa-cogs"></i> الاستخدامات</a>
                     <a class="nav-link" href="?logout=true">
                         <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
                     </a>
