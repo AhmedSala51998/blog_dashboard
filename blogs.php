@@ -13,9 +13,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $content = cleanInput($_POST['blog_content']);
         $video_url = cleanInput($_POST['video_url']);
         $external_link = cleanInput($_POST['external_link']);
-        $reference_system_id = !empty($_POST['reference_system_id']) ? cleanInput($_POST['reference_system_id']) : null;
-        $reference_article_id = !empty($_POST['reference_article_id']) ? cleanInput($_POST['reference_article_id']) : null;
-        $reference_section_id = !empty($_POST['reference_section_id']) ? cleanInput($_POST['reference_section_id']) : null;
+        $reference_system_id = !empty($_POST['reference_system_id']) ? implode(',', array_map('cleanInput', $_POST['reference_system_id'])) : null;
+        $reference_article_id = !empty($_POST['reference_article_id']) ? implode(',', array_map('cleanInput', $_POST['reference_article_id'])) : null;
+        $reference_section_id = !empty($_POST['reference_section_id']) ? implode(',', array_map('cleanInput', $_POST['reference_section_id'])) : null;
 
         // معالجة رفع الصورة
         $image_url = '';
@@ -126,9 +126,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $content = cleanInput($_POST['blog_content']);
         $video_url = cleanInput($_POST['video_url']);
         $external_link = cleanInput($_POST['external_link']);
-        $reference_system_id = !empty($_POST['reference_system_id']) ? cleanInput($_POST['reference_system_id']) : null;
-        $reference_article_id = !empty($_POST['reference_article_id']) ? cleanInput($_POST['reference_article_id']) : null;
-        $reference_section_id = !empty($_POST['reference_section_id']) ? cleanInput($_POST['reference_section_id']) : null;
+        $reference_system_id = !empty($_POST['reference_system_id']) ? implode(',', array_map('cleanInput', $_POST['reference_system_id'])) : null;
+        $reference_article_id = !empty($_POST['reference_article_id']) ? implode(',', array_map('cleanInput', $_POST['reference_article_id'])) : null;
+        $reference_section_id = !empty($_POST['reference_section_id']) ? implode(',', array_map('cleanInput', $_POST['reference_section_id'])) : null;
 
         // الحصول على معلومات المدونة الحالية
         $sql = "SELECT * FROM blogs WHERE id = ?";
@@ -759,7 +759,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
                                                         <div class="mb-3">
                                                             <label for="edit_reference_system<?php echo $blog['id']; ?>" class="form-label">اختر نظام/قانون</label>
-                                                            <select class="form-select" id="edit_reference_system<?php echo $blog['id']; ?>" name="reference_system_id">
+                                                            <select class="form-select" id="edit_reference_system<?php echo $blog['id']; ?>" name="reference_system_id[]" multiple>
                                                                 <option value="">-- اختر نظام/قانون --</option>
                                                                 <?php 
                                                                 mysqli_data_seek($systems_result, 0);
@@ -773,7 +773,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
                                                         <div class="mb-3">
                                                             <label for="edit_reference_article<?php echo $blog['id']; ?>" class="form-label">اختر مادة</label>
-                                                            <select class="form-select" id="edit_reference_article<?php echo $blog['id']; ?>" name="reference_article_id">
+                                                            <select class="form-select" id="edit_reference_article<?php echo $blog['id']; ?>" name="reference_article_id[]" multiple>
                                                                 <option value="">-- اختر مادة --</option>
                                                                 <?php 
                                                                 if (!empty($blog['reference_system_id'])) {
@@ -794,7 +794,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
                                                         <div class="mb-3">
                                                             <label for="edit_reference_section<?php echo $blog['id']; ?>" class="form-label">اختر جزء</label>
-                                                            <select class="form-select" id="edit_reference_section<?php echo $blog['id']; ?>" name="reference_section_id">
+                                                            <select class="form-select" id="edit_reference_section<?php echo $blog['id']; ?>" name="reference_section_id[]" multiple>
                                                                 <option value="">-- اختر جزء --</option>
                                                                 <?php 
                                                                 if (!empty($blog['reference_article_id'])) {
@@ -901,7 +901,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
                             <div class="mb-3">
                                 <label for="reference_system" class="form-label">اختر نظام/قانون</label>
-                                <select class="form-select" id="reference_system" name="reference_system_id">
+                                <select class="form-select" id="reference_system" name="reference_system_id[]" multiple>
                                     <option value="">-- اختر نظام/قانون --</option>
                                     <?php 
                                     mysqli_data_seek($systems_result, 0);
@@ -914,14 +914,14 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
                             <div class="mb-3">
                                 <label for="reference_article" class="form-label">اختر مادة</label>
-                                <select class="form-select" id="reference_article" name="reference_article_id" disabled>
+                                <select class="form-select" id="reference_article" name="reference_article_id[]" multiple disabled>
                                     <option value="">-- اختر مادة --</option>
                                 </select>
                             </div>
 
                             <div class="mb-3">
                                 <label for="reference_section" class="form-label">اختر جزء</label>
-                                <select class="form-select" id="reference_section" name="reference_section_id" disabled>
+                                <select class="form-select" id="reference_section" name="reference_section_id[]" multiple disabled>
                                     <option value="">-- اختر جزء --</option>
                                 </select>
                             </div>
