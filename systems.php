@@ -141,6 +141,15 @@ function displaySectionsRecursive($sections, $article_id) {
             echo '</div>';
             echo '</div>';
         }
+
+        if (!empty($usage_name)) {
+            echo '<div class="col-md-6 mb-2">';
+            echo '<div class="d-flex align-items-center">';
+            echo '<span class="badge bg-warning me-2">الاستخدامات</span>';
+            echo '<span>' . $usage_name . '</span>';
+            echo '</div>';
+            echo '</div>';
+        }
         
         if (!empty($references_text)) {
             echo '<div class="col-md-6 mb-2">';
