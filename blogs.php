@@ -973,7 +973,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
             // تحميل المواد عند اختيار نظام
             $('#reference_system').change(function() {
-                const system_id = $(this).val();
+                const system_ids = $(this).val() || [];
                 const article_select = $('#reference_article');
                 const section_select = $('#reference_section');
 
@@ -981,7 +981,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
                 article_select.html('<option value="">-- اختر مادة --</option>');
                 section_select.html('<option value="">-- اختر جزء --</option>');
 
-                if (system_id) {
+                if (system_ids.length > 0) {
                     article_select.prop('disabled', false);
 
                     // جلب المواد عبر AJAX
@@ -990,7 +990,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
                         type: 'POST',
                         data: {
                             get_articles: 1,
-                            system_id: system_id
+                            system_ids: system_ids
                         },
                         dataType: 'json',
                         success: function(data) {
