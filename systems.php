@@ -160,10 +160,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (isset($_POST['add_system'])) {
         $title = cleanInput($_POST['system_title']);
         $description = cleanInput($_POST['system_description']);
+        
+        // معالجة الجهات المعنية والاستخدامات المختارة
+        $entity_ids = !empty($_POST['entity_ids']) ? $_POST['entity_ids'] : [];
+        $usage_ids = !empty($_POST['usage_ids']) ? $_POST['usage_ids'] : [];
+        
+        // تحويل المصفوفات إلى نصوص للتخزين في قاعدة البيانات
+        $entities = !empty($entity_ids) ? implode(',', $entity_ids) : null;
+        $usages = !empty($usage_ids) ? implode(',', $usage_ids) : null;
 
-        $sql = "INSERT INTO systems (title, description) VALUES (?, ?)";
+        $sql = "INSERT INTO systems (title, description, entities, usages) VALUES (?, ?, ?, ?)";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ss", $title, $description);
+        mysqli_stmt_bind_param($stmt, "ssss", $title, $description, $entities, $usages);
 
         if (mysqli_stmt_execute($stmt)) {
             $system_id = mysqli_insert_id($conn);
@@ -230,10 +238,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $system_id = cleanInput($_POST['system_id']);
         $title = cleanInput($_POST['system_title']);
         $description = cleanInput($_POST['system_description']);
+        
+        // معالجة الجهات المعنية والاستخدامات المختارة
+        $entity_ids = !empty($_POST['entity_ids']) ? $_POST['entity_ids'] : [];
+        $usage_ids = !empty($_POST['usage_ids']) ? $_POST['usage_ids'] : [];
+        
+        // تحويل المصفوفات إلى نصوص للتخزين في قاعدة البيانات
+        $entities = !empty($entity_ids) ? implode(',', $entity_ids) : null;
+        $usages = !empty($usage_ids) ? implode(',', $usage_ids) : null;
 
-        $sql = "UPDATE systems SET title = ?, description = ? WHERE id = ?";
+        $sql = "UPDATE systems SET title = ?, description = ?, entities = ?, usages = ? WHERE id = ?";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ssi", $title, $description, $system_id);
+        mysqli_stmt_bind_param($stmt, "ssssi", $title, $description, $entities, $usages, $system_id);
 
         if (mysqli_stmt_execute($stmt)) {
             $_SESSION['message'] = "تم تعديل النظام بنجاح!";
@@ -896,6 +912,42 @@ $systems_result = mysqli_query($conn, $sql);
                                                     <label for="system_description<?php echo $system['id']; ?>" class="form-label">وصف النظام</label>
                                                     <textarea class="form-control" id="system_description<?php echo $system['id']; ?>" name="system_description" rows="4"><?php echo $system['description']; ?></textarea>
                                                 </div>
+                                                <div class="mb-3">
+                                                    <label for="system_entities<?php echo $system['id']; ?>" class="form-label">الجهات المعنية</label>
+                                                    <select class="form-select" id="system_entities<?php echo $system['id']; ?>" name="entity_ids[]" multiple>
+                                                        <?php
+                                                        $entities = getEntities();
+                                                        // تحديد الجهات المعنية المختارة مسبقاً
+                                                        $selected_entities = [];
+                                                        if (!empty($system['entities'])) {
+                                                            $selected_entities = explode(',', $system['entities']);
+                                                        }
+                                                        foreach ($entities as $entity) {
+                                                            $selected = in_array($entity['id'], $selected_entities) ? 'selected' : '';
+                                                            echo "<option value='" . $entity['id'] . "' $selected>" . $entity['title'] . "</option>";
+                                                        }
+                                                        ?>
+                                                    </select>
+                                                    <div class="form-text">يمكنك اختيار أكثر من جهة بالضغط مع الاستمرار على مفتاح Ctrl</div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="system_usages<?php echo $system['id']; ?>" class="form-label">الاستخدامات</label>
+                                                    <select class="form-select" id="system_usages<?php echo $system['id']; ?>" name="usage_ids[]" multiple>
+                                                        <?php
+                                                        $usages = getUsages();
+                                                        // تحديد الاستخدامات المختارة مسبقاً
+                                                        $selected_usages = [];
+                                                        if (!empty($system['usages'])) {
+                                                            $selected_usages = explode(',', $system['usages']);
+                                                        }
+                                                        foreach ($usages as $usage) {
+                                                            $selected = in_array($usage['id'], $selected_usages) ? 'selected' : '';
+                                                            echo "<option value='" . $usage['id'] . "' $selected>" . $usage['title'] . "</option>";
+                                                        }
+                                                        ?>
+                                                    </select>
+                                                    <div class="form-text">يمكنك اختيار أكثر من استخدام بالضغط مع الاستمرار على مفتاح Ctrl</div>
+                                                </div>
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
@@ -998,6 +1050,30 @@ $systems_result = mysqli_query($conn, $sql);
                         <div class="mb-3">
                             <label for="system_description" class="form-label">وصف النظام</label>
                             <textarea class="form-control" id="system_description" name="system_description" rows="4"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="system_entities" class="form-label">الجهات المعنية</label>
+                            <select class="form-select" id="system_entities" name="entity_ids[]" multiple>
+                                <?php
+                                $entities = getEntities();
+                                foreach ($entities as $entity) {
+                                    echo "<option value='" . $entity['id'] . "'>" . $entity['title'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                            <div class="form-text">يمكنك اختيار أكثر من جهة بالضغط مع الاستمرار على مفتاح Ctrl</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="system_usages" class="form-label">الاستخدامات</label>
+                            <select class="form-select" id="system_usages" name="usage_ids[]" multiple>
+                                <?php
+                                $usages = getUsages();
+                                foreach ($usages as $usage) {
+                                    echo "<option value='" . $usage['id'] . "'>" . $usage['title'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                            <div class="form-text">يمكنك اختيار أكثر من استخدام بالضغط مع الاستمرار على مفتاح Ctrl</div>
                         </div>
 
                         <div class="mb-3">
