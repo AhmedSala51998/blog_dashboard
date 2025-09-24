@@ -218,13 +218,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // الحصول على المواد عند اختيار نظام
     if (isset($_POST['get_articles'])) {
-        $system_id = cleanInput($_POST['system_id']);
-
-        $sql = "SELECT id, title FROM articles WHERE system_id = ? ORDER BY title";
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "i", $system_id);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
+        // التحقق من وجود معرفات الأنظمة المتعددة
+        if (isset($_POST['system_ids']) && is_array($_POST['system_ids'])) {
+            // تحويل مصفوفة المعرفات إلى نص مفصول بفواصل للاستخدام مع استعلام IN
+            $system_ids = array_map('intval', $_POST['system_ids']);
+            $system_ids_str = implode(',', $system_ids);
+            
+            $sql = "SELECT id, title FROM articles WHERE system_id IN ($system_ids_str) ORDER BY title";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+        } else {
+            // التعامل مع الحالة القديمة لمعرف واحد
+            $system_id = cleanInput($_POST['system_id']);
+            
+            $sql = "SELECT id, title FROM articles WHERE system_id = ? ORDER BY title";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "i", $system_id);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+        }
 
         $articles = [];
         while ($row = mysqli_fetch_assoc($result)) {
@@ -237,13 +250,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // الحصول على الأجزاء عند اختيار مادة
     if (isset($_POST['get_sections'])) {
-        $article_id = cleanInput($_POST['article_id']);
-
-        $sql = "SELECT id, title FROM sections WHERE article_id = ? ORDER BY title";
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "i", $article_id);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
+        // التحقق من وجود معرفات المواد المتعددة
+        if (isset($_POST['article_ids']) && is_array($_POST['article_ids'])) {
+            // تحويل مصفوفة المعرفات إلى نص مفصول بفواصل للاستخدام مع استعلام IN
+            $article_ids = array_map('intval', $_POST['article_ids']);
+            $article_ids_str = implode(',', $article_ids);
+            
+            $sql = "SELECT id, title FROM sections WHERE article_id IN ($article_ids_str) ORDER BY title";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+        } else {
+            // التعامل مع الحالة القديمة لمعرف واحد
+            $article_id = cleanInput($_POST['article_id']);
+            
+            $sql = "SELECT id, title FROM sections WHERE article_id = ? ORDER BY title";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "i", $article_id);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+        }
 
         $sections = [];
         while ($row = mysqli_fetch_assoc($result)) {
@@ -1014,13 +1040,13 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
             // تحميل الأجزاء عند اختيار مادة
             $('#reference_article').change(function() {
-                const article_id = $(this).val();
+                const article_ids = $(this).val() || [];
                 const section_select = $('#reference_section');
 
                 // إعادة تعيين حقل الجزء
                 section_select.html('<option value="">-- اختر جزء --</option>');
 
-                if (article_id) {
+                if (article_ids.length > 0) {
                     section_select.prop('disabled', false);
 
                     // جلب الأجزاء عبر AJAX
@@ -1029,7 +1055,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
                         type: 'POST',
                         data: {
                             get_sections: 1,
-                            article_id: article_id
+                            article_ids: article_ids
                         },
                         dataType: 'json',
                         success: function(data) {
@@ -1080,7 +1106,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
                     // تحميل المواد عند اختيار نظام
                     $('#edit_reference_system' + blogId).change(function() {
-                        const system_id = $(this).val();
+                        const system_ids = $(this).val() || [];
                         const article_select = $('#edit_reference_article' + blogId);
                         const section_select = $('#edit_reference_section' + blogId);
 
@@ -1088,7 +1114,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
                         article_select.html('<option value="">-- اختر مادة --</option>');
                         section_select.html('<option value="">-- اختر جزء --</option>');
 
-                        if (system_id) {
+                        if (system_ids.length > 0) {
                             article_select.prop('disabled', false);
 
                             // جلب المواد عبر AJAX
@@ -1097,7 +1123,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                 type: 'POST',
                                 data: {
                                     get_articles: 1,
-                                    system_id: system_id
+                                    system_ids: system_ids
                                 },
                                 dataType: 'json',
                                 success: function(data) {
@@ -1121,13 +1147,13 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
                     // تحميل الأجزاء عند اختيار مادة
                     $('#edit_reference_article' + blogId).change(function() {
-                        const article_id = $(this).val();
+                        const article_ids = $(this).val() || [];
                         const section_select = $('#edit_reference_section' + blogId);
 
                         // إعادة تعيين حقل الجزء
                         section_select.html('<option value="">-- اختر جزء --</option>');
 
-                        if (article_id) {
+                        if (article_ids.length > 0) {
                             section_select.prop('disabled', false);
 
                             // جلب الأجزاء عبر AJAX
@@ -1136,7 +1162,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                 type: 'POST',
                                 data: {
                                     get_sections: 1,
-                                    article_id: article_id
+                                    article_ids: article_ids
                                 },
                                 dataType: 'json',
                                 success: function(data) {
