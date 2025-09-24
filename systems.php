@@ -862,6 +862,15 @@ $systems_result = mysqli_query($conn, $sql);
                                                                 </div>
                                                             </div>
                                                             <?php endif; ?>
+
+                                                            <?php if (!empty($usage_name)): ?>
+                                                            <div class="col-md-4 mb-2">
+                                                                <div class="d-flex align-items-center">
+                                                                    <span class="badge bg-warning me-2">الاستخدامات</span>
+                                                                    <span><?php echo $usage_name; ?></span>
+                                                                </div>
+                                                            </div>
+                                                            <?php endif; ?>
                                                             
                                                             <?php if (!empty($references_text)): ?>
                                                             <div class="col-md-4 mb-2">
