@@ -690,17 +690,41 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                     </div>
                                                 <?php endif; ?>
 
-                                                <?php if (!empty($blog['system_title']) || !empty($blog['article_title']) || !empty($blog['section_title'])): ?>
+                                                <?php if (!empty($blog['systems']) || !empty($blog['articles']) || !empty($blog['sections'])): ?>
                                                     <div class="reference-section">
                                                         <h6><i class="fas fa-link"></i> الاستدلال من مكتب العمل:</h6>
-                                                        <?php if (!empty($blog['system_title'])): ?>
-                                                            <p><strong>النظام/القانون:</strong> <?php echo htmlspecialchars($blog['system_title']); ?></p>
+
+                                                        <?php if (!empty($blog['systems'])): ?>
+                                                            <div class="mb-2">
+                                                                <strong>الأنظمة/القوانين:</strong>
+                                                                <ul class="list-unstyled mb-0">
+                                                                    <?php foreach ($blog['systems'] as $system): ?>
+                                                                        <li>• <?php echo htmlspecialchars($system['title']); ?></li>
+                                                                    <?php endforeach; ?>
+                                                                </ul>
+                                                            </div>
                                                         <?php endif; ?>
-                                                        <?php if (!empty($blog['article_title'])): ?>
-                                                            <p><strong>المادة:</strong> <?php echo htmlspecialchars($blog['article_title']); ?></p>
+
+                                                        <?php if (!empty($blog['articles'])): ?>
+                                                            <div class="mb-2">
+                                                                <strong>المواد:</strong>
+                                                                <ul class="list-unstyled mb-0">
+                                                                    <?php foreach ($blog['articles'] as $article): ?>
+                                                                        <li>• <?php echo htmlspecialchars($article['title']); ?></li>
+                                                                    <?php endforeach; ?>
+                                                                </ul>
+                                                            </div>
                                                         <?php endif; ?>
-                                                        <?php if (!empty($blog['section_title'])): ?>
-                                                            <p><strong>الجزء:</strong> <?php echo htmlspecialchars($blog['section_title']); ?></p>
+
+                                                        <?php if (!empty($blog['sections'])): ?>
+                                                            <div class="mb-2">
+                                                                <strong>الأجزاء:</strong>
+                                                                <ul class="list-unstyled mb-0">
+                                                                    <?php foreach ($blog['sections'] as $section): ?>
+                                                                        <li>• <?php echo htmlspecialchars($section['title']); ?></li>
+                                                                    <?php endforeach; ?>
+                                                                </ul>
+                                                            </div>
                                                         <?php endif; ?>
                                                     </div>
                                                 <?php endif; ?>
