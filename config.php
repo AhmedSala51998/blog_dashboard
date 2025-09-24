@@ -92,6 +92,55 @@ function getEntities() {
     return $entities;
 }
 
+// دالة للحصول على قائمة الاستخدامات
+function getUsages() {
+    global $conn;
+    $usages = [];
+    $sql = "SELECT * FROM Usages ORDER BY title ASC";
+    $result = mysqli_query($conn, $sql);
+    while ($row = mysqli_fetch_assoc($result)) {
+        $usages[] = $row;
+    }
+    return $usages;
+}
+
+// دالة للحصول على الاستخدام للمادة
+function getArticleUsage($article_id) {
+    global $conn;
+    $sql = "SELECT u.* FROM Usages u
+            JOIN articles a ON u.id = a.usage_id
+            WHERE a.id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $article_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    return mysqli_fetch_assoc($result);
+}
+
+// دالة للحصول على الاستخدام للجزء
+function getSectionUsage($section_id) {
+    global $conn;
+    $sql = "SELECT u.* FROM Usages u
+            JOIN sections s ON u.id = s.usage_id
+            WHERE s.id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $section_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    return mysqli_fetch_assoc($result);
+}
+
+// دالة للحصول على الاستخدام بواسطة المعرف
+function getUsageById($usage_id) {
+    global $conn;
+    $sql = "SELECT * FROM Usages WHERE id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $usage_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    return mysqli_fetch_assoc($result);
+}
+
 // دالة للحصول على قائمة المواد
 function getArticles($exclude_id = null) {
     global $conn;
@@ -224,6 +273,55 @@ function getEntityById($entity_id) {
     $sql = "SELECT * FROM concerned_entities WHERE id = ?";
     $stmt = mysqli_prepare($conn, $sql);
     mysqli_stmt_bind_param($stmt, "i", $entity_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    return mysqli_fetch_assoc($result);
+}
+
+// دالة للحصول على قائمة الاستخدامات
+function getUsages() {
+    global $conn;
+    $usages = [];
+    $sql = "SELECT * FROM usages ORDER BY title ASC";
+    $result = mysqli_query($conn, $sql);
+    while ($row = mysqli_fetch_assoc($result)) {
+        $usages[] = $row;
+    }
+    return $usages;
+}
+
+// دالة للحصول على الاستخدام للمادة
+function getArticleUsage($article_id) {
+    global $conn;
+    $sql = "SELECT u.* FROM usages u
+            JOIN articles a ON u.id = a.usage_id
+            WHERE a.id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $article_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    return mysqli_fetch_assoc($result);
+}
+
+// دالة للحصول على الاستخدام للجزء
+function getSectionUsage($section_id) {
+    global $conn;
+    $sql = "SELECT u.* FROM usages u
+            JOIN sections s ON u.id = s.usage_id
+            WHERE s.id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $section_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    return mysqli_fetch_assoc($result);
+}
+
+// دالة للحصول على استخدام بواسطة المعرف
+function getUsageById($usage_id) {
+    global $conn;
+    $sql = "SELECT * FROM usages WHERE id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $usage_id);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
     return mysqli_fetch_assoc($result);

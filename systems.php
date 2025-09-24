@@ -14,10 +14,11 @@ function processSections($sections, $article_id, $parent_id = null) {
             $section_title = cleanInput($section['title']);
             $section_content = cleanInput($section['content']);
             $entity_id = !empty($section['entity_id']) ? cleanInput($section['entity_id']) : null;
+            $usage_id = !empty($section['usage_id']) ? cleanInput($section['usage_id']) : null;
 
-            $sql = "INSERT INTO sections (article_id, parent_id, title, content, entity_id) VALUES (?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO sections (article_id, parent_id, title, content, entity_id, usage_id) VALUES (?, ?, ?, ?, ?, ?)";
             $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "iissi", $article_id, $parent_id, $section_title, $section_content, $entity_id);
+            mysqli_stmt_bind_param($stmt, "iissii", $article_id, $parent_id, $section_title, $section_content, $entity_id, $usage_id);
             mysqli_stmt_execute($stmt);
 
             $section_id = mysqli_insert_id($conn);
@@ -78,6 +79,15 @@ function displaySectionsRecursive($sections, $article_id) {
             $entity = getEntityById($section['entity_id']);
             if ($entity) {
                 $entity_name = $entity['title'];
+            }
+        }
+        
+        // الحصول على الاستخدام
+        $usage_name = '';
+        if (!empty($section['usage_id'])) {
+            $usage = getUsageById($section['usage_id']);
+            if ($usage) {
+                $usage_name = $usage['title'];
             }
         }
         
@@ -160,18 +170,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (isset($_POST['add_system'])) {
         $title = cleanInput($_POST['system_title']);
         $description = cleanInput($_POST['system_description']);
-        
-        // معالجة الجهات المعنية والاستخدامات المختارة
-        $entity_ids = !empty($_POST['entity_ids']) ? $_POST['entity_ids'] : [];
-        $usage_ids = !empty($_POST['usage_ids']) ? $_POST['usage_ids'] : [];
-        
-        // تحويل المصفوفات إلى نصوص للتخزين في قاعدة البيانات
-        $entities = !empty($entity_ids) ? implode(',', $entity_ids) : null;
-        $usages = !empty($usage_ids) ? implode(',', $usage_ids) : null;
 
-        $sql = "INSERT INTO systems (title, description, entities, usages) VALUES (?, ?, ?, ?)";
+        $sql = "INSERT INTO systems (title, description) VALUES (?, ?)";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ssss", $title, $description, $entities, $usages);
+        mysqli_stmt_bind_param($stmt, "ss", $title, $description);
 
         if (mysqli_stmt_execute($stmt)) {
             $system_id = mysqli_insert_id($conn);
@@ -185,10 +187,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         $article_title = cleanInput($article['title']);
                         $article_content = cleanInput($article['content']);
                         $entity_id = !empty($article['entity_id']) ? cleanInput($article['entity_id']) : null;
+                        $usage_id = !empty($article['usage_id']) ? cleanInput($article['usage_id']) : null;
 
-                        $sql = "INSERT INTO articles (system_id, title, content, entity_id) VALUES (?, ?, ?, ?)";
+                        $sql = "INSERT INTO articles (system_id, title, content, entity_id, usage_id) VALUES (?, ?, ?, ?, ?)";
                         $stmt = mysqli_prepare($conn, $sql);
-                        mysqli_stmt_bind_param($stmt, "issi", $system_id, $article_title, $article_content, $entity_id);
+                        mysqli_stmt_bind_param($stmt, "issii", $system_id, $article_title, $article_content, $entity_id, $usage_id);
                         mysqli_stmt_execute($stmt);
 
                         $article_id = mysqli_insert_id($conn);
@@ -238,18 +241,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $system_id = cleanInput($_POST['system_id']);
         $title = cleanInput($_POST['system_title']);
         $description = cleanInput($_POST['system_description']);
-        
-        // معالجة الجهات المعنية والاستخدامات المختارة
-        $entity_ids = !empty($_POST['entity_ids']) ? $_POST['entity_ids'] : [];
-        $usage_ids = !empty($_POST['usage_ids']) ? $_POST['usage_ids'] : [];
-        
-        // تحويل المصفوفات إلى نصوص للتخزين في قاعدة البيانات
-        $entities = !empty($entity_ids) ? implode(',', $entity_ids) : null;
-        $usages = !empty($usage_ids) ? implode(',', $usage_ids) : null;
 
-        $sql = "UPDATE systems SET title = ?, description = ?, entities = ?, usages = ? WHERE id = ?";
+        $sql = "UPDATE systems SET title = ?, description = ? WHERE id = ?";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ssssi", $title, $description, $entities, $usages, $system_id);
+        mysqli_stmt_bind_param($stmt, "ssi", $title, $description, $system_id);
 
         if (mysqli_stmt_execute($stmt)) {
             $_SESSION['message'] = "تم تعديل النظام بنجاح!";
@@ -283,10 +278,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $title = cleanInput($_POST['article_title']);
         $content = cleanInput($_POST['article_content']);
         $entity_id = !empty($_POST['entity_id']) ? cleanInput($_POST['entity_id']) : null;
+        $usage_id = !empty($_POST['usage_id']) ? cleanInput($_POST['usage_id']) : null;
 
-        $sql = "UPDATE articles SET title = ?, content = ?, entity_id = ? WHERE id = ?";
+        $sql = "UPDATE articles SET title = ?, content = ?, entity_id = ?, usage_id = ? WHERE id = ?";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ssii", $title, $content, $entity_id, $article_id);
+        mysqli_stmt_bind_param($stmt, "ssiii", $title, $content, $entity_id, $usage_id, $article_id);
 
         if (mysqli_stmt_execute($stmt)) {
             // حذف المراجع القديمة
@@ -336,10 +332,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $title = cleanInput($_POST['section_title']);
         $content = cleanInput($_POST['section_content']);
         $entity_id = !empty($_POST['entity_id']) ? cleanInput($_POST['entity_id']) : null;
+        $usage_id = !empty($_POST['usage_id']) ? cleanInput($_POST['usage_id']) : null;
 
-        $sql = "UPDATE sections SET title = ?, content = ?, entity_id = ? WHERE id = ?";
+        $sql = "UPDATE sections SET title = ?, content = ?, entity_id = ?, usage_id = ? WHERE id = ?";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ssii", $title, $content, $entity_id, $section_id);
+        mysqli_stmt_bind_param($stmt, "ssiii", $title, $content, $entity_id, $usage_id, $section_id);
 
         if (mysqli_stmt_execute($stmt)) {
             // حذف المراجع القديمة
@@ -816,6 +813,15 @@ $systems_result = mysqli_query($conn, $sql);
                                                             }
                                                         }
                                                         
+                                                        // الحصول على الاستخدام
+                                                        $usage_name = '';
+                                                        if (!empty($article['usage_id'])) {
+                                                            $usage = getUsageById($article['usage_id']);
+                                                            if ($usage) {
+                                                                $usage_name = $usage['title'];
+                                                            }
+                                                        }
+                                                        
                                                         // الحصول على الأجزاء المرتبطة
                                                         $references = getArticleReferences($article['id']);
                                                         $references_text = '';
@@ -836,11 +842,11 @@ $systems_result = mysqli_query($conn, $sql);
                                                         }
                                                         ?>
                                                         
-                                                        <!-- عرض الجهة المعنية والأجزاء المرتبطة -->
+                                                        <!-- عرض الجهة المعنية والاستخدام والأجزاء المرتبطة -->
                                                         <div class="row mt-3">
                                                             
                                                             <?php if (!empty($entity_name)): ?>
-                                                            <div class="col-md-6 mb-2">
+                                                            <div class="col-md-4 mb-2">
                                                                 <div class="d-flex align-items-center">
                                                                     <span class="badge bg-primary me-2">الجهة المعنية</span>
                                                                     <span><?php echo $entity_name; ?></span>
@@ -849,7 +855,7 @@ $systems_result = mysqli_query($conn, $sql);
                                                             <?php endif; ?>
                                                             
                                                             <?php if (!empty($references_text)): ?>
-                                                            <div class="col-md-6 mb-2">
+                                                            <div class="col-md-4 mb-2">
                                                                 <div class="d-flex align-items-center">
                                                                     <span class="badge bg-info me-2">المواد المرتبطة</span>
                                                                     <span><?php echo $references_text; ?></span>
@@ -912,42 +918,6 @@ $systems_result = mysqli_query($conn, $sql);
                                                     <label for="system_description<?php echo $system['id']; ?>" class="form-label">وصف النظام</label>
                                                     <textarea class="form-control" id="system_description<?php echo $system['id']; ?>" name="system_description" rows="4"><?php echo $system['description']; ?></textarea>
                                                 </div>
-                                                <div class="mb-3">
-                                                    <label for="system_entities<?php echo $system['id']; ?>" class="form-label">الجهات المعنية</label>
-                                                    <select class="form-select" id="system_entities<?php echo $system['id']; ?>" name="entity_ids[]" multiple>
-                                                        <?php
-                                                        $entities = getEntities();
-                                                        // تحديد الجهات المعنية المختارة مسبقاً
-                                                        $selected_entities = [];
-                                                        if (!empty($system['entities'])) {
-                                                            $selected_entities = explode(',', $system['entities']);
-                                                        }
-                                                        foreach ($entities as $entity) {
-                                                            $selected = in_array($entity['id'], $selected_entities) ? 'selected' : '';
-                                                            echo "<option value='" . $entity['id'] . "' $selected>" . $entity['title'] . "</option>";
-                                                        }
-                                                        ?>
-                                                    </select>
-                                                    <div class="form-text">يمكنك اختيار أكثر من جهة بالضغط مع الاستمرار على مفتاح Ctrl</div>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label for="system_usages<?php echo $system['id']; ?>" class="form-label">الاستخدامات</label>
-                                                    <select class="form-select" id="system_usages<?php echo $system['id']; ?>" name="usage_ids[]" multiple>
-                                                        <?php
-                                                        $usages = getUsages();
-                                                        // تحديد الاستخدامات المختارة مسبقاً
-                                                        $selected_usages = [];
-                                                        if (!empty($system['usages'])) {
-                                                            $selected_usages = explode(',', $system['usages']);
-                                                        }
-                                                        foreach ($usages as $usage) {
-                                                            $selected = in_array($usage['id'], $selected_usages) ? 'selected' : '';
-                                                            echo "<option value='" . $usage['id'] . "' $selected>" . $usage['title'] . "</option>";
-                                                        }
-                                                        ?>
-                                                    </select>
-                                                    <div class="form-text">يمكنك اختيار أكثر من استخدام بالضغط مع الاستمرار على مفتاح Ctrl</div>
-                                                </div>
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
@@ -985,6 +955,18 @@ $systems_result = mysqli_query($conn, $sql);
                                                         $entities = getEntities();
                                                         foreach ($entities as $entity) {
                                                             echo "<option value='" . $entity['id'] . "'>" . $entity['title'] . "</option>";
+                                                        }
+                                                        ?>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="article_usage<?php echo $system['id']; ?>" class="form-label">الاستخدام</label>
+                                                    <select class="form-select" id="article_usage<?php echo $system['id']; ?>" name="usage_id">
+                                                        <option value="">-- اختر استخدام --</option>
+                                                        <?php
+                                                        $usages = getUsages();
+                                                        foreach ($usages as $usage) {
+                                                            echo "<option value='" . $usage['id'] . "'>" . $usage['title'] . "</option>";
                                                         }
                                                         ?>
                                                     </select>
@@ -1051,30 +1033,6 @@ $systems_result = mysqli_query($conn, $sql);
                             <label for="system_description" class="form-label">وصف النظام</label>
                             <textarea class="form-control" id="system_description" name="system_description" rows="4"></textarea>
                         </div>
-                        <div class="mb-3">
-                            <label for="system_entities" class="form-label">الجهات المعنية</label>
-                            <select class="form-select" id="system_entities" name="entity_ids[]" multiple>
-                                <?php
-                                $entities = getEntities();
-                                foreach ($entities as $entity) {
-                                    echo "<option value='" . $entity['id'] . "'>" . $entity['title'] . "</option>";
-                                }
-                                ?>
-                            </select>
-                            <div class="form-text">يمكنك اختيار أكثر من جهة بالضغط مع الاستمرار على مفتاح Ctrl</div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="system_usages" class="form-label">الاستخدامات</label>
-                            <select class="form-select" id="system_usages" name="usage_ids[]" multiple>
-                                <?php
-                                $usages = getUsages();
-                                foreach ($usages as $usage) {
-                                    echo "<option value='" . $usage['id'] . "'>" . $usage['title'] . "</option>";
-                                }
-                                ?>
-                            </select>
-                            <div class="form-text">يمكنك اختيار أكثر من استخدام بالضغط مع الاستمرار على مفتاح Ctrl</div>
-                        </div>
 
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -1133,6 +1091,20 @@ $systems_result = mysqli_query($conn, $sql);
                                     foreach ($entities as $entity) {
                                         $selected = ($current_entity && $current_entity['id'] == $entity['id']) ? 'selected' : '';
                                         echo "<option value='" . $entity['id'] . "' $selected>" . $entity['title'] . "</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="article_usage<?php echo $article['id']; ?>" class="form-label">الاستخدام</label>
+                                <select class="form-select" id="article_usage<?php echo $article['id']; ?>" name="usage_id">
+                                    <option value="">-- اختر استخدام --</option>
+                                    <?php
+                                    $usages = getUsages();
+                                    $current_usage = getArticleUsage($article['id']);
+                                    foreach ($usages as $usage) {
+                                        $selected = ($current_usage && $current_usage['id'] == $usage['id']) ? 'selected' : '';
+                                        echo "<option value='" . $usage['id'] . "' $selected>" . $usage['title'] . "</option>";
                                     }
                                     ?>
                                 </select>
@@ -1206,6 +1178,20 @@ $systems_result = mysqli_query($conn, $sql);
                                     foreach ($entities as $entity) {
                                         $selected = ($current_entity && $current_entity['id'] == $entity['id']) ? 'selected' : '';
                                         echo "<option value='" . $entity['id'] . "' $selected>" . $entity['title'] . "</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="section_usage<?php echo $section['id']; ?>" class="form-label">الاستخدام</label>
+                                <select class="form-select" id="section_usage<?php echo $section['id']; ?>" name="usage_id">
+                                    <option value="">-- اختر استخدام --</option>
+                                    <?php
+                                    $usages = getUsages();
+                                    $current_usage = getSectionUsage($section['id']);
+                                    foreach ($usages as $usage) {
+                                        $selected = ($current_usage && $current_usage['id'] == $usage['id']) ? 'selected' : '';
+                                        echo "<option value='" . $usage['id'] . "' $selected>" . $usage['title'] . "</option>";
                                     }
                                     ?>
                                 </select>
@@ -1295,6 +1281,16 @@ $systems_result = mysqli_query($conn, $sql);
                 }
                 ?>
             `;
+
+            let usagesOptions = `
+                <option value="">-- اختر استخدام --</option>
+                <?php
+                $usages = getUsages();
+                foreach ($usages as $usage) {
+                    echo "<option value='" . $usage['id'] . "'>" . $usage['title'] . "</option>";
+                }
+                ?>
+            `;
             
             let sectionsOptions = `
                 <?php
@@ -1336,6 +1332,18 @@ $systems_result = mysqli_query($conn, $sql);
                                 $entities = getEntities();
                                 foreach ($entities as $entity) {
                                     echo "<option value='" . $entity['id'] . "'>" . $entity['title'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">الاستخدام</label>
+                            <select class="form-select" name="articles[${articleCount}][usage_id]">
+                                <option value="">-- اختر استخدام --</option>
+                                <?php
+                                $usages = getUsages();
+                                foreach ($usages as $usage) {
+                                    echo "<option value='" . $usage['id'] . "'>" . $usage['title'] . "</option>";
                                 }
                                 ?>
                             </select>
@@ -1412,6 +1420,18 @@ $systems_result = mysqli_query($conn, $sql);
                                 $entities = getEntities();
                                 foreach ($entities as $entity) {
                                     echo "<option value='" . $entity['id'] . "'>" . $entity['title'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">الاستخدام</label>
+                            <select class="form-select" name="articles[${articleId}][sections][${sectionCount[articleId]}][usage_id]">
+                                <option value="">-- اختر استخدام --</option>
+                                <?php
+                                $usages = getUsages();
+                                foreach ($usages as $usage) {
+                                    echo "<option value='" . $usage['id'] . "'>" . $usage['title'] . "</option>";
                                 }
                                 ?>
                             </select>
@@ -1498,6 +1518,18 @@ $systems_result = mysqli_query($conn, $sql);
                                 $entities = getEntities();
                                 foreach ($entities as $entity) {
                                     echo "<option value='" . $entity['id'] . "'>" . $entity['title'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">الاستخدام</label>
+                            <select class="form-select" name="articles[${articleId}][sections][${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][usage_id]">
+                                <option value="">-- اختر استخدام --</option>
+                                <?php
+                                $usages = getUsages();
+                                foreach ($usages as $usage) {
+                                    echo "<option value='" . $usage['id'] . "'>" . $usage['title'] . "</option>";
                                 }
                                 ?>
                             </select>
