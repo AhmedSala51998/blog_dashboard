@@ -790,7 +790,9 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                                 <?php 
                                                                 mysqli_data_seek($systems_result, 0);
                                                                 while ($system = mysqli_fetch_assoc($systems_result)): 
-                                                                    $selected = ($blog['reference_system_id'] == $system['id']) ? 'selected' : '';
+                                                                    // التحقق مما إذا كان النظام الحالي مختارًا
+                                                                    $selected_system_ids = explode(',', $blog['reference_system_id']);
+                                                                    $selected = in_array($system['id'], $selected_system_ids) ? 'selected' : '';
                                                                 ?>
                                                                     <option value="<?php echo $system['id']; ?>" <?php echo $selected; ?>><?php echo htmlspecialchars($system['title']); ?></option>
                                                                 <?php endwhile; ?>
@@ -803,14 +805,22 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                                 <option value="">-- اختر مادة --</option>
                                                                 <?php 
                                                                 if (!empty($blog['reference_system_id'])) {
-                                                                    $articles_sql = "SELECT id, title FROM articles WHERE system_id = ? ORDER BY title";
+                                                                    // التعامل مع الاختيارات المتعددة للأنظمة
+                                                                    $system_ids = explode(',', $blog['reference_system_id']);
+                                                                    // إنشاء علامات استفهام للاستعلام
+                                                                    $placeholders = implode(',', array_fill(0, count($system_ids), '?'));
+                                                                    $articles_sql = "SELECT id, title FROM articles WHERE system_id IN ($placeholders) ORDER BY title";
                                                                     $stmt = mysqli_prepare($conn, $articles_sql);
-                                                                    mysqli_stmt_bind_param($stmt, "i", $blog['reference_system_id']);
+                                                                    // ربط المعلمات
+                                                                    $types = str_repeat('i', count($system_ids));
+                                                                    mysqli_stmt_bind_param($stmt, $types, ...$system_ids);
                                                                     mysqli_stmt_execute($stmt);
                                                                     $articles_result = mysqli_stmt_get_result($stmt);
 
                                                                     while ($article = mysqli_fetch_assoc($articles_result)) {
-                                                                        $selected = ($blog['reference_article_id'] == $article['id']) ? 'selected' : '';
+                                                                        // التحقق مما إذا كانت المادة الحالية مختارة
+                                                                        $selected_article_ids = explode(',', $blog['reference_article_id']);
+                                                                        $selected = in_array($article['id'], $selected_article_ids) ? 'selected' : '';
                                                                         echo "<option value='{$article['id']}' {$selected}>" . htmlspecialchars($article['title']) . "</option>";
                                                                     }
                                                                 }
@@ -824,14 +834,22 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                                 <option value="">-- اختر جزء --</option>
                                                                 <?php 
                                                                 if (!empty($blog['reference_article_id'])) {
-                                                                    $sections_sql = "SELECT id, title FROM sections WHERE article_id = ? ORDER BY title";
+                                                                    // التعامل مع الاختيارات المتعددة للمواد
+                                                                    $article_ids = explode(',', $blog['reference_article_id']);
+                                                                    // إنشاء علامات استفهام للاستعلام
+                                                                    $placeholders = implode(',', array_fill(0, count($article_ids), '?'));
+                                                                    $sections_sql = "SELECT id, title FROM sections WHERE article_id IN ($placeholders) ORDER BY title";
                                                                     $stmt = mysqli_prepare($conn, $sections_sql);
-                                                                    mysqli_stmt_bind_param($stmt, "i", $blog['reference_article_id']);
+                                                                    // ربط المعلمات
+                                                                    $types = str_repeat('i', count($article_ids));
+                                                                    mysqli_stmt_bind_param($stmt, $types, ...$article_ids);
                                                                     mysqli_stmt_execute($stmt);
                                                                     $sections_result = mysqli_stmt_get_result($stmt);
 
                                                                     while ($section = mysqli_fetch_assoc($sections_result)) {
-                                                                        $selected = ($blog['reference_section_id'] == $section['id']) ? 'selected' : '';
+                                                                        // التحقق مما إذا كان الجزء الحالي مختارًا
+                                                                        $selected_section_ids = explode(',', $blog['reference_section_id']);
+                                                                        $selected = in_array($section['id'], $selected_section_ids) ? 'selected' : '';
                                                                         echo "<option value='{$section['id']}' {$selected}>" . htmlspecialchars($section['title']) . "</option>";
                                                                     }
                                                                 }
