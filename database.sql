@@ -53,14 +53,11 @@ CREATE TABLE IF NOT EXISTS blogs (
     video_url VARCHAR(255),
     image_url VARCHAR(255),
     external_link VARCHAR(255),
-    reference_system_id INT(11),
-    reference_article_id INT(11),
-    reference_section_id INT(11),
+    reference_system_id TEXT,
+    reference_article_id TEXT,
+    reference_section_id TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (reference_system_id) REFERENCES systems(id) ON DELETE SET NULL,
-    FOREIGN KEY (reference_article_id) REFERENCES articles(id) ON DELETE SET NULL,
-    FOREIGN KEY (reference_section_id) REFERENCES sections(id) ON DELETE SET NULL
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- جدول مراجع المواد
