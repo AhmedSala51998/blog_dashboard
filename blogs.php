@@ -692,7 +692,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
                                                 <?php if (!empty($blog['system_title']) || !empty($blog['article_title']) || !empty($blog['section_title'])): ?>
                                                     <div class="reference-section">
-                                                        <h6><i class="fas fa-link"></i> الاستدلال من مكتب العمل:</h6>
+                                                        <h6><i class="fas fa-link"></i> الاستدلال من الأنظمة والقوانين:</h6>
                                                         <?php if (!empty($blog['system_title'])): ?>
                                                             <p><strong>النظام/القانون:</strong> <?php echo htmlspecialchars($blog['system_title']); ?></p>
                                                         <?php endif; ?>
