@@ -1409,7 +1409,7 @@ $systems_result = mysqli_query($conn, $sql);
                         </div>
                         <div class="mb-3">
                             <label class="form-label">المواد المرتبطة</label>
-                            <select class="form-select select2-multiple" name="articles[${articleCount}][references][]" multiple>
+                            <select class="form-select" name="articles[${articleCount}][references][]" multiple>
                                 <?php
                                 $articles = getArticles();
                                 foreach ($articles as $article_option) {
@@ -1437,15 +1437,6 @@ $systems_result = mysqli_query($conn, $sql);
                 $('#articles-container').append(articleHtml);
                 sectionCount[articleCount] = 0;
                 subsectionCount[articleCount] = {};
-
-                // بعد append
-                $(`#article-${articleCount} select.select2-multiple`).select2({
-                    placeholder: "اختر العناصر المرتبطة",
-                    allowClear: true,
-                    dir: "rtl",
-                    width: "100%"
-                });
-
             });
 
             // Remove Article Button Click
@@ -1506,7 +1497,7 @@ $systems_result = mysqli_query($conn, $sql);
                         </div>
                         <div class="mb-3">
                             <label class="form-label">الأجزاء المرتبطة</label>
-                            <select class="form-select select2-multiple" name="articles[${articleId}][sections][${sectionCount[articleId]}][references][]" multiple>
+                            <select class="form-select" name="articles[${articleId}][sections][${sectionCount[articleId]}][references][]" multiple>
                                 <?php
                                 $sections = getSections();
                                 foreach ($sections as $section_option) {
@@ -1534,13 +1525,12 @@ $systems_result = mysqli_query($conn, $sql);
                 $(`#sections-container-${articleId}`).append(sectionHtml);
                 
                 // تفعيل Select2 على العناصر الجديدة
-                $(`#sections-container-${articleId} .section-item select.select2-multiple`).select2({
+                $('.select2-multiple').select2({
                     placeholder: "اختر العناصر المرتبطة",
                     allowClear: true,
                     dir: "rtl",
                     width: "100%"
                 });
-
 
                 // Initialize subsection count for this section
                 subsectionCount[articleId][sectionCount[articleId]] = 0;
