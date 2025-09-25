@@ -541,10 +541,15 @@ $systems_result = mysqli_query($conn, $systems_sql);
             font-size: 0.9rem;
             color: var(--secondary-color);
         }
+        .blog-meta-item {
+            display: flex;
+            flex-wrap: wrap; /* يسمح للبادجات بالانتقال لسطر جديد */
+            gap: 0.25rem;    /* مسافة بين البادجات */
+        }
         .blog-meta-item span.badge {
             display: inline-block;
-            margin-bottom: 0.25rem; /* مسافة أسفل كل badge */
-            word-break: break-word; /* يكسر النص الطويل بدل ما يطلع بره البوكس */
+            word-break: break-word; /* يكسر النص الطويل بدل ما يخرج برا البوكس */
+            max-width: 100%;        /* يمنع تجاوز البوكس */
         }
 
     </style>
