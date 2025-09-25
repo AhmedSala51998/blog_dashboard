@@ -869,7 +869,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                 </div>
 
                                 <!-- Edit Blog Modal -->
-                                <div class="modal fade" id="editBlogModal<?php echo $blog['id']; ?>" tabindex="-1" aria-hidden="true">
+                                <div class="modal fade" id="editBlogModal<?php echo $blog['id']; ?>" data-blog-id="<?php echo $blog['id']; ?>" tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog modal-lg">
                                         <div class="modal-content">
                                             <div class="modal-header">
@@ -1165,21 +1165,29 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
  </script>
  <script>
-    $('#editBlogModal').on('shown.bs.modal', function () {
-        $('#edit_reference_system').select2({
-            dropdownParent: $('#editBlogModal'),
-            width: '100%'
-        });
-        $('#edit_reference_article').prop('disabled', false).select2({
-            dropdownParent: $('#editBlogModal'),
+    $('.modal.fade').on('shown.bs.modal', function () {
+        // جلب الـ blog ID من الـ data attribute
+        let blogId = $(this).data('blog-id');
+
+        // النظام
+        $('#edit_reference_system' + blogId).select2({
+            dropdownParent: $('#editBlogModal' + blogId + ' .modal-content'),
             width: '100%'
         });
 
-        $('#edit_reference_section').prop('disabled', false).select2({
-            dropdownParent: $('#editBlogModal'),
+        // المواد
+        $('#edit_reference_article' + blogId).select2({
+            dropdownParent: $('#editBlogModal' + blogId + ' .modal-content'),
+            width: '100%'
+        });
+
+        // الأجزاء
+        $('#edit_reference_section' + blogId).select2({
+            dropdownParent: $('#editBlogModal' + blogId + ' .modal-content'),
             width: '100%'
         });
     });
+
  </script>
     <script>
         $(document).ready(function() {
