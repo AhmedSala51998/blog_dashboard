@@ -601,24 +601,62 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                             </div>
 
                                             <div class="blog-meta">
-                                                <?php if (!empty($blog['system_title'])): ?>
+                                                <?php 
+                                                // استخراج الأنظمة
+                                                $system_names = [];
+                                                if (!empty($blog['reference_system_id'])) {
+                                                    $system_ids = explode(',', $blog['reference_system_id']);
+                                                    foreach ($system_ids as $system_id) {
+                                                        $system = getReferenceSystemById($system_id);
+                                                        if ($system) {
+                                                            $system_names[] = $system['title'];
+                                                        }
+                                                    }
+                                                }
+
+                                                // استخراج المواد
+                                                $article_names = [];
+                                                if (!empty($blog['reference_article_id'])) {
+                                                    $article_ids = explode(',', $blog['reference_article_id']);
+                                                    foreach ($article_ids as $article_id) {
+                                                        $article = getReferenceArticleById($article_id);
+                                                        if ($article) {
+                                                            $article_names[] = $article['title'];
+                                                        }
+                                                    }
+                                                }
+
+                                                // استخراج الأجزاء
+                                                $section_names = [];
+                                                if (!empty($blog['reference_section_id'])) {
+                                                    $section_ids = explode(',', $blog['reference_section_id']);
+                                                    foreach ($section_ids as $section_id) {
+                                                        $section = getReferenceSectionById($section_id);
+                                                        if ($section) {
+                                                            $section_names[] = $section['title'];
+                                                        }
+                                                    }
+                                                }
+                                                ?>
+
+                                                <?php if (!empty($system_names)): ?>
                                                     <div class="blog-meta-item">
                                                         <i class="fas fa-gavel"></i>
-                                                        <?php echo htmlspecialchars($blog['system_title']); ?>
+                                                        الأنظمة: <?php echo implode(', ', $system_names); ?>
                                                     </div>
                                                 <?php endif; ?>
 
-                                                <?php if (!empty($blog['article_title'])): ?>
+                                                <?php if (!empty($article_names)): ?>
                                                     <div class="blog-meta-item">
                                                         <i class="fas fa-file-alt"></i>
-                                                        <?php echo htmlspecialchars($blog['article_title']); ?>
+                                                        المواد: <?php echo implode(', ', $article_names); ?>
                                                     </div>
                                                 <?php endif; ?>
 
-                                                <?php if (!empty($blog['section_title'])): ?>
+                                                <?php if (!empty($section_names)): ?>
                                                     <div class="blog-meta-item">
                                                         <i class="fas fa-list"></i>
-                                                        <?php echo htmlspecialchars($blog['section_title']); ?>
+                                                        الأجزاء: <?php echo implode(', ', $section_names); ?>
                                                     </div>
                                                 <?php endif; ?>
 
@@ -946,8 +984,8 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
                             <div class="mb-3">
                                 <label for="reference_system" class="form-label">اختر نظام/قانون</label>
-                                <select class="form-select select2" id="reference_system" name="reference_system_id[]" multiple>
-                                    <option disabled value="">-- اختر نظام/قانون --</option>
+                                <select class="form-select select2-multiple" id="reference_system" name="reference_system_id[]" multiple>
+                                    <option value="">-- اختر نظام/قانون --</option>
                                     <?php 
                                     mysqli_data_seek($systems_result, 0);
                                     while ($system = mysqli_fetch_assoc($systems_result)): 
@@ -959,15 +997,15 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
                             <div class="mb-3">
                                 <label for="reference_article" class="form-label">اختر مادة</label>
-                                <select class="form-select select2" id="reference_article" name="reference_article_id[]" multiple disabled>
-                                    <option disabled value="">-- اختر مادة --</option>
+                                <select class="form-select select2-multiple" id="reference_article" name="reference_article_id[]" multiple>
+                                    <option value="">-- اختر مادة --</option>
                                 </select>
                             </div>
 
                             <div class="mb-3">
                                 <label for="reference_section" class="form-label">اختر جزء</label>
-                                <select class="form-select select2" id="reference_section" name="reference_section_id[]" multiple disabled>
-                                    <option disabled value="">-- اختر جزء --</option>
+                                <select class="form-select select2-multiple" id="reference_section" name="reference_section_id[]" multiple>
+                                    <option value="">-- اختر جزء --</option>
                                 </select>
                             </div>
                         </div>
