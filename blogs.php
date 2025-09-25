@@ -1148,11 +1148,12 @@ $systems_result = mysqli_query($conn, $systems_sql);
             dropdownParent: $('#addBlogModal'),
             width: '100%'
         });
-        $('#reference_article').select2({
+        $('#reference_article').prop('disabled', false).select2({
             dropdownParent: $('#addBlogModal'),
             width: '100%'
         });
-        $('#reference_section').select2({
+
+        $('#reference_section').prop('disabled', false).select2({
             dropdownParent: $('#addBlogModal'),
             width: '100%'
         });
