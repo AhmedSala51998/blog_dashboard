@@ -944,17 +944,18 @@ $systems_result = mysqli_query($conn, $systems_sql);
                         <div class="reference-section">
                             <h6><i class="fas fa-link"></i> الاستدلال من الأنظمة والقوانين:</h6>
 
-                            <select class="form-select select2" id="reference_system" name="reference_system_id[]" multiple>
-                                <?php 
-                                mysqli_data_seek($systems_result, 0);
-                                while ($system = mysqli_fetch_assoc($systems_result)): 
-                                ?>
-                                    <option value="<?php echo $system['id']; ?>">
-                                        <?php echo htmlspecialchars($system['title']); ?>
-                                    </option>
-                                <?php endwhile; ?>
-                            </select>
-
+                            <div class="mb-3">
+                                <label for="reference_system" class="form-label">اختر نظام/قانون</label>
+                                <select class="form-select select2" id="reference_system" name="reference_system_id[]" multiple>
+                                    <option disabled value="">-- اختر نظام/قانون --</option>
+                                    <?php 
+                                    mysqli_data_seek($systems_result, 0);
+                                    while ($system = mysqli_fetch_assoc($systems_result)): 
+                                    ?>
+                                        <option value="<?php echo $system['id']; ?>"><?php echo htmlspecialchars($system['title']); ?></option>
+                                    <?php endwhile; ?>
+                                </select>
+                            </div>
 
                             <div class="mb-3">
                                 <label for="reference_article" class="form-label">اختر مادة</label>
@@ -1210,7 +1211,8 @@ $systems_result = mysqli_query($conn, $systems_sql);
         $('.select2').select2({
         placeholder: "اختر من القائمة",
         allowClear: true,
-        width: '100%'
+        width: '100%',
+        height: '30%'
         });
     });
  </script>
