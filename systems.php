@@ -1716,6 +1716,18 @@ $systems_result = mysqli_query($conn, $sql);
                             </select>
                         </div>
                         <div class="mb-3">
+                            <label class="form-label">الاستخدام</label>
+                            <select class="form-select" name="articles[${articleId}][sections][${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][usage_id]">
+                                <option value="">-- اختر استخدام --</option>
+                                <?php
+                                $usages = getUsages();
+                                foreach ($usages as $usage) {
+                                    echo "<option value='" . $usage['id'] . "'>" . $usage['title'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label">الأجزاء المرتبطة</label>
                             <select class="form-select" name="sections[${index}][references][]" multiple>
                                 <?php
@@ -1791,6 +1803,18 @@ $systems_result = mysqli_query($conn, $sql);
                                     ?>
                                 </select>
                             </div>
+                            <div class="mb-3">
+                            <label class="form-label">الاستخدام</label>
+                            <select class="form-select" name="articles[${articleId}][sections][${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][usage_id]">
+                                <option value="">-- اختر استخدام --</option>
+                                <?php
+                                $usages = getUsages();
+                                foreach ($usages as $usage) {
+                                    echo "<option value='" . $usage['id'] . "'>" . $usage['title'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                           </div>
                             <div class="mb-3">
                                 <label class="form-label">الأجزاء المرتبطة</label>
                                 <select class="form-select" name="sections[${sectionIndex}][subsections][${subsectionIndex}][references][]" multiple>
@@ -1868,6 +1892,18 @@ $systems_result = mysqli_query($conn, $sql);
                                     ?>
                                 </select>
                             </div>
+                            <div class="mb-3">
+                            <label class="form-label">الاستخدام</label>
+                            <select class="form-select" name="articles[${articleId}][sections][${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][usage_id]">
+                                <option value="">-- اختر استخدام --</option>
+                                <?php
+                                $usages = getUsages();
+                                foreach ($usages as $usage) {
+                                    echo "<option value='" . $usage['id'] . "'>" . $usage['title'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                           </div>
                             <div class="mb-3">
                                 <label class="form-label">الأجزاء المرتبطة</label>
                                 <select class="form-select" name="sections[${sectionIndex}][subsections][${subsectionIndex}][references][]" multiple>
