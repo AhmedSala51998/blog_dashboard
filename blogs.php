@@ -1144,20 +1144,25 @@ $systems_result = mysqli_query($conn, $systems_sql);
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     $('#addBlogModal').on('shown.bs.modal', function () {
+        // النظام
         $('#reference_system').select2({
-            dropdownParent: $('#reference_system'),
-            width: '100%'
-        });
-        $('#reference_article').prop('disabled', false).select2({
-            dropdownParent: $('#reference_article'),
+            dropdownParent: $('#addBlogModal .modal-content'),
             width: '100%'
         });
 
+        // المواد (تمكين أولاً)
+        $('#reference_article').prop('disabled', false).select2({
+            dropdownParent: $('#addBlogModal .modal-content'),
+            width: '100%'
+        });
+
+        // الأجزاء (تمكين أولاً)
         $('#reference_section').prop('disabled', false).select2({
-            dropdownParent: $('#reference_section'),
+            dropdownParent: $('#addBlogModal .modal-content'),
             width: '100%'
         });
     });
+
  </script>
  <script>
     $('#editBlogModal').on('shown.bs.modal', function () {
