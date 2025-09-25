@@ -5,6 +5,42 @@ require_once 'config.php';
 // التحقق من تسجيل دخول المستخدم
 requireLogin();
 
+// دالة للحصول على نظام بواسطة المعرف
+function getReferenceSystemById($id) {
+    global $conn;
+    $id = cleanInput($id);
+    $sql = "SELECT * FROM systems WHERE id = $id";
+    $result = $conn->query($sql);
+    if ($result && $result->num_rows > 0) {
+        return $result->fetch_assoc();
+    }
+    return null;
+}
+
+// دالة للحصول على مادة بواسطة المعرف
+function getReferenceArticleById($id) {
+    global $conn;
+    $id = cleanInput($id);
+    $sql = "SELECT * FROM articles WHERE id = $id";
+    $result = $conn->query($sql);
+    if ($result && $result->num_rows > 0) {
+        return $result->fetch_assoc();
+    }
+    return null;
+}
+
+// دالة للحصول على جزء بواسطة المعرف
+function getReferenceSectionById($id) {
+    global $conn;
+    $id = cleanInput($id);
+    $sql = "SELECT * FROM sections WHERE id = $id";
+    $result = $conn->query($sql);
+    if ($result && $result->num_rows > 0) {
+        return $result->fetch_assoc();
+    }
+    return null;
+}
+
 // معالجة طلبات الإضافة والحذف والتعديل
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // إضافة مدونة جديدة
