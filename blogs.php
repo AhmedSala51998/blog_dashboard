@@ -820,35 +820,42 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                                 }
                                                             }
                                                             ?>
+                                                            <h6><i class="fas fa-link"></i> الاستدلال من الأنظمة والقوانين:</h6>
 
-                                                        <h6><i class="fas fa-link"></i> الاستدلال من الأنظمة والقوانين:</h6>
+                                                            <?php if (!empty($system_names)): ?>
+                                                                <div class="mb-2">
+                                                                    <strong>الأنظمة/القوانين:</strong><br>
+                                                                    <div class="d-flex flex-wrap gap-1 mt-1">
+                                                                        <?php foreach ($system_names as $sys): ?>
+                                                                            <span class="badge bg-primary"><?php echo htmlspecialchars($sys); ?></span>
+                                                                        <?php endforeach; ?>
+                                                                    </div>
+                                                                </div>
+                                                            <?php endif; ?>
 
-                                                        <?php if (!empty($system_names)): ?>
-                                                            <div class="mb-2">
-                                                                <strong>الأنظمة/القوانين:</strong><br>
-                                                                <?php foreach ($system_names as $sys): ?>
-                                                                    <span class="badge bg-primary me-1 mb-1"><?php echo htmlspecialchars($sys); ?></span>
-                                                                <?php endforeach; ?>
-                                                            </div>
-                                                        <?php endif; ?>
+                                                            <?php if (!empty($article_names)): ?>
+                                                                <div class="mb-2">
+                                                                    <strong>المواد:</strong><br>
+                                                                    <div class="d-flex flex-wrap gap-1 mt-1">
+                                                                        <?php foreach ($article_names as $art): ?>
+                                                                            <span class="badge bg-success"><?php echo htmlspecialchars($art); ?></span>
+                                                                        <?php endforeach; ?>
+                                                                    </div>
+                                                                </div>
+                                                            <?php endif; ?>
 
-                                                        <?php if (!empty($article_names)): ?>
-                                                            <div class="mb-2">
-                                                                <strong>المواد:</strong><br>
-                                                                <?php foreach ($article_names as $art): ?>
-                                                                    <span class="badge bg-success me-1 mb-1"><?php echo htmlspecialchars($art); ?></span>
-                                                                <?php endforeach; ?>
-                                                            </div>
-                                                        <?php endif; ?>
+                                                            <?php if (!empty($section_names)): ?>
+                                                                <div class="mb-2">
+                                                                    <strong>الأجزاء:</strong><br>
+                                                                    <div class="d-flex flex-wrap gap-1 mt-1">
+                                                                        <?php foreach ($section_names as $sec): ?>
+                                                                            <span class="badge bg-warning text-dark"><?php echo htmlspecialchars($sec); ?></span>
+                                                                        <?php endforeach; ?>
+                                                                    </div>
+                                                                </div>
+                                                            <?php endif; ?>
 
-                                                        <?php if (!empty($section_names)): ?>
-                                                            <div class="mb-2">
-                                                                <strong>الأجزاء:</strong><br>
-                                                                <?php foreach ($section_names as $sec): ?>
-                                                                    <span class="badge bg-warning text-dark me-1 mb-1"><?php echo htmlspecialchars($sec); ?></span>
-                                                                <?php endforeach; ?>
-                                                            </div>
-                                                        <?php endif; ?>
+
 
                                                     </div>
                                                 <?php endif; ?>
