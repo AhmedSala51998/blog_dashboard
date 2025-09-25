@@ -678,23 +678,39 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                 <?php if (!empty($system_names)): ?>
                                                     <div class="blog-meta-item">
                                                         <i class="fas fa-gavel"></i>
-                                                        الأنظمة: <?php echo implode(', ', $system_names); ?>
+                                                        <strong>الأنظمة:</strong>
+                                                        <ul class="list-unstyled ms-3 mt-2">
+                                                            <?php foreach ($system_names as $sys): ?>
+                                                                <li>• <?php echo htmlspecialchars($sys); ?></li>
+                                                            <?php endforeach; ?>
+                                                        </ul>
                                                     </div>
                                                 <?php endif; ?>
 
                                                 <?php if (!empty($article_names)): ?>
                                                     <div class="blog-meta-item">
                                                         <i class="fas fa-file-alt"></i>
-                                                        المواد: <?php echo implode(', ', $article_names); ?>
+                                                        <strong>المواد:</strong>
+                                                        <ul class="list-unstyled ms-3 mt-2">
+                                                            <?php foreach ($article_names as $art): ?>
+                                                                <li>• <?php echo htmlspecialchars($art); ?></li>
+                                                            <?php endforeach; ?>
+                                                        </ul>
                                                     </div>
                                                 <?php endif; ?>
 
                                                 <?php if (!empty($section_names)): ?>
                                                     <div class="blog-meta-item">
                                                         <i class="fas fa-list"></i>
-                                                        الأجزاء: <?php echo implode(', ', $section_names); ?>
+                                                        <strong>الأجزاء:</strong>
+                                                        <ul class="list-unstyled ms-3 mt-2">
+                                                            <?php foreach ($section_names as $sec): ?>
+                                                                <li>• <?php echo htmlspecialchars($sec); ?></li>
+                                                            <?php endforeach; ?>
+                                                        </ul>
                                                     </div>
                                                 <?php endif; ?>
+
 
                                                 <?php if (!empty($blog['pdf_path'])): ?>
                                                     <div class="blog-meta-item">
@@ -806,15 +822,34 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                             ?>
 
                                                         <h6><i class="fas fa-link"></i> الاستدلال من الأنظمة والقوانين:</h6>
-                                                        <?php if (!empty($blog['system_title'])): ?>
-                                                            <p><strong>النظام/القانون:</strong> <?php echo implode(', ', $system_names); ?></p>
+
+                                                        <?php if (!empty($system_names)): ?>
+                                                            <div class="mb-2">
+                                                                <strong>الأنظمة/القوانين:</strong><br>
+                                                                <?php foreach ($system_names as $sys): ?>
+                                                                    <span class="badge bg-primary me-1 mb-1"><?php echo htmlspecialchars($sys); ?></span>
+                                                                <?php endforeach; ?>
+                                                            </div>
                                                         <?php endif; ?>
-                                                        <?php if (!empty($blog['article_title'])): ?>
-                                                            <p><strong>المادة:</strong> <?php echo implode(', ', $article_names); ?></p>
+
+                                                        <?php if (!empty($article_names)): ?>
+                                                            <div class="mb-2">
+                                                                <strong>المواد:</strong><br>
+                                                                <?php foreach ($article_names as $art): ?>
+                                                                    <span class="badge bg-success me-1 mb-1"><?php echo htmlspecialchars($art); ?></span>
+                                                                <?php endforeach; ?>
+                                                            </div>
                                                         <?php endif; ?>
-                                                        <?php if (!empty($blog['section_title'])): ?>
-                                                            <p><strong>الجزء:</strong> <?php echo implode(', ', $section_names); ?></p>
+
+                                                        <?php if (!empty($section_names)): ?>
+                                                            <div class="mb-2">
+                                                                <strong>الأجزاء:</strong><br>
+                                                                <?php foreach ($section_names as $sec): ?>
+                                                                    <span class="badge bg-warning text-dark me-1 mb-1"><?php echo htmlspecialchars($sec); ?></span>
+                                                                <?php endforeach; ?>
+                                                            </div>
                                                         <?php endif; ?>
+
                                                     </div>
                                                 <?php endif; ?>
                                             </div>
