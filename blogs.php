@@ -109,7 +109,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $sql = "INSERT INTO blogs (title, content, pdf_path, video_url, image_url, external_link, reference_system_id, reference_article_id, reference_section_id) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ssssssiii", $title, $content, $pdf_path, $video_url, $image_url, $external_link, $reference_system_id, $reference_article_id, $reference_section_id);
+        mysqli_stmt_bind_param($stmt, "sssssssss", $title, $content, $pdf_path, $video_url, $image_url, $external_link, $reference_system_id, $reference_article_id, $reference_section_id);
 
         if (mysqli_stmt_execute($stmt)) {
             $_SESSION['message'] = "تم إضافة المدونة بنجاح!";
@@ -898,7 +898,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
                                                         <div class="mb-3">
                                                             <label for="edit_reference_system<?php echo $blog['id']; ?>" class="form-label">اختر نظام/قانون</label>
-                                                            <select class="form-select select2" id="edit_reference_system<?php echo $blog['id']; ?>" name="reference_system_id[]" multiple>
+                                                            <select class="form-select" id="edit_reference_system<?php echo $blog['id']; ?>" name="reference_system_id[]" multiple>
                                                                 <option value="">-- اختر نظام/قانون --</option>
                                                                 <?php 
                                                                 mysqli_data_seek($systems_result, 0);
@@ -914,7 +914,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
                                                         <div class="mb-3">
                                                             <label for="edit_reference_article<?php echo $blog['id']; ?>" class="form-label">اختر مادة</label>
-                                                            <select class="form-select select2" id="edit_reference_article<?php echo $blog['id']; ?>" name="reference_article_id[]" multiple>
+                                                            <select class="form-select" id="edit_reference_article<?php echo $blog['id']; ?>" name="reference_article_id[]" multiple>
                                                                 <option value="">-- اختر مادة --</option>
                                                                 <?php 
                                                                 if (!empty($blog['reference_system_id'])) {
@@ -943,7 +943,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
                                                         <div class="mb-3">
                                                             <label for="edit_reference_section<?php echo $blog['id']; ?>" class="form-label">اختر جزء</label>
-                                                            <select class="form-select select2" id="edit_reference_section<?php echo $blog['id']; ?>" name="reference_section_id[]" multiple>
+                                                            <select class="form-select" id="edit_reference_section<?php echo $blog['id']; ?>" name="reference_section_id[]" multiple>
                                                                 <option value="">-- اختر جزء --</option>
                                                                 <?php 
                                                                 if (!empty($blog['reference_article_id'])) {
