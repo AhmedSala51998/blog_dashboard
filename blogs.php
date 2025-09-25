@@ -946,7 +946,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
                             <div class="mb-3">
                                 <label for="reference_system" class="form-label">اختر نظام/قانون</label>
-                                <select class="select2" id="reference_system" name="reference_system_id[]" multiple>
+                                <select class="form-select select2" id="reference_system" name="reference_system_id[]" multiple>
                                     <option value="">-- اختر نظام/قانون --</option>
                                     <?php 
                                     mysqli_data_seek($systems_result, 0);
@@ -959,14 +959,14 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
                             <div class="mb-3">
                                 <label for="reference_article" class="form-label">اختر مادة</label>
-                                <select class="select2" id="reference_article" name="reference_article_id[]" multiple disabled>
+                                <select class="form-select select2" id="reference_article" name="reference_article_id[]" multiple disabled>
                                     <option value="">-- اختر مادة --</option>
                                 </select>
                             </div>
 
                             <div class="mb-3">
                                 <label for="reference_section" class="form-label">اختر جزء</label>
-                                <select class="select2" id="reference_section" name="reference_section_id[]" multiple disabled>
+                                <select class="form-select select2" id="reference_section" name="reference_section_id[]" multiple disabled>
                                     <option value="">-- اختر جزء --</option>
                                 </select>
                             </div>
