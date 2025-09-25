@@ -767,15 +767,53 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
                                                 <?php if (!empty($blog['system_title']) || !empty($blog['article_title']) || !empty($blog['section_title'])): ?>
                                                     <div class="reference-section">
+                                                             <?php 
+                                                            // استخراج الأنظمة
+                                                            $system_names = [];
+                                                            if (!empty($blog['reference_system_id'])) {
+                                                                $system_ids = explode(',', $blog['reference_system_id']);
+                                                                foreach ($system_ids as $system_id) {
+                                                                    $system = getReferenceSystemById($system_id);
+                                                                    if ($system) {
+                                                                        $system_names[] = $system['title'];
+                                                                    }
+                                                                }
+                                                            }
+
+                                                            // استخراج المواد
+                                                            $article_names = [];
+                                                            if (!empty($blog['reference_article_id'])) {
+                                                                $article_ids = explode(',', $blog['reference_article_id']);
+                                                                foreach ($article_ids as $article_id) {
+                                                                    $article = getReferenceArticleById($article_id);
+                                                                    if ($article) {
+                                                                        $article_names[] = $article['title'];
+                                                                    }
+                                                                }
+                                                            }
+
+                                                            // استخراج الأجزاء
+                                                            $section_names = [];
+                                                            if (!empty($blog['reference_section_id'])) {
+                                                                $section_ids = explode(',', $blog['reference_section_id']);
+                                                                foreach ($section_ids as $section_id) {
+                                                                    $section = getReferenceSectionById($section_id);
+                                                                    if ($section) {
+                                                                        $section_names[] = $section['title'];
+                                                                    }
+                                                                }
+                                                            }
+                                                            ?>
+
                                                         <h6><i class="fas fa-link"></i> الاستدلال من الأنظمة والقوانين:</h6>
                                                         <?php if (!empty($blog['system_title'])): ?>
-                                                            <p><strong>النظام/القانون:</strong> <?php echo htmlspecialchars($blog['system_title']); ?></p>
+                                                            <p><strong>النظام/القانون:</strong> <?php echo implode(', ', $system_names); ?></p>
                                                         <?php endif; ?>
                                                         <?php if (!empty($blog['article_title'])): ?>
-                                                            <p><strong>المادة:</strong> <?php echo htmlspecialchars($blog['article_title']); ?></p>
+                                                            <p><strong>المادة:</strong> <?php echo implode(', ', $article_names); ?></p>
                                                         <?php endif; ?>
                                                         <?php if (!empty($blog['section_title'])): ?>
-                                                            <p><strong>الجزء:</strong> <?php echo htmlspecialchars($blog['section_title']); ?></p>
+                                                            <p><strong>الجزء:</strong> <?php echo implode(', ', $section_names); ?></p>
                                                         <?php endif; ?>
                                                     </div>
                                                 <?php endif; ?>
