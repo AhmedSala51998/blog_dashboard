@@ -1364,6 +1364,22 @@ $systems_result = mysqli_query($conn, $sql);
             let sectionCount = {};
             let subsectionCount = {};
 
+
+            // عند فتح أي modal
+            $('.modal.fade').on('shown.bs.modal', function () {
+                let modal = $(this);
+
+                // تهيئة كل select داخل المودال عند فتحه
+                modal.find('select').each(function(){
+                    if (!$(this).hasClass('select2-hidden-accessible')) { // نتأكد أنه لم يتم تهيئته مسبقًا
+                        $(this).select2({ 
+                            dropdownParent: modal.find('.modal-content'), 
+                            width: '100%'
+                        });
+                    }
+                });
+            });
+
             // Add Article Button Click
             $('#addArticleBtn').click(function() {
                 articleCount++;
@@ -1435,6 +1451,14 @@ $systems_result = mysqli_query($conn, $sql);
                 `;
 
                 $('#articles-container').append(articleHtml);
+                 let modal = $('#addSystemModal');
+                    modal.find(`#article-${articleCount} select`).each(function(){
+                        $(this).select2({
+                            dropdownParent: modal.find('.modal-content'),
+                            width: '100%'
+                        });
+                    });
+
                 sectionCount[articleCount] = 0;
                 subsectionCount[articleCount] = {};
             });
@@ -1525,12 +1549,13 @@ $systems_result = mysqli_query($conn, $sql);
                 $(`#sections-container-${articleId}`).append(sectionHtml);
                 
                 // تفعيل Select2 على العناصر الجديدة
-                $('.select2-multiple').select2({
-                    placeholder: "اختر العناصر المرتبطة",
-                    allowClear: true,
-                    dir: "rtl",
-                    width: "100%"
-                });
+                 let modal = $(this).closest('.modal');
+                    modal.find(`#section-${articleId}-${sectionCount[articleId]} select`).each(function(){
+                        $(this).select2({
+                            dropdownParent: modal.find('.modal-content'),
+                            width: '100%'
+                        });
+                    });
 
                 // Initialize subsection count for this section
                 subsectionCount[articleId][sectionCount[articleId]] = 0;
