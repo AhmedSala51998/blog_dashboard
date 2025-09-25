@@ -1763,7 +1763,7 @@ $systems_result = mysqli_query($conn, $sql);
                             dropdownParent: $(modal).find('.modal-content'),
                             width: '100%',
                             dir: 'rtl',
-                            placeholder: "اختر العناصر المرتبطة",
+                            placeholder: "اختر من العناصر المتاحة",
                             allowClear: true
                         });
                     });
@@ -1851,7 +1851,7 @@ $systems_result = mysqli_query($conn, $sql);
                                 dropdownParent: $(modal).find('.modal-content'),
                                 width: '100%',
                                 dir: 'rtl',
-                                placeholder: "اختر العناصر المرتبطة",
+                                placeholder: "اختر من العناصر المتاحة",
                                 allowClear: true
                             });
                         });
@@ -1927,7 +1927,7 @@ $systems_result = mysqli_query($conn, $sql);
                                     dropdownParent: $(modal).find('.modal-content'),
                                     width: '100%',
                                     dir: 'rtl',
-                                    placeholder: "اختر العناصر المرتبطة",
+                                    placeholder: "اختر من العناصر المتاحة",
                                     allowClear: true
                                 });
                             });
