@@ -426,6 +426,7 @@ $systems_result = mysqli_query($conn, $sql);
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
         :root {
             --primary-color: #0d6efd;
@@ -947,7 +948,7 @@ $systems_result = mysqli_query($conn, $sql);
                             </div>
 
                             <!-- Add Article Modal -->
-                            <div class="modal fade" id="addArticleModal<?php echo $system['id']; ?>" tabindex="-1" aria-hidden="true">
+                            <div class="modal fade" id="addArticleModal<?php echo $system['id']; ?>" data-system-id="<?php echo $system['id']; ?>" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-lg">
                                     <div class="modal-content">
                                         <div class="modal-header">
@@ -1081,7 +1082,7 @@ $systems_result = mysqli_query($conn, $sql);
     if (mysqli_num_rows($articles_result) > 0):
         while ($article = mysqli_fetch_assoc($articles_result)):
     ?>
-        <div class="modal fade" id="editArticleModal<?php echo $article['id']; ?>" tabindex="-1" aria-hidden="true">
+        <div class="modal fade" id="editArticleModal<?php echo $article['id']; ?>" data-article-id="<?php echo $article['id']; ?>" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -1168,7 +1169,7 @@ $systems_result = mysqli_query($conn, $sql);
     if (mysqli_num_rows($sections_result) > 0):
         while ($section = mysqli_fetch_assoc($sections_result)):
     ?>
-        <div class="modal fade" id="editSectionModal<?php echo $section['id']; ?>" tabindex="-1" aria-hidden="true">
+        <div class="modal fade" id="editSectionModal<?php echo $section['id']; ?>" data-section-id="<?php echo $section['id']; ?>" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -1247,15 +1248,55 @@ $systems_result = mysqli_query($conn, $sql);
     endif;
     ?>
 
-    <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <!-- Select2 JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // عند فتح أي modal
+        $('.modal.fade').on('shown.bs.modal', function () {
+            let modal = $(this);
 
+            // اذا modal اضافة مادة
+            if(modal.data('system-id')) {
+                let id = modal.data('system-id');
+                $('#article_entity' + id).select2({ dropdownParent: modal.find('.modal-content'), width: '100%' });
+                $('#article_usage' + id).select2({ dropdownParent: modal.find('.modal-content'), width: '100%' });
+                $('#article_references' + id).select2({ dropdownParent: modal.find('.modal-content'), width: '100%' });
+            }
+
+            // اذا modal تعديل مادة
+            if(modal.data('article-id')) {
+                let id = modal.data('article-id');
+                $('#article_entity' + id).select2({ dropdownParent: modal.find('.modal-content'), width: '100%' });
+                $('#article_usage' + id).select2({ dropdownParent: modal.find('.modal-content'), width: '100%' });
+                $('#article_references' + id).select2({ dropdownParent: modal.find('.modal-content'), width: '100%' });
+            }
+
+            // اذا modal تعديل جزء
+            if(modal.data('section-id')) {
+                let id = modal.data('section-id');
+                $('#section_entity' + id).select2({ dropdownParent: modal.find('.modal-content'), width: '100%' });
+                $('#section_usage' + id).select2({ dropdownParent: modal.find('.modal-content'), width: '100%' });
+                $('#section_references' + id).select2({ dropdownParent: modal.find('.modal-content'), width: '100%' });
+            }
+
+            // اذا modal اضافة نظام (select المواد والأجزاء لو موجودة)
+            if(modal.attr('id') === 'addSystemModal') {
+                modal.find('select').each(function(){
+                    $(this).select2({ dropdownParent: modal.find('.modal-content'), width: '100%' });
+                });
+            }
+
+            // اذا modal اضافة مادة (Add Article inside system)
+            if(modal.attr('id').startsWith('addArticleModal')) {
+                modal.find('select').each(function(){
+                    $(this).select2({ dropdownParent: modal.find('.modal-content'), width: '100%' });
+                });
+            }
+        });
+
+    </script>
     <script>
         $(document).ready(function() {
             // تفعيل Select2 على جميع قوائم الاختيار المتعدد
