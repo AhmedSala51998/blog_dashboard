@@ -541,6 +541,12 @@ $systems_result = mysqli_query($conn, $systems_sql);
             font-size: 0.9rem;
             color: var(--secondary-color);
         }
+        .blog-meta-item span.badge {
+            display: inline-block;
+            margin-bottom: 0.25rem; /* مسافة أسفل كل badge */
+            word-break: break-word; /* يكسر النص الطويل بدل ما يطلع بره البوكس */
+        }
+
     </style>
 </head>
 <body>
