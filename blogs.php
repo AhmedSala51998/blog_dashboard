@@ -1159,6 +1159,23 @@ $systems_result = mysqli_query($conn, $systems_sql);
         });
     });
  </script>
+ <script>
+    $('#editBlogModal').on('shown.bs.modal', function () {
+        $('#edit_reference_system').select2({
+            dropdownParent: $('#editBlogModal'),
+            width: '100%'
+        });
+        $('#edit_reference_article').prop('disabled', false).select2({
+            dropdownParent: $('#editBlogModal'),
+            width: '100%'
+        });
+
+        $('#edit_reference_section').prop('disabled', false).select2({
+            dropdownParent: $('#editBlogModal'),
+            width: '100%'
+        });
+    });
+ </script>
     <script>
         $(document).ready(function() {
             // معاينة الصورة عند اختيارها
