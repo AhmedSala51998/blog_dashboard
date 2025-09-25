@@ -675,36 +675,35 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                 }
                                                 ?>
 
-                                                    <?php if (!empty($system_names)): ?>
-                                                        <div class="blog-meta-item mb-2 p-2 border rounded" style="display: flex; flex-wrap: wrap; gap: 5px; align-items: center;">
-                                                            <i class="fas fa-gavel me-1"></i>
-                                                            <strong class="w-100">الأنظمة:</strong>
-                                                            <?php foreach ($system_names as $sys): ?>
-                                                                <span class="badge bg-primary"><?php echo htmlspecialchars($sys); ?></span>
-                                                            <?php endforeach; ?>
-                                                        </div>
-                                                    <?php endif; ?>
+                                               <?php if (!empty($system_names)): ?>
+                                                <div class="blog-meta-item mb-2">
+                                                    <i class="fas fa-gavel"></i>
+                                                    <strong>الأنظمة:</strong><br>
+                                                    <?php foreach ($system_names as $sys): ?>
+                                                        <span class="badge bg-primary me-1 mb-1"><?php echo htmlspecialchars($sys); ?></span>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            <?php endif; ?>
 
-                                                    <?php if (!empty($article_names)): ?>
-                                                        <div class="blog-meta-item mb-2 p-2 border rounded" style="display: flex; flex-wrap: wrap; gap: 5px; align-items: center;">
-                                                            <i class="fas fa-file-alt me-1"></i>
-                                                            <strong class="w-100">المواد:</strong>
-                                                            <?php foreach ($article_names as $art): ?>
-                                                                <span class="badge bg-success"><?php echo htmlspecialchars($art); ?></span>
-                                                            <?php endforeach; ?>
-                                                        </div>
-                                                    <?php endif; ?>
+                                            <?php if (!empty($article_names)): ?>
+                                                <div class="blog-meta-item mb-2">
+                                                    <i class="fas fa-file-alt"></i>
+                                                    <strong>المواد:</strong><br>
+                                                    <?php foreach ($article_names as $art): ?>
+                                                        <span class="badge bg-success me-1 mb-1"><?php echo htmlspecialchars($art); ?></span>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            <?php endif; ?>
 
-                                                    <?php if (!empty($section_names)): ?>
-                                                        <div class="blog-meta-item mb-2 p-2 border rounded" style="display: flex; flex-wrap: wrap; gap: 5px; align-items: center;">
-                                                            <i class="fas fa-list me-1"></i>
-                                                            <strong class="w-100">الأجزاء:</strong>
-                                                            <?php foreach ($section_names as $sec): ?>
-                                                                <span class="badge bg-warning text-dark"><?php echo htmlspecialchars($sec); ?></span>
-                                                            <?php endforeach; ?>
-                                                        </div>
-                                                    <?php endif; ?>
-
+                                            <?php if (!empty($section_names)): ?>
+                                                <div class="blog-meta-item mb-2">
+                                                    <i class="fas fa-list"></i>
+                                                    <strong>الأجزاء:</strong><br>
+                                                    <?php foreach ($section_names as $sec): ?>
+                                                        <span class="badge bg-warning text-dark me-1 mb-1"><?php echo htmlspecialchars($sec); ?></span>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            <?php endif; ?>
 
 
 
