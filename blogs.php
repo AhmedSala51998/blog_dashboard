@@ -947,7 +947,6 @@ $systems_result = mysqli_query($conn, $systems_sql);
                             <div class="mb-3">
                                 <label for="reference_system" class="form-label">اختر نظام/قانون</label>
                                 <select class="form-select select2" id="reference_system" name="reference_system_id[]" multiple>
-                                    <option disabled value="">-- اختر نظام/قانون --</option>
                                     <?php 
                                     mysqli_data_seek($systems_result, 0);
                                     while ($system = mysqli_fetch_assoc($systems_result)): 
@@ -1211,8 +1210,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
         $('.select2').select2({
         placeholder: "اختر من القائمة",
         allowClear: true,
-        width: '100%',
-        height: '30%'
+        width: '100%'
         });
     });
  </script>
