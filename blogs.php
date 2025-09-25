@@ -1142,7 +1142,22 @@ $systems_result = mysqli_query($conn, $systems_sql);
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
+  <script>
+    $('#addBlogModal').on('shown.bs.modal', function () {
+        $('#reference_system').select2({
+            dropdownParent: $('#addBlogModal'),
+            width: '100%'
+        });
+        $('#reference_article').select2({
+            dropdownParent: $('#addBlogModal'),
+            width: '100%'
+        });
+        $('#reference_section').select2({
+            dropdownParent: $('#addBlogModal'),
+            width: '100%'
+        });
+    });
+ </script>
     <script>
         $(document).ready(function() {
             // معاينة الصورة عند اختيارها
@@ -1360,22 +1375,5 @@ $systems_result = mysqli_query($conn, $systems_sql);
             });
         });
     </script>
-  <script>
-    $('#addBlogModal').on('shown.bs.modal', function () {
-    $('#reference_system').select2({
-        dropdownParent: $('#addBlogModal'),
-        width: '100%'
-    });
-    $('#reference_article').select2({
-        dropdownParent: $('#addBlogModal'),
-        width: '100%'
-    });
-    $('#reference_section').select2({
-        dropdownParent: $('#addBlogModal'),
-        width: '100%'
-    });
-});
-
- </script>
 </body>
 </html>
