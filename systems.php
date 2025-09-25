@@ -1655,12 +1655,13 @@ $systems_result = mysqli_query($conn, $sql);
                 }
                 
                 // تفعيل Select2 على العناصر الجديدة
-                $('.select2-multiple').select2({
-                    placeholder: "اختر العناصر المرتبطة",
-                    allowClear: true,
-                    dir: "rtl",
-                    width: "100%"
-                });
+                let modal = $(this).closest('.modal');
+                    modal.find(`#subsection-${articleId}-${sectionId}-${subsectionCount[articleId][sectionId]} select`).each(function(){
+                        $(this).select2({
+                            dropdownParent: modal.find('.modal-content'),
+                            width: '100%'
+                        });
+                    });
 
                 // Initialize sub-subsection count for this subsection
                 if (!subsectionCount[articleId][sectionId + '_' + subsectionCount[articleId][sectionId]]) {
@@ -1743,6 +1744,19 @@ $systems_result = mysqli_query($conn, $sql);
                     div.querySelector('.remove-section').addEventListener('click', () => div.remove());
                     container.appendChild(div);
 
+                    // بعد إنشاء أي div جديد (section / subsection / subsubsection)
+                    const modal = btn.closest('.modal'); // الحصول على المودال الحالي
+                    div.querySelectorAll('select').forEach(sel => {
+                        $(sel).select2({
+                            dropdownParent: $(modal).find('.modal-content'),
+                            width: '100%',
+                            dir: 'rtl',
+                            placeholder: "اختر العناصر المرتبطة",
+                            allowClear: true
+                        });
+                    });
+
+
                     // Add subsection functionality
                     const addSubsectionBtn = div.querySelector('.add-subsection-btn');
                     addSubsectionBtn.addEventListener('click', () => {
@@ -1806,6 +1820,19 @@ $systems_result = mysqli_query($conn, $sql);
                         subsectionDiv.querySelector('.remove-subsection').addEventListener('click', () => subsectionDiv.remove());
                         subsectionContainer.appendChild(subsectionDiv);
 
+                        // بعد إنشاء أي div جديد (section / subsection / subsubsection)
+                        const modal = btn.closest('.modal'); // الحصول على المودال الحالي
+                        div.querySelectorAll('select').forEach(sel => {
+                            $(sel).select2({
+                                dropdownParent: $(modal).find('.modal-content'),
+                                width: '100%',
+                                dir: 'rtl',
+                                placeholder: "اختر العناصر المرتبطة",
+                                allowClear: true
+                            });
+                        });
+
+
                         // Add sub-subsection functionality
                         const addSubsubsectionBtn = subsectionDiv.querySelector('.add-subsubsection-btn');
                         addSubsubsectionBtn.addEventListener('click', () => {
@@ -1857,6 +1884,18 @@ $systems_result = mysqli_query($conn, $sql);
 
                             subsubsectionDiv.querySelector('.remove-subsubsection').addEventListener('click', () => subsubsectionDiv.remove());
                             subsubsectionContainer.appendChild(subsubsectionDiv);
+                            // بعد إنشاء أي div جديد (section / subsection / subsubsection)
+                            const modal = btn.closest('.modal'); // الحصول على المودال الحالي
+                            div.querySelectorAll('select').forEach(sel => {
+                                $(sel).select2({
+                                    dropdownParent: $(modal).find('.modal-content'),
+                                    width: '100%',
+                                    dir: 'rtl',
+                                    placeholder: "اختر العناصر المرتبطة",
+                                    allowClear: true
+                                });
+                            });
+
                         });
                     });
                 });
