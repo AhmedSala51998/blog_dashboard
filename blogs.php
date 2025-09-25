@@ -307,8 +307,6 @@ $systems_result = mysqli_query($conn, $systems_sql);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <style>
         :root {
             --primary-color: #0d6efd;
@@ -989,6 +987,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script>
         $(document).ready(function() {
@@ -1207,14 +1206,14 @@ $systems_result = mysqli_query($conn, $systems_sql);
             });
         });
     </script>
-    <script>
-  $(document).ready(function() {
-    $('.select2').select2({
-      placeholder: "اختر من القائمة",
-      allowClear: true,
-      width: '100%'
+  <script>
+    $(document).ready(function() {
+        $('.select2').select2({
+        placeholder: "اختر من القائمة",
+        allowClear: true,
+        width: '100%'
+        });
     });
-  });
-</script>
+ </script>
 </body>
 </html>
