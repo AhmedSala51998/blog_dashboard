@@ -1058,8 +1058,8 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
                             <div class="mb-3">
                                 <label for="reference_system" class="form-label">اختر نظام/قانون</label>
-                                <select class="form-select select2" id="reference_system" name="reference_system_id[]" multiple>
-                                    <option value="">-- اختر نظام/قانون --</option>
+                                <select class="form-select" id="reference_system" name="reference_system_id[]" multiple>
+                                    <option disabled value="">-- اختر نظام/قانون --</option>
                                     <?php 
                                     mysqli_data_seek($systems_result, 0);
                                     while ($system = mysqli_fetch_assoc($systems_result)): 
@@ -1071,15 +1071,15 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
                             <div class="mb-3">
                                 <label for="reference_article" class="form-label">اختر مادة</label>
-                                <select class="form-select select2" id="reference_article" name="reference_article_id[]" multiple>
-                                    <option value="">-- اختر مادة --</option>
+                                <select class="form-select" id="reference_article" name="reference_article_id[]" multiple disabled>
+                                    <option disabled value="">-- اختر مادة --</option>
                                 </select>
                             </div>
 
                             <div class="mb-3">
                                 <label for="reference_section" class="form-label">اختر جزء</label>
-                                <select class="form-select select2" id="reference_section" name="reference_section_id[]" multiple>
-                                    <option value="">-- اختر جزء --</option>
+                                <select class="form-select" id="reference_section" name="reference_section_id[]" multiple disabled>
+                                    <option disabled value="">-- اختر جزء --</option>
                                 </select>
                             </div>
                         </div>
@@ -1136,8 +1136,8 @@ $systems_result = mysqli_query($conn, $systems_sql);
                 const section_select = $('#reference_section');
 
                 // إعادة تعيين حقول المادة والجزء
-                article_select.empty().append('<option value="">-- اختر مادة --</option>').trigger('change');
-                section_select.empty().append('<option value="">-- اختر جزء --</option>').trigger('change');
+                article_select.html('<option value="">-- اختر مادة --</option>');
+                section_select.html('<option value="">-- اختر جزء --</option>');
 
                 if (system_ids.length > 0) {
                     article_select.prop('disabled', false);
@@ -1156,7 +1156,6 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                 $.each(data, function(index, article) {
                                     article_select.append('<option value="' + article.id + '">' + article.title + '</option>');
                                 });
-                                article_select.trigger('change');
                             } else {
                                 article_select.append('<option value="">-- لا توجد مواد --</option>');
                             }
@@ -1177,7 +1176,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
                 const section_select = $('#reference_section');
 
                 // إعادة تعيين حقل الجزء
-                section_select.empty().append('<option value="">-- اختر جزء --</option>').trigger('change');
+                section_select.html('<option value="">-- اختر جزء --</option>');
 
                 if (article_ids.length > 0) {
                     section_select.prop('disabled', false);
@@ -1196,7 +1195,6 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                 $.each(data, function(index, section) {
                                     section_select.append('<option value="' + section.id + '">' + section.title + '</option>');
                                 });
-                                section_select.trigger('change');
                             } else {
                                 section_select.append('<option value="">-- لا توجد أجزاء --</option>');
                             }
@@ -1245,8 +1243,8 @@ $systems_result = mysqli_query($conn, $systems_sql);
                         const section_select = $('#edit_reference_section' + blogId);
 
                         // إعادة تعيين حقول المادة والجزء
-                        article_select.empty().append('<option value="">-- اختر مادة --</option>').trigger('change');
-                        section_select.empty().append('<option value="">-- اختر جزء --</option>').trigger('change');
+                        article_select.html('<option value="">-- اختر مادة --</option>');
+                        section_select.html('<option value="">-- اختر جزء --</option>');
 
                         if (system_ids.length > 0) {
                             article_select.prop('disabled', false);
@@ -1265,7 +1263,6 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                         $.each(data, function(index, article) {
                                             article_select.append('<option value="' + article.id + '">' + article.title + '</option>');
                                         });
-                                        article_select.trigger('change');
                                     } else {
                                         article_select.append('<option value="">-- لا توجد مواد --</option>');
                                     }
@@ -1286,7 +1283,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
                         const section_select = $('#edit_reference_section' + blogId);
 
                         // إعادة تعيين حقل الجزء
-                        section_select.empty().append('<option value="">-- اختر جزء --</option>').trigger('change');
+                        section_select.html('<option value="">-- اختر جزء --</option>');
 
                         if (article_ids.length > 0) {
                             section_select.prop('disabled', false);
@@ -1305,7 +1302,6 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                         $.each(data, function(index, section) {
                                             section_select.append('<option value="' + section.id + '">' + section.title + '</option>');
                                         });
-                                        section_select.trigger('change');
                                     } else {
                                         section_select.append('<option value="">-- لا توجد أجزاء --</option>');
                                     }
@@ -1325,20 +1321,9 @@ $systems_result = mysqli_query($conn, $systems_sql);
   <script>
     $(document).ready(function() {
         $('.select2').select2({
-            placeholder: "اختر من القائمة",
-            allowClear: true,
-            dir: 'rtl',
-            width: '100%'
-        });
-
-        // عند فتح نماذج التعديل، قم بإعادة تهيئة Select2
-        $('.modal').on('shown.bs.modal', function() {
-            $(this).find('.select2').select2('destroy').select2({
-                placeholder: "اختر من القائمة",
-                allowClear: true,
-                dir: 'rtl',
-                width: '100%'
-            });
+        placeholder: "اختر من القائمة",
+        allowClear: true,
+        width: '100%'
         });
     });
  </script>
