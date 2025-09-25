@@ -1145,16 +1145,16 @@ $systems_result = mysqli_query($conn, $systems_sql);
   <script>
     $('#addBlogModal').on('shown.bs.modal', function () {
         $('#reference_system').select2({
-            dropdownParent: $('#addBlogModal'),
+            dropdownParent: $('#reference_system'),
             width: '100%'
         });
         $('#reference_article').prop('disabled', false).select2({
-            dropdownParent: $('#addBlogModal'),
+            dropdownParent: $('#reference_article'),
             width: '100%'
         });
 
         $('#reference_section').prop('disabled', false).select2({
-            dropdownParent: $('#addBlogModal'),
+            dropdownParent: $('#reference_section'),
             width: '100%'
         });
     });
