@@ -307,4 +307,44 @@ function getSectionSubsections($section_id) {
     }
     return $subsections;
 }
+
+// دالة للحصول على أجزاء المادة بواسطة معرف المادة
+function getSectionsByArticleId($article_id) {
+    global $conn;
+    $sections = [];
+    $sql = "SELECT s.*, a.title as article_title, sy.title as system_title 
+            FROM sections s 
+            JOIN articles a ON s.article_id = a.id 
+            JOIN systems sy ON a.system_id = sy.id 
+            WHERE s.article_id = ? AND s.parent_id IS NULL 
+            ORDER BY s.id";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $article_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    while ($row = mysqli_fetch_assoc($result)) {
+        $sections[] = $row;
+    }
+    return $sections;
+}
+
+// دالة للحصول على الأجزاء الفرعية بواسطة معرف الجزء الرئيسي
+function getSectionsByParentId($parent_id) {
+    global $conn;
+    $sections = [];
+    $sql = "SELECT s.*, a.title as article_title, sy.title as system_title 
+            FROM sections s 
+            JOIN articles a ON s.article_id = a.id 
+            JOIN systems sy ON a.system_id = sy.id 
+            WHERE s.parent_id = ? 
+            ORDER BY s.id";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $parent_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    while ($row = mysqli_fetch_assoc($result)) {
+        $sections[] = $row;
+    }
+    return $sections;
+}
 ?>
