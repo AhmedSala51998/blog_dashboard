@@ -310,6 +310,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
             }
 
+            // إضافة الأجزاء الجديدة
+            if (isset($_POST['sections']) && is_array($_POST['sections'])) {
+                processSections($_POST['sections'], $article_id, null);
+            }
+            // إذا كان هناك أجزاء في مصفوفة articles
+            else if (isset($_POST['articles']) && is_array($_POST['articles'])) {
+                foreach ($_POST['articles'] as $article) {
+                    if ($article['id'] == $article_id && isset($article['sections']) && is_array($article['sections'])) {
+                        processSections($article['sections'], $article_id, null);
+                    }
+                }
+            }
+
             $_SESSION['message'] = "تم تعديل المادة بنجاح!";
             $_SESSION['message_type'] = "success";
         } else {
@@ -1173,15 +1186,15 @@ $systems_result = mysqli_query($conn, $sql);
                                                 </div>
                                                 <div class="mb-3">
                                                     <label class="form-label">عنوان الجزء</label>
-                                                    <input type="text" class="form-control" name="articles[' . $article['id'] . '][sections][' . $section_num . '][title]" value="' . htmlspecialchars($section['title']) . '">
+                                                    <input type="text" class="form-control" name="sections[' . $section_num . '][title]" value="' . htmlspecialchars($section['title']) . '">
                                                 </div>
                                                 <div class="mb-3">
                                                     <label class="form-label">محتوى الجزء</label>
-                                                    <textarea class="form-control" name="articles[' . $article['id'] . '][sections][' . $section_num . '][content]" rows="3">' . htmlspecialchars($section['content']) . '</textarea>
+                                                    <textarea class="form-control" name="sections[' . $section_num . '][content]" rows="3">' . htmlspecialchars($section['content']) . '</textarea>
                                                 </div>
                                                 <div class="mb-3">
                                                     <label class="form-label">الجهة المعنية</label>
-                                                    <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_num . '][entity_id]">
+                                                    <select class="form-select" name="sections[' . $section_num . '][entity_id]">
                                                         <option value="">-- اختر جهة معنية --</option>';
 
                                                         $entities = getEntities();
@@ -1194,7 +1207,7 @@ $systems_result = mysqli_query($conn, $sql);
                                                 </div>
                                                 <div class="mb-3">
                                                     <label class="form-label">الاستخدام</label>
-                                                    <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_num . '][usage_id]">
+                                                    <select class="form-select" name="sections[' . $section_num . '][usage_id]">
                                                         <option value="">-- اختر استخدام --</option>';
 
                                                         $usages = getUsages();
@@ -1207,7 +1220,7 @@ $systems_result = mysqli_query($conn, $sql);
                                                 </div>
                                                 <div class="mb-3">
                                                     <label class="form-label">الأجزاء المرتبطة</label>
-                                                    <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_num . '][references][]" multiple>';
+                                                    <select class="form-select" name="sections[' . $section_num . '][references][]" multiple>';
 
                                                         $sections = getSections();
                                                         $section_references = getSectionReferences($section['id']);
@@ -1847,8 +1860,8 @@ $systems_result = mysqli_query($conn, $sql);
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.add-section-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    const systemId = btn.dataset.system;
-                    const container = document.getElementById(`sections-container-${systemId}`);
+                    const articleId = btn.dataset.article;
+                    const container = document.getElementById(`sections-container-${articleId}`);
 
                     const index = container.querySelectorAll('.section-item').length + 1;
 
@@ -1907,11 +1920,11 @@ $systems_result = mysqli_query($conn, $sql);
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <label class="form-label mb-0">الأجزاء الفرعية</label>
-                                <button type="button" class="btn btn-sm btn-outline-info add-subsection-btn" data-section="${index}">
+                                <button type="button" class="btn btn-sm btn-outline-info add-subsection-btn" data-article="${articleId}" data-section="${index}">
                                     <i class="fas fa-plus"></i> إضافة جزء فرعي
                                 </button>
                             </div>
-                            <div id="subsections-container-${index}">
+                            <div id="subsections-container-${articleId}-${index}">
                                 <!-- Subsections will be added here dynamically -->
                             </div>
                         </div>
