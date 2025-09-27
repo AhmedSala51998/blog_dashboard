@@ -330,6 +330,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     }
                 }
             }
+            // إذا كان هناك أجزاء مباشرة في النموذج (بدون articles array)
+            else if (isset($_POST['sections']) && is_array($_POST['sections'])) {
+                processSections($_POST['sections'], $article_id, null);
+            }
 
             $_SESSION['message'] = "تم تعديل المادة بنجاح!";
             $_SESSION['message_type'] = "success";
