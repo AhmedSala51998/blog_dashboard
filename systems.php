@@ -351,27 +351,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                     // إضافة الأجزاء الفرعية
                     if (!empty($section['subsections']) && is_array($section['subsections'])) {
-                        foreach ($section['subsections'] as $subsection) {
-                            $subsection_title = cleanInput($subsection['title']);
-                            $subsection_content = cleanInput($subsection['content']);
-                            $subsection_entity_id = !empty($subsection['entity_id']) ? cleanInput($subsection['entity_id']) : null;
-                            $subsection_usage_id = !empty($subsection['usage_id']) ? cleanInput($subsection['usage_id']) : null;
+                        foreach ($section['subsections'] as $subsection_key => $subsection) {
+                            // التحقق من وجود بيانات الجزء الفرعي
+                            if (!empty($subsection['title']) || !empty($subsection['content'])) {
+                                $subsection_title = cleanInput($subsection['title']);
+                                $subsection_content = cleanInput($subsection['content']);
+                                $subsection_entity_id = !empty($subsection['entity_id']) ? cleanInput($subsection['entity_id']) : null;
+                                $subsection_usage_id = !empty($subsection['usage_id']) ? cleanInput($subsection['usage_id']) : null;
 
-                            $sql = "INSERT INTO sections (article_id, title, content, entity_id, usage_id, parent_id) VALUES (?, ?, ?, ?, ?, ?)";
-                            $stmt = mysqli_prepare($conn, $sql);
-                            mysqli_stmt_bind_param($stmt, "issiii", $article_id, $subsection_title, $subsection_content, $subsection_entity_id, $subsection_usage_id, $parent_section_id);
-                            mysqli_stmt_execute($stmt);
+                                $sql = "INSERT INTO sections (article_id, title, content, entity_id, usage_id, parent_id) VALUES (?, ?, ?, ?, ?, ?)";
+                                $stmt = mysqli_prepare($conn, $sql);
+                                mysqli_stmt_bind_param($stmt, "issiii", $article_id, $subsection_title, $subsection_content, $subsection_entity_id, $subsection_usage_id, $parent_section_id);
+                                mysqli_stmt_execute($stmt);
 
-                            // الحصول على معرف الجزء الفرعي المضاف
-                            $subsection_id = mysqli_insert_id($conn);
+                                // الحصول على معرف الجزء الفرعي المضاف
+                                $subsection_id = mysqli_insert_id($conn);
 
-                            // إضافة المراجع للجزء الفرعي
-                            if (!empty($subsection['references']) && is_array($subsection['references'])) {
-                                foreach ($subsection['references'] as $reference_id) {
-                                    $sql = "INSERT INTO section_references (section_id, referenced_section_id) VALUES (?, ?)";
-                                    $stmt = mysqli_prepare($conn, $sql);
-                                    mysqli_stmt_bind_param($stmt, "ii", $subsection_id, $reference_id);
-                                    mysqli_stmt_execute($stmt);
+                                // إضافة المراجع للجزء الفرعي
+                                if (!empty($subsection['references']) && is_array($subsection['references'])) {
+                                    foreach ($subsection['references'] as $reference_id) {
+                                        $sql = "INSERT INTO section_references (section_id, referenced_section_id) VALUES (?, ?)";
+                                        $stmt = mysqli_prepare($conn, $sql);
+                                        mysqli_stmt_bind_param($stmt, "ii", $subsection_id, $reference_id);
+                                        mysqli_stmt_execute($stmt);
+                                    }
                                 }
                             }
                         }
@@ -409,27 +412,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                             // إضافة الأجزاء الفرعية
                             if (!empty($section['subsections']) && is_array($section['subsections'])) {
-                                foreach ($section['subsections'] as $subsection) {
-                                    $subsection_title = cleanInput($subsection['title']);
-                                    $subsection_content = cleanInput($subsection['content']);
-                                    $subsection_entity_id = !empty($subsection['entity_id']) ? cleanInput($subsection['entity_id']) : null;
-                                    $subsection_usage_id = !empty($subsection['usage_id']) ? cleanInput($subsection['usage_id']) : null;
+                                foreach ($section['subsections'] as $subsection_key => $subsection) {
+                                    // التحقق من وجود بيانات الجزء الفرعي
+                                    if (!empty($subsection['title']) || !empty($subsection['content'])) {
+                                        $subsection_title = cleanInput($subsection['title']);
+                                        $subsection_content = cleanInput($subsection['content']);
+                                        $subsection_entity_id = !empty($subsection['entity_id']) ? cleanInput($subsection['entity_id']) : null;
+                                        $subsection_usage_id = !empty($subsection['usage_id']) ? cleanInput($subsection['usage_id']) : null;
 
-                                    $sql = "INSERT INTO sections (article_id, title, content, entity_id, usage_id, parent_id) VALUES (?, ?, ?, ?, ?, ?)";
-                                    $stmt = mysqli_prepare($conn, $sql);
-                                    mysqli_stmt_bind_param($stmt, "issiii", $article_id, $subsection_title, $subsection_content, $subsection_entity_id, $subsection_usage_id, $parent_section_id);
-                                    mysqli_stmt_execute($stmt);
+                                        $sql = "INSERT INTO sections (article_id, title, content, entity_id, usage_id, parent_id) VALUES (?, ?, ?, ?, ?, ?)";
+                                        $stmt = mysqli_prepare($conn, $sql);
+                                        mysqli_stmt_bind_param($stmt, "issiii", $article_id, $subsection_title, $subsection_content, $subsection_entity_id, $subsection_usage_id, $parent_section_id);
+                                        mysqli_stmt_execute($stmt);
 
-                                    // الحصول على معرف الجزء الفرعي المضاف
-                                    $subsection_id = mysqli_insert_id($conn);
+                                        // الحصول على معرف الجزء الفرعي المضاف
+                                        $subsection_id = mysqli_insert_id($conn);
 
-                                    // إضافة المراجع للجزء الفرعي
-                                    if (!empty($subsection['references']) && is_array($subsection['references'])) {
-                                        foreach ($subsection['references'] as $reference_id) {
-                                            $sql = "INSERT INTO section_references (section_id, referenced_section_id) VALUES (?, ?)";
-                                            $stmt = mysqli_prepare($conn, $sql);
-                                            mysqli_stmt_bind_param($stmt, "ii", $subsection_id, $reference_id);
-                                            mysqli_stmt_execute($stmt);
+                                        // إضافة المراجع للجزء الفرعي
+                                        if (!empty($subsection['references']) && is_array($subsection['references'])) {
+                                            foreach ($subsection['references'] as $reference_id) {
+                                                $sql = "INSERT INTO section_references (section_id, referenced_section_id) VALUES (?, ?)";
+                                                $stmt = mysqli_prepare($conn, $sql);
+                                                mysqli_stmt_bind_param($stmt, "ii", $subsection_id, $reference_id);
+                                                mysqli_stmt_execute($stmt);
+                                            }
                                         }
                                     }
                                 }
