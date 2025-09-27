@@ -324,13 +324,117 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             // إضافة الأجزاء الجديدة
             if (isset($_POST['sections']) && is_array($_POST['sections'])) {
-                processSections($_POST['sections'], $article_id, null);
+                foreach ($_POST['sections'] as $section_id => $section) {
+                    // إضافة الجزء الرئيسي
+                    $title = cleanInput($section['title']);
+                    $content = cleanInput($section['content']);
+                    $entity_id = !empty($section['entity_id']) ? cleanInput($section['entity_id']) : null;
+                    $usage_id = !empty($section['usage_id']) ? cleanInput($section['usage_id']) : null;
+
+                    $sql = "INSERT INTO sections (article_id, title, content, entity_id, usage_id, parent_id) VALUES (?, ?, ?, ?, ?, NULL)";
+                    $stmt = mysqli_prepare($conn, $sql);
+                    mysqli_stmt_bind_param($stmt, "issii", $article_id, $title, $content, $entity_id, $usage_id);
+                    mysqli_stmt_execute($stmt);
+
+                    // الحصول على معرف الجزء الرئيسي المضاف
+                    $parent_section_id = mysqli_insert_id($conn);
+
+                    // إضافة المراجع للجزء الرئيسي
+                    if (!empty($section['references']) && is_array($section['references'])) {
+                        foreach ($section['references'] as $reference_id) {
+                            $sql = "INSERT INTO section_references (section_id, referenced_section_id) VALUES (?, ?)";
+                            $stmt = mysqli_prepare($conn, $sql);
+                            mysqli_stmt_bind_param($stmt, "ii", $parent_section_id, $reference_id);
+                            mysqli_stmt_execute($stmt);
+                        }
+                    }
+
+                    // إضافة الأجزاء الفرعية
+                    if (!empty($section['subsections']) && is_array($section['subsections'])) {
+                        foreach ($section['subsections'] as $subsection) {
+                            $subsection_title = cleanInput($subsection['title']);
+                            $subsection_content = cleanInput($subsection['content']);
+                            $subsection_entity_id = !empty($subsection['entity_id']) ? cleanInput($subsection['entity_id']) : null;
+                            $subsection_usage_id = !empty($subsection['usage_id']) ? cleanInput($subsection['usage_id']) : null;
+
+                            $sql = "INSERT INTO sections (article_id, title, content, entity_id, usage_id, parent_id) VALUES (?, ?, ?, ?, ?, ?)";
+                            $stmt = mysqli_prepare($conn, $sql);
+                            mysqli_stmt_bind_param($stmt, "issiii", $article_id, $subsection_title, $subsection_content, $subsection_entity_id, $subsection_usage_id, $parent_section_id);
+                            mysqli_stmt_execute($stmt);
+
+                            // الحصول على معرف الجزء الفرعي المضاف
+                            $subsection_id = mysqli_insert_id($conn);
+
+                            // إضافة المراجع للجزء الفرعي
+                            if (!empty($subsection['references']) && is_array($subsection['references'])) {
+                                foreach ($subsection['references'] as $reference_id) {
+                                    $sql = "INSERT INTO section_references (section_id, referenced_section_id) VALUES (?, ?)";
+                                    $stmt = mysqli_prepare($conn, $sql);
+                                    mysqli_stmt_bind_param($stmt, "ii", $subsection_id, $reference_id);
+                                    mysqli_stmt_execute($stmt);
+                                }
+                            }
+                        }
+                    }
+                }
             }
             // إذا كان هناك أجزاء في مصفوفة articles
             else if (isset($_POST['articles']) && is_array($_POST['articles'])) {
                 foreach ($_POST['articles'] as $article) {
                     if ($article['id'] == $article_id && isset($article['sections']) && is_array($article['sections'])) {
-                        processSections($article['sections'], $article_id, null);
+                        foreach ($article['sections'] as $section_id => $section) {
+                            // إضافة الجزء الرئيسي
+                            $title = cleanInput($section['title']);
+                            $content = cleanInput($section['content']);
+                            $entity_id = !empty($section['entity_id']) ? cleanInput($section['entity_id']) : null;
+                            $usage_id = !empty($section['usage_id']) ? cleanInput($section['usage_id']) : null;
+
+                            $sql = "INSERT INTO sections (article_id, title, content, entity_id, usage_id, parent_id) VALUES (?, ?, ?, ?, ?, NULL)";
+                            $stmt = mysqli_prepare($conn, $sql);
+                            mysqli_stmt_bind_param($stmt, "issii", $article_id, $title, $content, $entity_id, $usage_id);
+                            mysqli_stmt_execute($stmt);
+
+                            // الحصول على معرف الجزء الرئيسي المضاف
+                            $parent_section_id = mysqli_insert_id($conn);
+
+                            // إضافة المراجع للجزء الرئيسي
+                            if (!empty($section['references']) && is_array($section['references'])) {
+                                foreach ($section['references'] as $reference_id) {
+                                    $sql = "INSERT INTO section_references (section_id, referenced_section_id) VALUES (?, ?)";
+                                    $stmt = mysqli_prepare($conn, $sql);
+                                    mysqli_stmt_bind_param($stmt, "ii", $parent_section_id, $reference_id);
+                                    mysqli_stmt_execute($stmt);
+                                }
+                            }
+
+                            // إضافة الأجزاء الفرعية
+                            if (!empty($section['subsections']) && is_array($section['subsections'])) {
+                                foreach ($section['subsections'] as $subsection) {
+                                    $subsection_title = cleanInput($subsection['title']);
+                                    $subsection_content = cleanInput($subsection['content']);
+                                    $subsection_entity_id = !empty($subsection['entity_id']) ? cleanInput($subsection['entity_id']) : null;
+                                    $subsection_usage_id = !empty($subsection['usage_id']) ? cleanInput($subsection['usage_id']) : null;
+
+                                    $sql = "INSERT INTO sections (article_id, title, content, entity_id, usage_id, parent_id) VALUES (?, ?, ?, ?, ?, ?)";
+                                    $stmt = mysqli_prepare($conn, $sql);
+                                    mysqli_stmt_bind_param($stmt, "issiii", $article_id, $subsection_title, $subsection_content, $subsection_entity_id, $subsection_usage_id, $parent_section_id);
+                                    mysqli_stmt_execute($stmt);
+
+                                    // الحصول على معرف الجزء الفرعي المضاف
+                                    $subsection_id = mysqli_insert_id($conn);
+
+                                    // إضافة المراجع للجزء الفرعي
+                                    if (!empty($subsection['references']) && is_array($subsection['references'])) {
+                                        foreach ($subsection['references'] as $reference_id) {
+                                            $sql = "INSERT INTO section_references (section_id, referenced_section_id) VALUES (?, ?)";
+                                            $stmt = mysqli_prepare($conn, $sql);
+                                            mysqli_stmt_bind_param($stmt, "ii", $subsection_id, $reference_id);
+                                            mysqli_stmt_execute($stmt);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
