@@ -1383,15 +1383,15 @@ $systems_result = mysqli_query($conn, $sql);
                                                                     </div>
                                                                     <div class="mb-3">
                                                                         <label class="form-label">عنوان الجزء الفرعي</label>
-                                                                        <input type="text" class="form-control" name="articles[' . $article['id'] . '][sections][' . $section_num . '][subsections][' . $subsection_num . '][title]" value="' . htmlspecialchars($subsection['title']) . '">
+                                                                        <input type="text" class="form-control" name="sections[' . $section_num . '][subsections][' . $subsection_num . '][title]" value="' . htmlspecialchars($subsection['title']) . '" required>
                                                                     </div>
                                                                     <div class="mb-3">
                                                                         <label class="form-label">محتوى الجزء الفرعي</label>
-                                                                        <textarea class="form-control" name="articles[' . $article['id'] . '][sections][' . $section_num . '][subsections][' . $subsection_num . '][content]" rows="3">' . htmlspecialchars($subsection['content']) . '</textarea>
+                                                                        <textarea class="form-control" name="sections[' . $section_num . '][subsections][' . $subsection_num . '][content]" rows="3">' . htmlspecialchars($subsection['content']) . '</textarea>
                                                                     </div>
                                                                     <div class="mb-3">
                                                                         <label class="form-label">الجهة المعنية</label>
-                                                                        <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_num . '][subsections][' . $subsection_num . '][entity_id]">
+                                                                        <select class="form-select" name="sections[' . $section_num . '][subsections][' . $subsection_num . '][entity_id]">
                                                                             <option value="">-- اختر جهة معنية --</option>';
 
                                                                             $entities = getEntities();
@@ -1404,7 +1404,7 @@ $systems_result = mysqli_query($conn, $sql);
                                                                     </div>
                                                                     <div class="mb-3">
                                                                         <label class="form-label">الاستخدام</label>
-                                                                        <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_num . '][subsections][' . $subsection_num . '][usage_id]">
+                                                                        <select class="form-select" name="sections[' . $section_num . '][subsections][' . $subsection_num . '][usage_id]">
                                                                             <option value="">-- اختر استخدام --</option>';
 
                                                                             $usages = getUsages();
@@ -1417,7 +1417,7 @@ $systems_result = mysqli_query($conn, $sql);
                                                                     </div>
                                                                     <div class="mb-3">
                                                                         <label class="form-label">الأجزاء المرتبطة</label>
-                                                                        <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_num . '][subsections][' . $subsection_num . '][references][]" multiple>';
+                                                                        <select class="form-select" name="sections[' . $section_num . '][subsections][' . $subsection_num . '][references][]" multiple>';
 
                                                                             $sections = getSections();
                                                                             $subsection_references = getSectionReferences($subsection['id']);
