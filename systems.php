@@ -310,6 +310,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
             }
 
+            // حذف الأجزاء القديمة
+            $sql = "DELETE FROM sections WHERE article_id = ?";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "i", $article_id);
+            mysqli_stmt_execute($stmt);
+
+            // حذف مراجع الأجزاء القديمة
+            $sql = "DELETE FROM section_references WHERE section_id IN (SELECT id FROM sections WHERE article_id = ?)";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "i", $article_id);
+            mysqli_stmt_execute($stmt);
+
+            // إضافة الأجزاء الجديدة
+            if (isset($_POST['articles']) && is_array($_POST['articles'])) {
+                foreach ($_POST['articles'] as $article) {
+                    if ($article['id'] == $article_id && isset($article['sections']) && is_array($article['sections'])) {
+                        processSections($article['sections'], $article_id, null);
+                    }
+                }
+            }
+
             $_SESSION['message'] = "تم تعديل المادة بنجاح!";
             $_SESSION['message_type'] = "success";
         } else {
@@ -1158,30 +1179,31 @@ $systems_result = mysqli_query($conn, $sql);
                                 <div id="sections-container-<?php echo $article['id']; ?>">
                                     <?php
                                     // عرض الأجزاء الموجودة
-                                    $existing_sections = getArticleSections($article['id']);
+                                    $existing_sections = getSectionsByArticleId($article['id']);
                                     if (!empty($existing_sections)) {
-                                        foreach ($existing_sections as $section_index => $section) {
-                                            $section_num = $section_index + 1;
-                                            echo '<div class="section-item" id="section-' . $article['id'] . '-' . $section_num . '">
+                                        $section_index = 0;
+                                        foreach ($existing_sections as $section) {
+                                            $section_index++;
+                                            echo '<div class="section-item" id="section-' . $article['id'] . '-' . $section_index . '">
                                                 <div class="section-item-header">
-                                                    <h6>جزء ' . $section_num . '</h6>
+                                                    <h6>جزء ' . $section_index . '</h6>
                                                     <div>
-                                                        <button type="button" class="btn btn-sm btn-outline-danger remove-section-btn" data-article="' . $article['id'] . '" data-section="' . $section_num . '">
+                                                        <button type="button" class="btn btn-sm btn-outline-danger remove-section-btn" data-article="' . $article['id'] . '" data-section="' . $section_index . '">
                                                             <i class="fas fa-times"></i>
                                                         </button>
                                                     </div>
                                                 </div>
                                                 <div class="mb-3">
                                                     <label class="form-label">عنوان الجزء</label>
-                                                    <input type="text" class="form-control" name="articles[' . $article['id'] . '][sections][' . $section_num . '][title]" value="' . htmlspecialchars($section['title']) . '">
+                                                    <input type="text" class="form-control" name="articles[' . $article['id'] . '][sections][' . $section_index . '][title]" value="' . htmlspecialchars($section['title']) . '">
                                                 </div>
                                                 <div class="mb-3">
                                                     <label class="form-label">محتوى الجزء</label>
-                                                    <textarea class="form-control" name="articles[' . $article['id'] . '][sections][' . $section_num . '][content]" rows="3">' . htmlspecialchars($section['content']) . '</textarea>
+                                                    <textarea class="form-control" name="articles[' . $article['id'] . '][sections][' . $section_index . '][content]" rows="3">' . htmlspecialchars($section['content']) . '</textarea>
                                                 </div>
                                                 <div class="mb-3">
                                                     <label class="form-label">الجهة المعنية</label>
-                                                    <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_num . '][entity_id]">
+                                                    <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_index . '][entity_id]">
                                                         <option value="">-- اختر جهة معنية --</option>';
 
                                                         $entities = getEntities();
@@ -1194,7 +1216,7 @@ $systems_result = mysqli_query($conn, $sql);
                                                 </div>
                                                 <div class="mb-3">
                                                     <label class="form-label">الاستخدام</label>
-                                                    <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_num . '][usage_id]">
+                                                    <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_index . '][usage_id]">
                                                         <option value="">-- اختر استخدام --</option>';
 
                                                         $usages = getUsages();
@@ -1207,7 +1229,7 @@ $systems_result = mysqli_query($conn, $sql);
                                                 </div>
                                                 <div class="mb-3">
                                                     <label class="form-label">الأجزاء المرتبطة</label>
-                                                    <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_num . '][references][]" multiple>';
+                                                    <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_index . '][references][]" multiple>';
 
                                                         $sections = getSections();
                                                         $section_references = getSectionReferences($section['id']);
@@ -1228,35 +1250,36 @@ $systems_result = mysqli_query($conn, $sql);
                                                 <div class="mb-3">
                                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                                         <label class="form-label mb-0">الأجزاء الفرعية</label>
-                                                        <button type="button" class="btn btn-sm btn-outline-info add-subsection-btn" data-article="' . $article['id'] . '" data-section="' . $section_num . '">
+                                                        <button type="button" class="btn btn-sm btn-outline-info add-subsection-btn" data-article="' . $article['id'] . '" data-section="' . $section_index . '">
                                                             <i class="fas fa-plus"></i> إضافة جزء فرعي
                                                         </button>
                                                     </div>
                                                     <div id="subsections-container-' . $article['id'] . '-' . $section_num . '">';
 
                                                         // عرض الأجزاء الفرعية الموجودة
-                                                        $existing_subsections = getSectionSubsections($section['id']);
+                                                        $existing_subsections = getSectionsByParentId($section['id']);
                                                         if (!empty($existing_subsections)) {
-                                                            foreach ($existing_subsections as $subsection_index => $subsection) {
-                                                                $subsection_num = $subsection_index + 1;
-                                                                echo '<div class="subsection-container mb-3" id="subsection-' . $article['id'] . '-' . $section_num . '-' . $subsection_num . '">
+                                                            $subsection_index = 0;
+                                                            foreach ($existing_subsections as $subsection) {
+                                                                $subsection_index++;
+                                                                echo '<div class="subsection-container" id="subsection-' . $article['id'] . '-' . $section_index . '-' . $subsection_index . '">
                                                                     <div class="d-flex justify-content-between align-items-center mb-2">
-                                                                        <h6>جزء فرعي ' . $subsection_num . '</h6>
-                                                                        <button type="button" class="btn btn-sm btn-outline-danger remove-subsection-btn" data-article="' . $article['id'] . '" data-section="' . $section_num . '" data-subsection="' . $subsection_num . '">
+                                                                        <h6>جزء فرعي ' . $subsection_index . '</h6>
+                                                                        <button type="button" class="btn btn-sm btn-outline-danger remove-subsection" data-article="' . $article['id'] . '" data-section="' . $section_index . '" data-subsection="' . $subsection_index . '">
                                                                             <i class="fas fa-times"></i>
                                                                         </button>
                                                                     </div>
                                                                     <div class="mb-3">
                                                                         <label class="form-label">عنوان الجزء الفرعي</label>
-                                                                        <input type="text" class="form-control" name="articles[' . $article['id'] . '][sections][' . $section_num . '][subsections][' . $subsection_num . '][title]" value="' . htmlspecialchars($subsection['title']) . '">
+                                                                        <input type="text" class="form-control" name="articles[' . $article['id'] . '][sections][' . $section_index . '][subsections][' . $subsection_index . '][title]" value="' . htmlspecialchars($subsection['title']) . '">
                                                                     </div>
                                                                     <div class="mb-3">
                                                                         <label class="form-label">محتوى الجزء الفرعي</label>
-                                                                        <textarea class="form-control" name="articles[' . $article['id'] . '][sections][' . $section_num . '][subsections][' . $subsection_num . '][content]" rows="3">' . htmlspecialchars($subsection['content']) . '</textarea>
+                                                                        <textarea class="form-control" name="articles[' . $article['id'] . '][sections][' . $section_index . '][subsections][' . $subsection_index . '][content]" rows="3">' . htmlspecialchars($subsection['content']) . '</textarea>
                                                                     </div>
                                                                     <div class="mb-3">
                                                                         <label class="form-label">الجهة المعنية</label>
-                                                                        <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_num . '][subsections][' . $subsection_num . '][entity_id]">
+                                                                        <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_index . '][subsections][' . $subsection_index . '][entity_id]">
                                                                             <option value="">-- اختر جهة معنية --</option>';
 
                                                                             $entities = getEntities();
@@ -1269,7 +1292,7 @@ $systems_result = mysqli_query($conn, $sql);
                                                                     </div>
                                                                     <div class="mb-3">
                                                                         <label class="form-label">الاستخدام</label>
-                                                                        <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_num . '][subsections][' . $subsection_num . '][usage_id]">
+                                                                        <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_index . '][subsections][' . $subsection_index . '][usage_id]">
                                                                             <option value="">-- اختر استخدام --</option>';
 
                                                                             $usages = getUsages();
@@ -1282,7 +1305,7 @@ $systems_result = mysqli_query($conn, $sql);
                                                                     </div>
                                                                     <div class="mb-3">
                                                                         <label class="form-label">الأجزاء المرتبطة</label>
-                                                                        <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_num . '][subsections][' . $subsection_num . '][references][]" multiple>';
+                                                                        <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_index . '][subsections][' . $subsection_index . '][references][]" multiple>';
 
                                                                             $sections = getSections();
                                                                             $subsection_references = getSectionReferences($subsection['id']);
