@@ -310,6 +310,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
             }
 
+            // حذف الأجزاء القديمة
+            $sql = "DELETE FROM sections WHERE article_id = ?";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "i", $article_id);
+            mysqli_stmt_execute($stmt);
+
+            // حذف مراجع الأجزاء القديمة
+            $sql = "DELETE FROM section_references WHERE section_id IN (SELECT id FROM sections WHERE article_id = ?)";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "i", $article_id);
+            mysqli_stmt_execute($stmt);
+
+            // إضافة الأجزاء الجديدة
+            if (isset($_POST['articles']) && is_array($_POST['articles'])) {
+                foreach ($_POST['articles'] as $article) {
+                    if ($article['id'] == $article_id && isset($article['sections']) && is_array($article['sections'])) {
+                        processSections($article['sections'], $article_id, null);
+                    }
+                }
+            }
+
             $_SESSION['message'] = "تم تعديل المادة بنجاح!";
             $_SESSION['message_type'] = "success";
         } else {
@@ -1726,7 +1747,7 @@ $systems_result = mysqli_query($conn, $sql);
             });
 
             // Remove Section Button Click
-            $(document).on('click', '.remove-section', function() {
+            $(document).on('click', '.remove-section, .remove-section-btn', function() {
                 let articleId = $(this).data('article');
                 let sectionId = $(this).data('section');
                 $(`#section-${articleId}-${sectionId}`).remove();
@@ -1737,8 +1758,15 @@ $systems_result = mysqli_query($conn, $sql);
                 let articleId = $(this).data('article');
                 let sectionId = $(this).data('section');
 
-                if (!subsectionCount[articleId][sectionId]) {
-                    subsectionCount[articleId][sectionId] = 0;
+                // Initialize subsection count if not exists
+                if (!window.subsectionCount) {
+                    window.subsectionCount = {};
+                }
+                if (!window.subsectionCount[articleId]) {
+                    window.subsectionCount[articleId] = {};
+                }
+                if (!window.subsectionCount[articleId][sectionId]) {
+                    window.subsectionCount[articleId][sectionId] = 0;
                 }
                 subsectionCount[articleId][sectionId]++;
 
@@ -1847,6 +1875,116 @@ $systems_result = mysqli_query($conn, $sql);
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.add-section-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
+                    let articleId, container, index;
+
+                    // Check if this is for edit article modal
+                    if (btn.dataset.article) {
+                        articleId = btn.dataset.article;
+                        container = document.getElementById(`sections-container-${articleId}`);
+
+                        if (!container) {
+                            console.error('Container not found:', `sections-container-${articleId}`);
+                            return;
+                        }
+
+                        index = container.querySelectorAll('.section-item').length + 1;
+
+                        const div = document.createElement('div');
+                        div.className = 'section-item';
+                        div.id = `section-${articleId}-${index}`;
+                        div.innerHTML = `
+                            <div class="section-item-header">
+                                <h6>جزء ${index}</h6>
+                                <div>
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-section-btn" data-article="${articleId}" data-section="${index}">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">عنوان الجزء</label>
+                                <input type="text" class="form-control" name="articles[${articleId}][sections][${index}][title]">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">محتوى الجزء</label>
+                                <textarea class="form-control" name="articles[${articleId}][sections][${index}][content]" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">الجهة المعنية</label>
+                                <select class="form-select" name="articles[${articleId}][sections][${index}][entity_id]">
+                                    <option value="">-- اختر جهة معنية --</option>
+                                    <?php
+                                    $entities = getEntities();
+                                    foreach ($entities as $entity) {
+                                        echo "<option value='" . $entity['id'] . "'>" . $entity['title'] . "</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">الاستخدام</label>
+                                <select class="form-select" name="articles[${articleId}][sections][${index}][usage_id]">
+                                    <option value="">-- اختر استخدام --</option>
+                                    <?php
+                                    $usages = getUsages();
+                                    foreach ($usages as $usage) {
+                                        echo "<option value='" . $usage['id'] . "'>" . $usage['title'] . "</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">الأجزاء المرتبطة</label>
+                                <select class="form-select" name="articles[${articleId}][sections][${index}][references][]" multiple>
+                                    <?php
+                                    $sections = getSections();
+                                    foreach ($sections as $section_option) {
+                                        echo "<option value='" . $section_option['id'] . "'>" . $section_option['system_title'] . " - " . $section_option['article_title'] . " - " . $section_option['title'] . "</option>";
+                                    }
+                                    ?>
+                                </select>
+                                <div class="form-text">اختر الأجزاء المرتبطة</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label mb-0">الأجزاء الفرعية</label>
+                                    <button type="button" class="btn btn-sm btn-outline-info add-subsection-btn" data-article="${articleId}" data-section="${index}">
+                                        <i class="fas fa-plus"></i> إضافة جزء فرعي
+                                    </button>
+                                </div>
+                                <div id="subsections-container-${articleId}-${index}">
+                                    <!-- Subsections will be added here dynamically -->
+                                </div>
+                            </div>
+                        `;
+
+                        container.appendChild(div);
+
+                        // Initialize Select2 for the new elements
+                        const modal = btn.closest('.modal');
+                        if (modal) {
+                            $(div).find('select').each(function() {
+                                $(this).select2({
+                                    dropdownParent: $(modal).find('.modal-content'),
+                                    width: '100%'
+                                });
+                            });
+                        }
+
+                        // Initialize subsection count for this section
+                        if (!window.subsectionCount) {
+                            window.subsectionCount = {};
+                        }
+                        if (!window.subsectionCount[articleId]) {
+                            window.subsectionCount[articleId] = {};
+                        }
+                        window.subsectionCount[articleId][index] = 0;
+
+                        return;
+                    }
+
+                    // Original code for system modal
                     const systemId = btn.dataset.system;
                     const container = document.getElementById(`sections-container-${systemId}`);
 
