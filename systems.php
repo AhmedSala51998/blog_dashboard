@@ -310,6 +310,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
             }
 
+            // حذف الأجزاء القديمة
+            $sql = "DELETE FROM sections WHERE article_id = ?";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "i", $article_id);
+            mysqli_stmt_execute($stmt);
+
             // إضافة الأجزاء الجديدة
             if (isset($_POST['sections']) && is_array($_POST['sections'])) {
                 processSections($_POST['sections'], $article_id, null);
