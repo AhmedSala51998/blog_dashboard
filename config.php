@@ -277,4 +277,34 @@ function getUsageById($usage_id) {
     $result = mysqli_stmt_get_result($stmt);
     return mysqli_fetch_assoc($result);
 }
+
+// دالة للحصول على أجزاء المادة
+function getArticleSections($article_id) {
+    global $conn;
+    $sections = [];
+    $sql = "SELECT * FROM sections WHERE article_id = ? AND parent_id IS NULL ORDER BY id";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $article_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    while ($row = mysqli_fetch_assoc($result)) {
+        $sections[] = $row;
+    }
+    return $sections;
+}
+
+// دالة للحصول على الأجزاء الفرعية
+function getSectionSubsections($section_id) {
+    global $conn;
+    $subsections = [];
+    $sql = "SELECT * FROM sections WHERE parent_id = ? ORDER BY id";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $section_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    while ($row = mysqli_fetch_assoc($result)) {
+        $subsections[] = $row;
+    }
+    return $subsections;
+}
 ?>

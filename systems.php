@@ -1147,6 +1147,170 @@ $systems_result = mysqli_query($conn, $sql);
                                 </select>
                                 <div class="form-text">اختر المواد المرتبطة (يمكنك الاختيار المتعدد بالضغط على Ctrl)</div>
                             </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label mb-0">الأجزاء</label>
+                                    <button type="button" class="btn btn-sm btn-outline-primary add-section-btn" data-article="<?php echo $article['id']; ?>">
+                                        <i class="fas fa-plus"></i> إضافة جزء
+                                    </button>
+                                </div>
+                                <div id="sections-container-<?php echo $article['id']; ?>">
+                                    <?php
+                                    // عرض الأجزاء الموجودة
+                                    $existing_sections = getArticleSections($article['id']);
+                                    if (!empty($existing_sections)) {
+                                        foreach ($existing_sections as $section_index => $section) {
+                                            $section_num = $section_index + 1;
+                                            echo '<div class="section-item" id="section-' . $article['id'] . '-' . $section_num . '">
+                                                <div class="section-item-header">
+                                                    <h6>جزء ' . $section_num . '</h6>
+                                                    <div>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger remove-section-btn" data-article="' . $article['id'] . '" data-section="' . $section_num . '">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">عنوان الجزء</label>
+                                                    <input type="text" class="form-control" name="articles[' . $article['id'] . '][sections][' . $section_num . '][title]" value="' . htmlspecialchars($section['title']) . '">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">محتوى الجزء</label>
+                                                    <textarea class="form-control" name="articles[' . $article['id'] . '][sections][' . $section_num . '][content]" rows="3">' . htmlspecialchars($section['content']) . '</textarea>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">الجهة المعنية</label>
+                                                    <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_num . '][entity_id]">
+                                                        <option value="">-- اختر جهة معنية --</option>';
+
+                                                        $entities = getEntities();
+                                                        foreach ($entities as $entity) {
+                                                            $selected = ($section['entity_id'] == $entity['id']) ? 'selected' : '';
+                                                            echo "<option value='" . $entity['id'] . "' $selected>" . $entity['title'] . "</option>";
+                                                        }
+
+                                                    echo '</select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">الاستخدام</label>
+                                                    <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_num . '][usage_id]">
+                                                        <option value="">-- اختر استخدام --</option>';
+
+                                                        $usages = getUsages();
+                                                        foreach ($usages as $usage) {
+                                                            $selected = ($section['usage_id'] == $usage['id']) ? 'selected' : '';
+                                                            echo "<option value='" . $usage['id'] . "' $selected>" . $usage['title'] . "</option>";
+                                                        }
+
+                                                    echo '</select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">الأجزاء المرتبطة</label>
+                                                    <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_num . '][references][]" multiple>';
+
+                                                        $sections = getSections();
+                                                        $section_references = getSectionReferences($section['id']);
+                                                        $section_reference_ids = [];
+                                                        foreach ($section_references as $ref) {
+                                                            $section_reference_ids[] = $ref['referenced_section_id'];
+                                                        }
+
+                                                        foreach ($sections as $section_option) {
+                                                            $selected = in_array($section_option['id'], $section_reference_ids) ? 'selected' : '';
+                                                            echo "<option value='" . $section_option['id'] . "' $selected>" . $section_option['system_title'] . " - " . $section_option['article_title'] . " - " . $section_option['title'] . "</option>";
+                                                        }
+
+                                                    echo '</select>
+                                                    <div class="form-text">اختر الأجزاء المرتبطة</div>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <label class="form-label mb-0">الأجزاء الفرعية</label>
+                                                        <button type="button" class="btn btn-sm btn-outline-info add-subsection-btn" data-article="' . $article['id'] . '" data-section="' . $section_num . '">
+                                                            <i class="fas fa-plus"></i> إضافة جزء فرعي
+                                                        </button>
+                                                    </div>
+                                                    <div id="subsections-container-' . $article['id'] . '-' . $section_num . '">';
+
+                                                        // عرض الأجزاء الفرعية الموجودة
+                                                        $existing_subsections = getSectionSubsections($section['id']);
+                                                        if (!empty($existing_subsections)) {
+                                                            foreach ($existing_subsections as $subsection_index => $subsection) {
+                                                                $subsection_num = $subsection_index + 1;
+                                                                echo '<div class="subsection-container mb-3" id="subsection-' . $article['id'] . '-' . $section_num . '-' . $subsection_num . '">
+                                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                        <h6>جزء فرعي ' . $subsection_num . '</h6>
+                                                                        <button type="button" class="btn btn-sm btn-outline-danger remove-subsection-btn" data-article="' . $article['id'] . '" data-section="' . $section_num . '" data-subsection="' . $subsection_num . '">
+                                                                            <i class="fas fa-times"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">عنوان الجزء الفرعي</label>
+                                                                        <input type="text" class="form-control" name="articles[' . $article['id'] . '][sections][' . $section_num . '][subsections][' . $subsection_num . '][title]" value="' . htmlspecialchars($subsection['title']) . '">
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">محتوى الجزء الفرعي</label>
+                                                                        <textarea class="form-control" name="articles[' . $article['id'] . '][sections][' . $section_num . '][subsections][' . $subsection_num . '][content]" rows="3">' . htmlspecialchars($subsection['content']) . '</textarea>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">الجهة المعنية</label>
+                                                                        <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_num . '][subsections][' . $subsection_num . '][entity_id]">
+                                                                            <option value="">-- اختر جهة معنية --</option>';
+
+                                                                            $entities = getEntities();
+                                                                            foreach ($entities as $entity) {
+                                                                                $selected = ($subsection['entity_id'] == $entity['id']) ? 'selected' : '';
+                                                                                echo "<option value='" . $entity['id'] . "' $selected>" . $entity['title'] . "</option>";
+                                                                            }
+
+                                                                        echo '</select>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">الاستخدام</label>
+                                                                        <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_num . '][subsections][' . $subsection_num . '][usage_id]">
+                                                                            <option value="">-- اختر استخدام --</option>';
+
+                                                                            $usages = getUsages();
+                                                                            foreach ($usages as $usage) {
+                                                                                $selected = ($subsection['usage_id'] == $usage['id']) ? 'selected' : '';
+                                                                                echo "<option value='" . $usage['id'] . "' $selected>" . $usage['title'] . "</option>";
+                                                                            }
+
+                                                                        echo '</select>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">الأجزاء المرتبطة</label>
+                                                                        <select class="form-select" name="articles[' . $article['id'] . '][sections][' . $section_num . '][subsections][' . $subsection_num . '][references][]" multiple>';
+
+                                                                            $sections = getSections();
+                                                                            $subsection_references = getSectionReferences($subsection['id']);
+                                                                            $subsection_reference_ids = [];
+                                                                            foreach ($subsection_references as $ref) {
+                                                                                $subsection_reference_ids[] = $ref['referenced_section_id'];
+                                                                            }
+
+                                                                            foreach ($sections as $section_option) {
+                                                                                $selected = in_array($section_option['id'], $subsection_reference_ids) ? 'selected' : '';
+                                                                                echo "<option value='" . $section_option['id'] . "' $selected>" . $section_option['system_title'] . " - " . $section_option['article_title'] . " - " . $section_option['title'] . "</option>";
+                                                                            }
+
+                                                                        echo '</select>
+                                                                        <div class="form-text">اختر الأجزاء المرتبطة</div>
+                                                                    </div>
+                                                                </div>';
+                                                            }
+                                                        }
+
+                                                    echo '</div>
+                                                </div>
+                                            </div>';
+                                        }
+                                    }
+                                    ?>
+                                </div>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
