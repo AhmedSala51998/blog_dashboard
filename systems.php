@@ -1891,15 +1891,15 @@ $systems_result = mysqli_query($conn, $sql);
                         </div>
                         <div class="mb-3">
                             <label class="form-label">عنوان الجزء الفرعي</label>
-                            <input type="text" class="form-control" name="sections[${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][title]" required>
+                            <input type="text" class="form-control" name="articles[${articleId}][sections][${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][title]" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">محتوى الجزء الفرعي</label>
-                            <textarea class="form-control" name="sections[${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][content]" rows="3"></textarea>
+                            <textarea class="form-control" name="articles[${articleId}][sections][${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][content]" rows="3"></textarea>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">الجهة المعنية</label>
-                            <select class="form-select" name="sections[${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][entity_id]">
+                            <select class="form-select" name="articles[${articleId}][sections][${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][entity_id]">
                                 <option value="">-- اختر جهة معنية --</option>
                                 <?php
                                 $entities = getEntities();
@@ -1911,7 +1911,7 @@ $systems_result = mysqli_query($conn, $sql);
                         </div>
                         <div class="mb-3">
                             <label class="form-label">الاستخدام</label>
-                            <select class="form-select" name="sections[${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][usage_id]">
+                            <select class="form-select" name="articles[${articleId}][sections][${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][usage_id]">
                                 <option value="">-- اختر استخدام --</option>
                                 <?php
                                 $usages = getUsages();
@@ -1923,7 +1923,7 @@ $systems_result = mysqli_query($conn, $sql);
                         </div>
                         <div class="mb-3">
                             <label class="form-label">الأجزاء المرتبطة</label>
-                            <select class="form-select" name="sections[${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][references][]" multiple>
+                            <select class="form-select" name="articles[${articleId}][sections][${sectionId}][subsections][${subsectionCount[articleId][sectionId]}][references][]" multiple>
                                 <?php
                                 $sections = getSections();
                                 foreach ($sections as $section_option) {
