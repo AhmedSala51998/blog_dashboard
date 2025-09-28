@@ -2081,11 +2081,12 @@ $systems_result = mysqli_query($conn, $sql);
                 $(`#subsections-container-edit-section-${sectionId}`).append(subsectionHtml);
 
                 // تفعيل Select2 على العناصر الجديدة
-                $(`#subsection-edit-section-${sectionId}-${subsectionCountEditSection[sectionId]} select`).each(function(){
-                    $(this).select2({
-                        theme: 'bootstrap-5',
-                        width: '100%'
-                    });
+                let modal = $(this).closest('.modal');
+                    modal.find(`#subsection-edit-section-${sectionId}-${subsectionCountEditSection[sectionId]} select`).each(function(){
+                        $(this).select2({
+                            dropdownParent: modal.find('.modal-content'),
+                            width: '100%'
+                        });
                 });
             });
 
