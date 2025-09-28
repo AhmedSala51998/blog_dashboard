@@ -515,6 +515,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                         // التحقق مما إذا كان الجزء الفرعي موجوداً بالفعل في قاعدة البيانات
                         if (!empty($subsection['id'])) {
+                             return 1;
                             // تحديث الجزء الفرعي الموجود
                             $subsection_id = cleanInput($subsection['id']);
                             $sql = "UPDATE sections SET title = ?, content = ?, entity_id = ?, usage_id = ? WHERE id = ?";
@@ -528,7 +529,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             mysqli_stmt_bind_param($stmt, "i", $subsection_id);
                             mysqli_stmt_execute($stmt);
                         } else {
-                            return 1;
                             // إضافة جزء فرعي جديد
                             $sql = "INSERT INTO sections (article_id, title, content, entity_id, usage_id, parent_id) VALUES (?, ?, ?, ?, ?, ?)";
                             $stmt = mysqli_prepare($conn, $sql);
