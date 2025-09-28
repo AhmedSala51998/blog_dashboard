@@ -1670,91 +1670,6 @@ $systems_result = mysqli_query($conn, $sql);
                                     ?>
                                 </div>
                             </div>
-
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <label class="form-label mb-0">الأجزاء الفرعية</label>
-                                    <button type="button" class="btn btn-sm btn-outline-info add-subsection-btn-edit-section" data-section="<?php echo $section['id']; ?>">
-                                        <i class="fas fa-plus"></i> إضافة جزء فرعي
-                                    </button>
-                                </div>
-                                <div id="subsections-container-edit-section-<?php echo $section['id']; ?>">
-                                    <?php
-                                    // عرض الأجزاء الفرعية الموجودة
-                                    $existing_subsections = getSectionSubsections($section['id']);
-                                    if (!empty($existing_subsections)) {
-                                        foreach ($existing_subsections as $subsection_index => $subsection) {
-                                            $subsection_num = $subsection_index + 1;
-                                            echo '<div class="subsection-container mb-3" id="subsection-edit-section-' . $section['id'] . '-' . $subsection_num . '">
-                                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                                    <h6>جزء فرعي ' . $subsection_num . '</h6>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger remove-subsection-btn-edit-section" data-section="' . $section['id'] . '" data-subsection="' . $subsection_num . '">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">عنوان الجزء الفرعي</label>
-                                                    <input type="text" class="form-control" name="subsections[' . $subsection_num . '][title]" value="' . htmlspecialchars($subsection['title']) . '">
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">محتوى الجزء الفرعي</label>
-                                                    <textarea class="form-control" name="subsections[' . $subsection_num . '][content]" rows="3">' . htmlspecialchars($subsection['content']) . '</textarea>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">الجهة المعنية</label>
-                                                    <select class="form-select" name="subsections[' . $subsection_num . '][entity_id]">
-                                                        <option value="">-- اختر جهة معنية --</option>';
-
-                                                        $entities = getEntities();
-                                                        foreach ($entities as $entity) {
-                                                            $selected = ($subsection['entity_id'] == $entity['id']) ? 'selected' : '';
-                                                            echo "<option value='" . $entity['id'] . "' $selected>" . $entity['title'] . "</option>";
-                                                        }
-
-                                                    echo '</select>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">الاستخدام</label>
-                                                    <select class="form-select" name="subsections[' . $subsection_num . '][usage_id]">
-                                                        <option value="">-- اختر استخدام --</option>';
-
-                                                        $usages = getUsages();
-                                                        foreach ($usages as $usage) {
-                                                            $selected = ($subsection['usage_id'] == $usage['id']) ? 'selected' : '';
-                                                            echo "<option value='" . $usage['id'] . "' $selected>" . $usage['title'] . "</option>";
-                                                        }
-
-                                                    echo '</select>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">الأجزاء المرتبطة</label>
-                                                    <select class="form-select" name="subsections[' . $subsection_num . '][references][]" multiple>';
-
-                                                        $sections = getSections();
-                                                        $subsection_references = getSectionReferences($subsection['id']);
-                                                        $subsection_reference_ids = [];
-                                                        foreach ($subsection_references as $ref) {
-                                                            $subsection_reference_ids[] = $ref['referenced_section_id'];
-                                                        }
-
-                                                        foreach ($sections as $section_option) {
-                                                            $selected = in_array($section_option['id'], $subsection_reference_ids) ? 'selected' : '';
-                                                            echo "<option value='" . $section_option['id'] . "' $selected>" . $section_option['system_title'] . " - " . $section_option['article_title'] . " - " . $section_option['title'] . "</option>";
-                                                        }
-
-                                                    echo '</select>
-                                                    <div class="form-text">اختر الأجزاء المرتبطة</div>
-                                                </div>
-                                                <!-- إضافة حقل مخفي لمعرف الجزء الأصلي -->
-                                                <input type="hidden" name="subsections[' . $subsection_num . '][parent_id]" value="' . $section['id'] . '">
-                                                <!-- إضافة حقل مخفي لمعرف الجزء الفرعي إذا كان موجوداً -->
-                                                <input type="hidden" name="subsections[' . $subsection_num . '][id]" value="' . $subsection['id'] . '">
-                                            </div>';
-                                        }
-                                    }
-                                    ?>
-                                </div>
-                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
@@ -1884,6 +1799,7 @@ $systems_result = mysqli_query($conn, $sql);
             let articleCount = 0;
             let sectionCount = {};
             let subsectionCount = {};
+            let subsectionCountEditSection = {};
 
 
             // عند فتح أي modal
