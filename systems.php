@@ -312,10 +312,39 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             // حذف الأجزاء الفرعية القديمة فقط إذا تم إرسال أجزاء جديدة
             if (isset($_POST['sections']) && is_array($_POST['sections']) || isset($_POST['articles']) && is_array($_POST['articles'])) {
-                $sql = "DELETE FROM sections WHERE article_id = ? AND parent_id IS NOT NULL";
-                $stmt = mysqli_prepare($conn, $sql);
-                mysqli_stmt_bind_param($stmt, "i", $article_id);
-                mysqli_stmt_execute($stmt);
+                // الحصول على الأجزاء الرئيسية الموجودة في النموذج
+                $existing_parent_ids = [];
+                if (isset($_POST['sections']) && is_array($_POST['sections'])) {
+                    foreach ($_POST['sections'] as $section_id => $section) {
+                        // الحصول على معرف الجزء الرئيسي من قاعدة البيانات
+                        $sql = "SELECT id FROM sections WHERE article_id = ? AND title = ? AND parent_id IS NULL";
+                        $stmt = mysqli_prepare($conn, $sql);
+                        $section_title = cleanInput($section['title']);
+                        mysqli_stmt_bind_param($stmt, "is", $article_id, $section_title);
+                        mysqli_stmt_execute($stmt);
+                        $result = mysqli_stmt_get_result($stmt);
+                        if ($row = mysqli_fetch_assoc($result)) {
+                            $existing_parent_ids[] = $row['id'];
+                        }
+                    }
+                }
+
+                // حذف الأجزاء الفرعية القديمة التي لا تنتمي إلى الأجزاء الرئيسية الموجودة في النموذج
+                if (!empty($existing_parent_ids)) {
+                    $placeholders = implode(',', array_fill(0, count($existing_parent_ids), '?'));
+                    $sql = "DELETE FROM sections WHERE article_id = ? AND parent_id IS NOT NULL AND parent_id NOT IN ($placeholders)";
+                    $stmt = mysqli_prepare($conn, $sql);
+                    $params = array_merge([$article_id], $existing_parent_ids);
+                    $types = 'i' . str_repeat('i', count($existing_parent_ids));
+                    mysqli_stmt_bind_param($stmt, $types, ...$params);
+                    mysqli_stmt_execute($stmt);
+                } else {
+                    // إذا لم يتم إرسال أجزاء رئيسية، احذف جميع الأجزاء الفرعية
+                    $sql = "DELETE FROM sections WHERE article_id = ? AND parent_id IS NOT NULL";
+                    $stmt = mysqli_prepare($conn, $sql);
+                    mysqli_stmt_bind_param($stmt, "i", $article_id);
+                    mysqli_stmt_execute($stmt);
+                }
             }
 
             // حذف الأجزاء الرئيسية القديمة فقط إذا تم إرسال أجزاء جديدة
@@ -363,13 +392,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 $subsection_entity_id = !empty($subsection['entity_id']) ? cleanInput($subsection['entity_id']) : null;
                                 $subsection_usage_id = !empty($subsection['usage_id']) ? cleanInput($subsection['usage_id']) : null;
 
-                                $sql = "INSERT INTO sections (article_id, title, content, entity_id, usage_id, parent_id) VALUES (?, ?, ?, ?, ?, ?)";
+                                // التحقق مما إذا كان الجزء الفرعي موجوداً بالفعل في قاعدة البيانات
+                                $sql = "SELECT id FROM sections WHERE article_id = ? AND parent_id = ? AND title = ?";
                                 $stmt = mysqli_prepare($conn, $sql);
-                                mysqli_stmt_bind_param($stmt, "issiii", $article_id, $subsection_title, $subsection_content, $subsection_entity_id, $subsection_usage_id, $parent_section_id);
+                                mysqli_stmt_bind_param($stmt, "iis", $article_id, $parent_section_id, $subsection_title);
                                 mysqli_stmt_execute($stmt);
+                                $result = mysqli_stmt_get_result($stmt);
 
-                                // الحصول على معرف الجزء الفرعي المضاف
-                                $subsection_id = mysqli_insert_id($conn);
+                                if ($row = mysqli_fetch_assoc($result)) {
+                                    // تحديث الجزء الفرعي الموجود
+                                    $subsection_id = $row['id'];
+                                    $sql = "UPDATE sections SET title = ?, content = ?, entity_id = ?, usage_id = ? WHERE id = ?";
+                                    $stmt = mysqli_prepare($conn, $sql);
+                                    mysqli_stmt_bind_param($stmt, "ssiii", $subsection_title, $subsection_content, $subsection_entity_id, $subsection_usage_id, $subsection_id);
+                                    mysqli_stmt_execute($stmt);
+
+                                    // حذف المراجع القديمة
+                                    $sql = "DELETE FROM section_references WHERE section_id = ?";
+                                    $stmt = mysqli_prepare($conn, $sql);
+                                    mysqli_stmt_bind_param($stmt, "i", $subsection_id);
+                                    mysqli_stmt_execute($stmt);
+                                } else {
+                                    // إضافة جزء فرعي جديد
+                                    $sql = "INSERT INTO sections (article_id, title, content, entity_id, usage_id, parent_id) VALUES (?, ?, ?, ?, ?, ?)";
+                                    $stmt = mysqli_prepare($conn, $sql);
+                                    mysqli_stmt_bind_param($stmt, "issiii", $article_id, $subsection_title, $subsection_content, $subsection_entity_id, $subsection_usage_id, $parent_section_id);
+                                    mysqli_stmt_execute($stmt);
+                                    $subsection_id = mysqli_insert_id($conn);
+                                }
 
                                 // إضافة المراجع للجزء الفرعي
                                 if (!empty($subsection['references']) && is_array($subsection['references'])) {
@@ -424,13 +474,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         $subsection_entity_id = !empty($subsection['entity_id']) ? cleanInput($subsection['entity_id']) : null;
                                         $subsection_usage_id = !empty($subsection['usage_id']) ? cleanInput($subsection['usage_id']) : null;
 
-                                        $sql = "INSERT INTO sections (article_id, title, content, entity_id, usage_id, parent_id) VALUES (?, ?, ?, ?, ?, ?)";
+                                        // التحقق مما إذا كان الجزء الفرعي موجوداً بالفعل في قاعدة البيانات
+                                        $sql = "SELECT id FROM sections WHERE article_id = ? AND parent_id = ? AND title = ?";
                                         $stmt = mysqli_prepare($conn, $sql);
-                                        mysqli_stmt_bind_param($stmt, "issiii", $article_id, $subsection_title, $subsection_content, $subsection_entity_id, $subsection_usage_id, $parent_section_id);
+                                        mysqli_stmt_bind_param($stmt, "iis", $article_id, $parent_section_id, $subsection_title);
                                         mysqli_stmt_execute($stmt);
+                                        $result = mysqli_stmt_get_result($stmt);
 
-                                        // الحصول على معرف الجزء الفرعي المضاف
-                                        $subsection_id = mysqli_insert_id($conn);
+                                        if ($row = mysqli_fetch_assoc($result)) {
+                                            // تحديث الجزء الفرعي الموجود
+                                            $subsection_id = $row['id'];
+                                            $sql = "UPDATE sections SET title = ?, content = ?, entity_id = ?, usage_id = ? WHERE id = ?";
+                                            $stmt = mysqli_prepare($conn, $sql);
+                                            mysqli_stmt_bind_param($stmt, "ssiii", $subsection_title, $subsection_content, $subsection_entity_id, $subsection_usage_id, $subsection_id);
+                                            mysqli_stmt_execute($stmt);
+
+                                            // حذف المراجع القديمة
+                                            $sql = "DELETE FROM section_references WHERE section_id = ?";
+                                            $stmt = mysqli_prepare($conn, $sql);
+                                            mysqli_stmt_bind_param($stmt, "i", $subsection_id);
+                                            mysqli_stmt_execute($stmt);
+                                        } else {
+                                            // إضافة جزء فرعي جديد
+                                            $sql = "INSERT INTO sections (article_id, title, content, entity_id, usage_id, parent_id) VALUES (?, ?, ?, ?, ?, ?)";
+                                            $stmt = mysqli_prepare($conn, $sql);
+                                            mysqli_stmt_bind_param($stmt, "issiii", $article_id, $subsection_title, $subsection_content, $subsection_entity_id, $subsection_usage_id, $parent_section_id);
+                                            mysqli_stmt_execute($stmt);
+                                            $subsection_id = mysqli_insert_id($conn);
+                                        }
 
                                         // إضافة المراجع للجزء الفرعي
                                         if (!empty($subsection['references']) && is_array($subsection['references'])) {
