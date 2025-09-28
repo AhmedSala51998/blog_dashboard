@@ -517,9 +517,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         if (!empty($subsection['id'])) {
                             // تحديث الجزء الفرعي الموجود
                             $subsection_id = cleanInput($subsection['id']);
-                            $sql = "UPDATE sections SET title = ?, content = ? WHERE id = ?";
+                            $sql = "UPDATE sections SET title = ?, content = ?, entity_id = ?, usage_id = ? WHERE id = ?";
                             $stmt = mysqli_prepare($conn, $sql);
-                            mysqli_stmt_bind_param($stmt, "ssi", $subsection_title, $subsection_content, $subsection_id);
+                            mysqli_stmt_bind_param($stmt, "ssiii", $subsection_title, $subsection_content, $subsection_entity_id, $subsection_usage_id, $subsection_id);
                             mysqli_stmt_execute($stmt);
 
                             // حذف المراجع القديمة
@@ -528,10 +528,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             mysqli_stmt_bind_param($stmt, "i", $subsection_id);
                             mysqli_stmt_execute($stmt);
                         } else {
-                            // إضافة جزء فرعي جديد
-                            $sql = "INSERT INTO sections (article_id, title, content, parent_id) VALUES (?, ?, ?, ?)";
+                            // إضافة جزء فرعي جديد - نحتاج للحصول على article_id من الجزء الأصلي
+                            // الحصول على article_id من الجزء الأصلي
+                            $sql_get_article = "SELECT article_id FROM sections WHERE id = ?";
+                            $stmt_get_article = mysqli_prepare($conn, $sql_get_article);
+                            mysqli_stmt_bind_param($stmt_get_article, "i", $section_id);
+                            mysqli_stmt_execute($stmt_get_article);
+                            $result_get_article = mysqli_stmt_get_result($stmt_get_article);
+                            $row = mysqli_fetch_assoc($result_get_article);
+                            $article_id = $row['article_id'];
+
+                            // إضافة الجزء الفرعي الجديد
+                            $sql = "INSERT INTO sections (article_id, title, content, entity_id, usage_id, parent_id) VALUES (?, ?, ?, ?, ?, ?)";
                             $stmt = mysqli_prepare($conn, $sql);
-                            mysqli_stmt_bind_param($stmt, "issi", $section_id, $subsection_title, $subsection_content, $section_id);
+                            mysqli_stmt_bind_param($stmt, "issiii", $article_id, $subsection_title, $subsection_content, $subsection_entity_id, $subsection_usage_id, $section_id);
                             mysqli_stmt_execute($stmt);
                             $subsection_id = mysqli_insert_id($conn);
                         }
