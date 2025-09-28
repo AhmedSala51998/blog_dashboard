@@ -310,17 +310,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
             }
 
-            // حذف الأجزاء الفرعية القديمة
-            $sql = "DELETE FROM sections WHERE article_id = ? AND parent_id IS NOT NULL";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "i", $article_id);
-            mysqli_stmt_execute($stmt);
+            // حذف الأجزاء الفرعية القديمة فقط إذا تم إرسال أجزاء جديدة
+            if (isset($_POST['sections']) && is_array($_POST['sections']) || isset($_POST['articles']) && is_array($_POST['articles'])) {
+                $sql = "DELETE FROM sections WHERE article_id = ? AND parent_id IS NOT NULL";
+                $stmt = mysqli_prepare($conn, $sql);
+                mysqli_stmt_bind_param($stmt, "i", $article_id);
+                mysqli_stmt_execute($stmt);
+            }
 
-            // حذف الأجزاء الرئيسية القديمة
-            $sql = "DELETE FROM sections WHERE article_id = ? AND parent_id IS NULL";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "i", $article_id);
-            mysqli_stmt_execute($stmt);
+            // حذف الأجزاء الرئيسية القديمة فقط إذا تم إرسال أجزاء جديدة
+            if (isset($_POST['sections']) && is_array($_POST['sections']) || isset($_POST['articles']) && is_array($_POST['articles'])) {
+                $sql = "DELETE FROM sections WHERE article_id = ? AND parent_id IS NULL";
+                $stmt = mysqli_prepare($conn, $sql);
+                mysqli_stmt_bind_param($stmt, "i", $article_id);
+                mysqli_stmt_execute($stmt);
+            }
 
             // إضافة الأجزاء الجديدة
             if (isset($_POST['sections']) && is_array($_POST['sections'])) {
