@@ -1434,6 +1434,8 @@ $systems_result = mysqli_query($conn, $sql);
                                                                         echo '</select>
                                                                         <div class="form-text">اختر الأجزاء المرتبطة</div>
                                                                     </div>
+                                                                    <!-- إضافة حقل مخفي لمعرف الجزء الأصلي -->
+                                                                    <input type="hidden" name="articles[' . $article['id'] . '][sections][' . $section_num . '][subsections][' . $subsection_num . '][parent_id]" value="' . $section['id'] . '">
                                                                 </div>';
                                                             }
                                                         }
