@@ -95,8 +95,21 @@ function processPDFFile($file_path, $system_id) {
             $line = trim($line);
             if (empty($line)) continue;
 
+            // 🔹 Normalize line (تحويل "1مادة" -> "مادة 1" وهكذا)
+            $line = preg_replace('/^(\d+)\s*مادة$/u', 'مادة $1', $line);
+            $line = preg_replace('/^مادة(\d+)/u', 'مادة $1', $line);
+
+            $line = preg_replace('/^(\d+)\s*الجزء$/u', 'الجزء $1', $line);
+            $line = preg_replace('/^الجزء(\d+)/u', 'الجزء $1', $line);
+
+            $line = preg_replace('/^(\d+)\s*الجزء\s*الفرعي$/u', 'الجزء الفرعي $1', $line);
+            $line = preg_replace('/^الجزء\s*الفرعي(\d+)/u', 'الجزء الفرعي $1', $line);
+
             // مادة
-            if (preg_match('/^(?:المادة|مادة)?\s*(\d+)\s*(?:المادة|مادة)?$/u', $line)) {                // اغلاق مادة سابقة
+            if (preg_match('/^(?:المادة|مادة)\s*(\d+)/u', $line)) {
+                echo "📑 Detected Article: $line<br>";
+
+                // اغلاق مادة سابقة
                 if ($current_article_id !== null) {
                     if ($current_section_id !== null) {
                         if (!empty($current_subsection_content)) {
@@ -133,7 +146,10 @@ function processPDFFile($file_path, $system_id) {
             }
 
             // جزء
-            else if (preg_match('/^(?:الجزء)?\s*(\d+)\s*الجزء?$/u', $line) || preg_match('/^الجزء\s*(\d+)/u', $line)) {                // اغلاق جزء سابق
+            else if (preg_match('/^الجزء\s*(\d+)/u', $line) && $current_article_id !== null) {
+                echo "📂 Detected Section: $line<br>";
+
+                // اغلاق جزء سابق
                 if ($current_section_id !== null) {
                     if (!empty($current_subsection_content)) {
                         $sql = "INSERT INTO sections (article_id, title, content, parent_id) VALUES (?, ?, ?, ?)";
@@ -162,8 +178,10 @@ function processPDFFile($file_path, $system_id) {
             }
 
             // جزء فرعي
-            else if (preg_match('/^(?:الجزء\s*الفرعي)?\s*(\d+)/u', $line)) { 
-                    if (!empty($current_subsection_content)) {
+            else if (preg_match('/^الجزء\s*الفرعي\s*(\d+)/u', $line) && $current_section_id !== null) {
+                echo "📄 Detected Subsection: $line<br>";
+
+                if (!empty($current_subsection_content)) {
                     $sql = "INSERT INTO sections (article_id, title, content, parent_id) VALUES (?, ?, ?, ?)";
                     $stmt = mysqli_prepare($conn, $sql);
                     $stmt->bind_param("issi", $current_article_id, $current_subsection_title, $current_subsection_content, $current_section_id);
@@ -220,6 +238,7 @@ function processPDFFile($file_path, $system_id) {
         ];
     }
 }
+
 
 
 
