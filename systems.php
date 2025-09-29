@@ -2994,7 +2994,7 @@ $systems_result = mysqli_query($conn, $sql);
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">استيراد نظام من ملف PDF</h5>
+                    <h5 class="modal-title">استيراد نظام من ملف WORD</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form method="post" enctype="multipart/form-data" id="importPDFForm">
@@ -3020,7 +3020,7 @@ $systems_result = mysqli_query($conn, $sql);
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="create_new_system" name="create_new_system">
                                 <label class="form-check-label" for="create_new_system">
-                                    إنشاء نظام جديد من ملف PDF
+                                    إنشاء نظام جديد من ملف WORD
                                 </label>
                             </div>
                         </div>
