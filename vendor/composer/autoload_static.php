@@ -15,6 +15,11 @@ class ComposerStaticInita6b0f492c44a777c858b57a35947c74d
         array (
             'Symfony\\Polyfill\\Mbstring\\' => 26,
         ),
+        'P' => 
+        array (
+            'PhpOffice\\PhpWord\\' => 18,
+            'PhpOffice\\Math\\' => 15,
+        ),
         'A' => 
         array (
             'App\\' => 4,
@@ -25,6 +30,14 @@ class ComposerStaticInita6b0f492c44a777c858b57a35947c74d
         'Symfony\\Polyfill\\Mbstring\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-mbstring',
+        ),
+        'PhpOffice\\PhpWord\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phpoffice/phpword/src/PhpWord',
+        ),
+        'PhpOffice\\Math\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phpoffice/math/src/Math',
         ),
         'App\\' => 
         array (

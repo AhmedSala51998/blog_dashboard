@@ -69,14 +69,26 @@ function getSectionsRecursive($article_id, $parent_id = null, $level = 0) {
 }
 
 // دالة لمعالجة ملف PDF واستخراج البيانات
-function processPDFFile($file_path, $system_id) {
+require_once 'vendor/autoload.php';
+use PhpOffice\PhpWord\IOFactory;
+
+function processWordFile($file_path, $system_id) {
     global $conn;
-    require_once 'vendor/autoload.php';
 
     try {
-        $parser = new \Smalot\PdfParser\Parser();
-        $pdf = $parser->parseFile($file_path);
-        $text = $pdf->getText();
+        // 🔹 تحميل ملف Word
+        $phpWord = IOFactory::load($file_path);
+        $text = '';
+
+        foreach ($phpWord->getSections() as $section) {
+            $elements = $section->getElements();
+            foreach ($elements as $element) {
+                // استخراج النصوص فقط
+                if (method_exists($element, 'getText')) {
+                    $text .= $element->getText() . "\n";
+                }
+            }
+        }
 
         $lines = explode("\n", $text);
 
@@ -98,17 +110,13 @@ function processPDFFile($file_path, $system_id) {
             // 🔹 Normalize line (تحويل "1مادة" -> "مادة 1" وهكذا)
             $line = preg_replace('/^(\d+)\s*مادة$/u', 'مادة $1', $line);
             $line = preg_replace('/^مادة(\d+)/u', 'مادة $1', $line);
-
             $line = preg_replace('/^(\d+)\s*الجزء$/u', 'الجزء $1', $line);
             $line = preg_replace('/^الجزء(\d+)/u', 'الجزء $1', $line);
-
             $line = preg_replace('/^(\d+)\s*الجزء\s*الفرعي$/u', 'الجزء الفرعي $1', $line);
             $line = preg_replace('/^الجزء\s*الفرعي(\d+)/u', 'الجزء الفرعي $1', $line);
 
             // مادة
             if (preg_match('/^(?:المادة|مادة)\s*(\d+)/u', $line)) {
-                echo "📑 Detected Article: $line<br>";
-
                 // اغلاق مادة سابقة
                 if ($current_article_id !== null) {
                     if ($current_section_id !== null) {
@@ -147,9 +155,6 @@ function processPDFFile($file_path, $system_id) {
 
             // جزء
             else if (preg_match('/^الجزء\s*(\d+)/u', $line) && $current_article_id !== null) {
-                echo "📂 Detected Section: $line<br>";
-
-                // اغلاق جزء سابق
                 if ($current_section_id !== null) {
                     if (!empty($current_subsection_content)) {
                         $sql = "INSERT INTO sections (article_id, title, content, parent_id) VALUES (?, ?, ?, ?)";
@@ -179,8 +184,6 @@ function processPDFFile($file_path, $system_id) {
 
             // جزء فرعي
             else if (preg_match('/^الجزء\s*الفرعي\s*(\d+)/u', $line) && $current_section_id !== null) {
-                echo "📄 Detected Subsection: $line<br>";
-
                 if (!empty($current_subsection_content)) {
                     $sql = "INSERT INTO sections (article_id, title, content, parent_id) VALUES (?, ?, ?, ?)";
                     $stmt = mysqli_prepare($conn, $sql);
@@ -231,6 +234,7 @@ function processPDFFile($file_path, $system_id) {
             'sections_count' => $sections_count,
             'subsections_count' => $subsections_count
         ];
+
     } catch (Exception $e) {
         return [
             'success' => false,
@@ -399,7 +403,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 // إذا تم تحديد نظام بشكل صحيح، قم بمعالجة ملف PDF
                 if (!empty($system_id)) {
                     // هنا سيتم استدعاء دالة معالجة ملف PDF
-                    $result = processPDFFile($file_tmp_path, $system_id);
+                    $result = processWordFile($file_tmp_path, $system_id);
                     
                     if ($result['success']) {
                         $_SESSION['message'] = "تم استيراد البيانات بنجاح! تمت إضافة " . $result['articles_count'] . " مادة و " . $result['sections_count'] . " جزء.";
