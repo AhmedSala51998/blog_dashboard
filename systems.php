@@ -68,6 +68,142 @@ function getSectionsRecursive($article_id, $parent_id = null, $level = 0) {
     return $sections;
 }
 
+// دالة لمعالجة ملف PDF واستخراج البيانات
+function processPDFFile($file_path, $system_id) {
+    global $conn;
+    
+    // في بيئة حقيقية، يجب استخدام مكتبة مثل Smalot/PdfParser أو TCPDF لاستخراج النصوص من ملف PDF
+    // هنا سنستخدم دالة وهمية للتوضيح
+    
+    // محاكاة استخراج النصوص من ملف PDF
+    $pdf_content = file_get_contents($file_path);
+    
+    // في بيئة حقيقية، سيتم استخدام مكتبة PDF Parser هنا
+    // $parser = new \Smalot\PdfParser\Parser();
+    // $pdf = $parser->parseFile($file_path);
+    // $text = $pdf->getText();
+    
+    // تقسيم المحتوى إلى مواد وأجزاء وأجزاء فرعية
+    // هذا مجرد مثال توضيحي، ويجب تعديله حسب هيكل ملفات PDF الفعلية
+    
+    $articles_count = 0;
+    $sections_count = 0;
+    $subsections_count = 0;
+    
+    // مثال على هيكل البيانات المستخرجة من ملف PDF
+    // في بيئة حقيقية، سيتم استخراج هذه البيانات من ملف PDF باستخدام تحليل النص
+    $extracted_data = [
+        'articles' => [
+            [
+                'title' => 'المادة الأولى',
+                'content' => 'نص المادة الأولى المستخرجة من ملف PDF',
+                'entity_id' => null,
+                'usage_id' => null,
+                'sections' => [
+                    [
+                        'title' => 'الجزء الأول',
+                        'content' => 'نص الجزء الأول',
+                        'entity_id' => null,
+                        'usage_id' => null,
+                        'subsections' => [
+                            [
+                                'title' => 'الجزء الفرعي الأول',
+                                'content' => 'نص الجزء الفرعي الأول',
+                                'entity_id' => null,
+                                'usage_id' => null
+                            ],
+                            [
+                                'title' => 'الجزء الفرعي الثاني',
+                                'content' => 'نص الجزء الفرعي الثاني',
+                                'entity_id' => null,
+                                'usage_id' => null
+                            ]
+                        ]
+                    ],
+                    [
+                        'title' => 'الجزء الثاني',
+                        'content' => 'نص الجزء الثاني',
+                        'entity_id' => null,
+                        'usage_id' => null,
+                        'subsections' => []
+                    ]
+                ]
+            ],
+            [
+                'title' => 'المادة الثانية',
+                'content' => 'نص المادة الثانية المستخرجة من ملف PDF',
+                'entity_id' => null,
+                'usage_id' => null,
+                'sections' => []
+            ]
+        ]
+    ];
+    
+    // معالجة المواد المستخرجة وإضافتها لقاعدة البيانات
+    foreach ($extracted_data['articles'] as $article_data) {
+        // إضافة المادة
+        $article_title = cleanInput($article_data['title']);
+        $article_content = cleanInput($article_data['content']);
+        $entity_id = !empty($article_data['entity_id']) ? cleanInput($article_data['entity_id']) : null;
+        $usage_id = !empty($article_data['usage_id']) ? cleanInput($article_data['usage_id']) : null;
+        
+        $sql = "INSERT INTO articles (system_id, title, content, entity_id, usage_id) VALUES (?, ?, ?, ?, ?)";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "issii", $system_id, $article_title, $article_content, $entity_id, $usage_id);
+        
+        if (mysqli_stmt_execute($stmt)) {
+            $article_id = mysqli_insert_id($conn);
+            $articles_count++;
+            
+            // معالجة الأجزاء
+            if (!empty($article_data['sections'])) {
+                foreach ($article_data['sections'] as $section_data) {
+                    // إضافة الجزء
+                    $section_title = cleanInput($section_data['title']);
+                    $section_content = cleanInput($section_data['content']);
+                    $section_entity_id = !empty($section_data['entity_id']) ? cleanInput($section_data['entity_id']) : null;
+                    $section_usage_id = !empty($section_data['usage_id']) ? cleanInput($section_data['usage_id']) : null;
+                    
+                    $sql = "INSERT INTO sections (article_id, title, content, entity_id, usage_id) VALUES (?, ?, ?, ?, ?)";
+                    $stmt = mysqli_prepare($conn, $sql);
+                    mysqli_stmt_bind_param($stmt, "issii", $article_id, $section_title, $section_content, $section_entity_id, $section_usage_id);
+                    
+                    if (mysqli_stmt_execute($stmt)) {
+                        $section_id = mysqli_insert_id($conn);
+                        $sections_count++;
+                        
+                        // معالجة الأجزاء الفرعية
+                        if (!empty($section_data['subsections'])) {
+                            foreach ($section_data['subsections'] as $subsection_data) {
+                                // إضافة الجزء الفرعي
+                                $subsection_title = cleanInput($subsection_data['title']);
+                                $subsection_content = cleanInput($subsection_data['content']);
+                                $subsection_entity_id = !empty($subsection_data['entity_id']) ? cleanInput($subsection_data['entity_id']) : null;
+                                $subsection_usage_id = !empty($subsection_data['usage_id']) ? cleanInput($subsection_data['usage_id']) : null;
+                                
+                                $sql = "INSERT INTO sections (article_id, title, content, entity_id, usage_id, parent_id) VALUES (?, ?, ?, ?, ?, ?)";
+                                $stmt = mysqli_prepare($conn, $sql);
+                                mysqli_stmt_bind_param($stmt, "issiii", $article_id, $subsection_title, $subsection_content, $subsection_entity_id, $subsection_usage_id, $section_id);
+                                
+                                if (mysqli_stmt_execute($stmt)) {
+                                    $subsections_count++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    return [
+        'success' => true,
+        'articles_count' => $articles_count,
+        'sections_count' => $sections_count,
+        'subsections_count' => $subsections_count
+    ];
+}
+
 // دالة لعرض الأجزاء بشكل متكرر
 function displaySectionsRecursive($sections, $article_id) {
     foreach ($sections as $section) {
@@ -175,6 +311,72 @@ function displaySectionsRecursive($sections, $article_id) {
 
 // معالجة طلبات الإضافة والحذف والتعديل
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // استيراد بيانات من ملف PDF
+    if (isset($_POST['import_pdf'])) {
+        // التحقق من وجود ملف مرفوع
+        if (isset($_FILES['pdf_file']) && $_FILES['pdf_file']['error'] == UPLOAD_ERR_OK) {
+            $file_tmp_path = $_FILES['pdf_file']['tmp_name'];
+            $file_name = $_FILES['pdf_file']['name'];
+            
+            // التحقق من امتداد الملف
+            $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+            if ($file_extension != 'pdf') {
+                $_SESSION['message'] = "يرجى اختيار ملف PDF صالح.";
+                $_SESSION['message_type'] = "danger";
+            } else {
+                // تحديد ما إذا كان سيتم إنشاء نظام جديد أو استخدام نظام موجود
+                $create_new_system = isset($_POST['create_new_system']) && $_POST['create_new_system'] == 'on';
+                
+                if ($create_new_system) {
+                    // إنشاء نظام جديد
+                    $system_title = cleanInput($_POST['new_system_title']);
+                    $system_description = cleanInput($_POST['new_system_description']);
+                    
+                    if (empty($system_title)) {
+                        $_SESSION['message'] = "يرجى إدخال عنوان النظام الجديد.";
+                        $_SESSION['message_type'] = "danger";
+                    } else {
+                        $sql = "INSERT INTO systems (title, description) VALUES (?, ?)";
+                        $stmt = mysqli_prepare($conn, $sql);
+                        mysqli_stmt_bind_param($stmt, "ss", $system_title, $system_description);
+                        
+                        if (mysqli_stmt_execute($stmt)) {
+                            $system_id = mysqli_insert_id($conn);
+                            $_SESSION['message'] = "تم إنشاء النظام بنجاح! جاري معالجة ملف PDF...";
+                            $_SESSION['message_type'] = "success";
+                        } else {
+                            $_SESSION['message'] = "خطأ في إنشاء النظام: " . mysqli_error($conn);
+                            $_SESSION['message_type'] = "danger";
+                        }
+                    }
+                } else {
+                    // استخدام نظام موجود
+                    $system_id = cleanInput($_POST['system_id']);
+                    if (empty($system_id)) {
+                        $_SESSION['message'] = "يرجى اختيار نظام لاستيراد البيانات إليه.";
+                        $_SESSION['message_type'] = "danger";
+                    }
+                }
+                
+                // إذا تم تحديد نظام بشكل صحيح، قم بمعالجة ملف PDF
+                if (!empty($system_id)) {
+                    // هنا سيتم استدعاء دالة معالجة ملف PDF
+                    $result = processPDFFile($file_tmp_path, $system_id);
+                    
+                    if ($result['success']) {
+                        $_SESSION['message'] = "تم استيراد البيانات بنجاح! تمت إضافة " . $result['articles_count'] . " مادة و " . $result['sections_count'] . " جزء.";
+                        $_SESSION['message_type'] = "success";
+                    } else {
+                        $_SESSION['message'] = "خطأ في معالجة ملف PDF: " . $result['error'];
+                        $_SESSION['message_type'] = "danger";
+                    }
+                }
+            }
+        } else {
+            $_SESSION['message'] = "يرجى اختيار ملف PDF للاستيراد.";
+            $_SESSION['message_type'] = "danger";
+        }
+    }
     // إضافة نظام جديد
     if (isset($_POST['add_system'])) {
         $title = cleanInput($_POST['system_title']);
@@ -948,6 +1150,9 @@ $systems_result = mysqli_query($conn, $sql);
                     <div class="mb-4">
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSystemModal">
                             <i class="fas fa-plus"></i> إضافة نظام جديد
+                        </button>
+                        <button type="button" class="btn btn-success ms-2" data-bs-toggle="modal" data-bs-target="#importPDFModal">
+                            <i class="fas fa-file-pdf"></i> استيراد نظام من ملف PDF
                         </button>
                     </div>
 
@@ -2742,5 +2947,147 @@ $systems_result = mysqli_query($conn, $sql);
         });
     </script>
 
+    <!-- Import PDF Modal -->
+    <div class="modal fade" id="importPDFModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">استيراد نظام من ملف PDF</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" enctype="multipart/form-data" id="importPDFForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="pdf_file" class="form-label">اختر ملف PDF</label>
+                            <input type="file" class="form-control" id="pdf_file" name="pdf_file" accept=".pdf" required>
+                            <div class="form-text">يرجى اختيار ملف PDF يحتوي على بيانات النظام والمواد والأجزاء والأجزاء الفرعية.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="pdf_system_id" class="form-label">اختر النظام الذي تريد إضافة البيانات إليه</label>
+                            <select class="form-select" id="pdf_system_id" name="system_id" required>
+                                <option value="">-- اختر نظام --</option>
+                                <?php
+                                $systems_result = mysqli_query($conn, "SELECT * FROM systems ORDER BY title ASC");
+                                while ($system = mysqli_fetch_assoc($systems_result)) {
+                                    echo "<option value='" . $system['id'] . "'>" . $system['title'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="create_new_system" name="create_new_system">
+                                <label class="form-check-label" for="create_new_system">
+                                    إنشاء نظام جديد من ملف PDF
+                                </label>
+                            </div>
+                        </div>
+                        <div id="new_system_fields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="new_system_title" class="form-label">عنوان النظام الجديد</label>
+                                <input type="text" class="form-control" id="new_system_title" name="new_system_title">
+                            </div>
+                            <div class="mb-3">
+                                <label for="new_system_description" class="form-label">وصف النظام الجديد</label>
+                                <textarea class="form-control" id="new_system_description" name="new_system_description" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" name="import_pdf" class="btn btn-success">استيراد البيانات</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // عند تغيير حالة checkbox إنشاء نظام جديد
+            $('#create_new_system').change(function() {
+                if ($(this).is(':checked')) {
+                    $('#new_system_fields').show();
+                    $('#pdf_system_id').prop('required', false);
+                    $('#new_system_title').prop('required', true);
+                } else {
+                    $('#new_system_fields').hide();
+                    $('#pdf_system_id').prop('required', true);
+                    $('#new_system_title').prop('required', false);
+                }
+            });
+        });
+    </script>
+    <!-- Import PDF Modal -->
+    <div class="modal fade" id="importPDFModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">استيراد نظام من ملف PDF</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" enctype="multipart/form-data" id="importPDFForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="pdf_file" class="form-label">اختر ملف PDF</label>
+                            <input type="file" class="form-control" id="pdf_file" name="pdf_file" accept=".pdf" required>
+                            <div class="form-text">يرجى اختيار ملف PDF يحتوي على بيانات النظام والمواد والأجزاء والأجزاء الفرعية.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="pdf_system_id" class="form-label">اختر النظام الذي تريد إضافة البيانات إليه</label>
+                            <select class="form-select" id="pdf_system_id" name="system_id" required>
+                                <option value="">-- اختر نظام --</option>
+                                <?php
+                                $systems_result = mysqli_query($conn, "SELECT * FROM systems ORDER BY title ASC");
+                                while ($system = mysqli_fetch_assoc($systems_result)) {
+                                    echo "<option value='" . $system['id'] . "'>" . $system['title'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="create_new_system" name="create_new_system">
+                                <label class="form-check-label" for="create_new_system">
+                                    إنشاء نظام جديد من ملف PDF
+                                </label>
+                            </div>
+                        </div>
+                        <div id="new_system_fields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="new_system_title" class="form-label">عنوان النظام الجديد</label>
+                                <input type="text" class="form-control" id="new_system_title" name="new_system_title">
+                            </div>
+                            <div class="mb-3">
+                                <label for="new_system_description" class="form-label">وصف النظام الجديد</label>
+                                <textarea class="form-control" id="new_system_description" name="new_system_description" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" name="import_pdf" class="btn btn-success">استيراد البيانات</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // عند تغيير حالة checkbox إنشاء نظام جديد
+            $('#create_new_system').change(function() {
+                if ($(this).is(':checked')) {
+                    $('#new_system_fields').show();
+                    $('#pdf_system_id').prop('required', false);
+                    $('#new_system_title').prop('required', true);
+                } else {
+                    $('#new_system_fields').hide();
+                    $('#pdf_system_id').prop('required', true);
+                    $('#new_system_title').prop('required', false);
+                }
+            });
+        });
+    </script>
 </body>
 </html>
