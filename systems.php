@@ -96,8 +96,7 @@ function processPDFFile($file_path, $system_id) {
             if (empty($line)) continue;
 
             // مادة
-            if (preg_match('/^(?:المادة|مادة)\s*(\d+)/u', $line)) {
-                // اغلاق مادة سابقة
+            if (preg_match('/^(?:المادة|مادة)\s*(\d+)/u', $line, $m)) {                // اغلاق مادة سابقة
                 if ($current_article_id !== null) {
                     if ($current_section_id !== null) {
                         if (!empty($current_subsection_content)) {
@@ -134,8 +133,7 @@ function processPDFFile($file_path, $system_id) {
             }
 
             // جزء
-            else if (preg_match('/^الجزء\s+(\d+)/u', $line) && $current_article_id !== null) {
-                // اغلاق جزء سابق
+            else if (preg_match('/^الجزء\s*(\d+)/u', $line, $m) && $current_article_id !== null) {                // اغلاق جزء سابق
                 if ($current_section_id !== null) {
                     if (!empty($current_subsection_content)) {
                         $sql = "INSERT INTO sections (article_id, title, content, parent_id) VALUES (?, ?, ?, ?)";
@@ -164,8 +162,7 @@ function processPDFFile($file_path, $system_id) {
             }
 
             // جزء فرعي
-            else if (preg_match('/^الجزء\s+الفرعي\s+(\d+)/u', $line) && $current_section_id !== null) {
-                if (!empty($current_subsection_content)) {
+            else if (preg_match('/^الجزء\s*الفرعي\s*(\d+)/u', $line, $m) && $current_section_id !== null) {                if (!empty($current_subsection_content)) {
                     $sql = "INSERT INTO sections (article_id, title, content, parent_id) VALUES (?, ?, ?, ?)";
                     $stmt = mysqli_prepare($conn, $sql);
                     $stmt->bind_param("issi", $current_article_id, $current_subsection_title, $current_subsection_content, $current_section_id);
