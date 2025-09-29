@@ -5,6 +5,174 @@ require_once 'config.php';
 // التحقق من تسجيل دخول المستخدم
 requireLogin();
 
+// دالة لاستخراج النص من ملف PDF
+function extractTextFromPdf($filePath) {
+    // استخدام مكتبة PdfParser لاستخراج النصوص من ملف PDF
+    try {
+        // تحميل مكتبة PdfParser
+        require_once 'vendor/autoload.php';
+
+        // قراءة ملف PDF
+        $parser = new \Smalot\PdfParser\Parser();
+        $pdf = $parser->parseFile($filePath);
+        $text = $pdf->getText();
+
+        return $text;
+    } catch (Exception $e) {
+        return false;
+    }
+}
+
+// دالة لتحليل النص المستخرج من PDF وتحويله إلى هيكل منظم
+function parsePdfTextToStructure($text) {
+    // تقسيم النص إلى مواد وأجزاء
+    $lines = explode("
+", $text);
+
+    $current_article = null;
+    $current_section = null;
+    $current_subsection = null;
+    $articles = [];
+
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if (empty($line)) continue;
+
+        // التحقق إذا كان السطر يمثل مادة (مثال: "المادة 1")
+        if (preg_match('/^(المادة|مادة)\s*(\d+)/i', $line, $matches)) {
+            // حفظ المادة الحالية إذا كانت موجودة
+            if ($current_article !== null) {
+                $articles[] = $current_article;
+            }
+
+            // بدء مادة جديدة
+            $article_number = $matches[2];
+            $current_article = [
+                'title' => $line,
+                'content' => '',
+                'sections' => []
+            ];
+            $current_section = null;
+            $current_subsection = null;
+        }
+        // التحقق إذا كان السطر يمثل جزءاً (مثال: "الجزء 1-1")
+        elseif (preg_match('/^(الجزء|جزء)\s*(\d+(?:-\d+)*)/i', $line, $matches) && $current_article !== null) {
+            // حفظ الجزء الحالي إذا كان موجوداً
+            if ($current_section !== null) {
+                $current_article['sections'][] = $current_section;
+            }
+
+            // بدء جزء جديد
+            $section_number = $matches[2];
+            $current_section = [
+                'title' => $line,
+                'content' => '',
+                'subsections' => []
+            ];
+            $current_subsection = null;
+        }
+        // التحقق إذا كان السطر يمثل جزءاً فرعياً (مثال: "الفرع 1-1-أ")
+        elseif (preg_match('/^(الفرع|فرع|البند|بند)\s*(\d+(?:-\d+)*(?:-[أ-إ]+)?)/i', $line, $matches) && $current_section !== null) {
+            // حفظ الجزء الفرعي الحالي إذا كان موجوداً
+            if ($current_subsection !== null) {
+                $current_section['subsections'][] = $current_subsection;
+            }
+
+            // بدء جزء فرعي جديد
+            $subsection_number = $matches[2];
+            $current_subsection = [
+                'title' => $line,
+                'content' => ''
+            ];
+        }
+        // إضافة المحتوى إلى العنصر الحالي
+        else {
+            if ($current_subsection !== null) {
+                $current_subsection['content'] .= $line . "
+";
+            } elseif ($current_section !== null) {
+                $current_section['content'] .= $line . "
+";
+            } elseif ($current_article !== null) {
+                $current_article['content'] .= $line . "
+";
+            }
+        }
+    }
+
+    // حفظ العنصر الأخير
+    if ($current_subsection !== null) {
+        $current_section['subsections'][] = $current_subsection;
+    }
+    if ($current_section !== null) {
+        $current_article['sections'][] = $current_section;
+    }
+    if ($current_article !== null) {
+        $articles[] = $current_article;
+    }
+
+    return $articles;
+}
+
+// دالة لإضافة المواد والأجزاء المستخرجة من PDF إلى قاعدة البيانات
+function addPdfDataToDatabase($articles, $system_id, &$conn) {
+    $added_articles = 0;
+    $added_sections = 0;
+    $added_subsections = 0;
+
+    foreach ($articles as $article) {
+        if (!empty($article['title']) || !empty($article['content'])) {
+            $article_title = cleanInput($article['title']);
+            $article_content = cleanInput($article['content']);
+
+            $sql = "INSERT INTO articles (system_id, title, content) VALUES (?, ?, ?)";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "iss", $system_id, $article_title, $article_content);
+            mysqli_stmt_execute($stmt);
+
+            $article_id = mysqli_insert_id($conn);
+            $added_articles++;
+
+            // إضافة الأجزاء
+            foreach ($article['sections'] as $section) {
+                if (!empty($section['title']) || !empty($section['content'])) {
+                    $section_title = cleanInput($section['title']);
+                    $section_content = cleanInput($section['content']);
+
+                    $sql = "INSERT INTO sections (article_id, title, content, parent_id) VALUES (?, ?, ?, NULL)";
+                    $stmt = mysqli_prepare($conn, $sql);
+                    mysqli_stmt_bind_param($stmt, "iss", $article_id, $section_title, $section_content);
+                    mysqli_stmt_execute($stmt);
+
+                    $section_id = mysqli_insert_id($conn);
+                    $added_sections++;
+
+                    // إضافة الأجزاء الفرعية
+                    foreach ($section['subsections'] as $subsection) {
+                        if (!empty($subsection['title']) || !empty($subsection['content'])) {
+                            $subsection_title = cleanInput($subsection['title']);
+                            $subsection_content = cleanInput($subsection['content']);
+
+                            $sql = "INSERT INTO sections (article_id, title, content, parent_id) VALUES (?, ?, ?, ?)";
+                            $stmt = mysqli_prepare($conn, $sql);
+                            mysqli_stmt_bind_param($stmt, "issi", $article_id, $subsection_title, $subsection_content, $section_id);
+                            mysqli_stmt_execute($stmt);
+
+                            $added_subsections++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return [
+        'articles' => $added_articles,
+        'sections' => $added_sections,
+        'subsections' => $added_subsections
+    ];
+}
+
 // دالة معالجة الأجزاء بشكل متكرر
 function processSections($sections, $article_id, $parent_id = null) {
     global $conn;
@@ -602,6 +770,79 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['message'] = "خطأ أثناء إضافة المادة: " . mysqli_error($conn);
             $_SESSION['message_type'] = "danger";
         }
+    }
+}
+
+// معالجة رفع ملف PDF واستخراج البيانات
+if (isset($_POST['upload_pdf'])) {
+    // التحقق من وجود ملف مرفوع
+    if (isset($_FILES['pdf_file']) && $_FILES['pdf_file']['error'] == UPLOAD_ERR_OK) {
+        $file_tmp_path = $_FILES['pdf_file']['tmp_name'];
+        $file_name = $_FILES['pdf_file']['name'];
+
+        // التحقق من امتداد الملف
+        $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+        if ($file_ext != "pdf") {
+            $_SESSION['message'] = "يرجى اختيار ملف PDF صالح.";
+            $_SESSION['message_type'] = "danger";
+        } else {
+            // التحقق من خيار إنشاء نظام جديد أو الإضافة إلى نظام موجود
+            $create_new_system = isset($_POST['create_new_system']) && $_POST['create_new_system'] == 'on';
+
+            if ($create_new_system) {
+                // إنشاء نظام جديد
+                $new_system_title = cleanInput($_POST['new_system_title']);
+                $new_system_description = cleanInput($_POST['new_system_description']);
+
+                if (empty($new_system_title)) {
+                    $_SESSION['message'] = "يرجى إدخال عنوان النظام الجديد.";
+                    $_SESSION['message_type'] = "danger";
+                } else {
+                    $sql = "INSERT INTO systems (title, description) VALUES (?, ?)";
+                    $stmt = mysqli_prepare($conn, $sql);
+                    mysqli_stmt_bind_param($stmt, "ss", $new_system_title, $new_system_description);
+
+                    if (mysqli_stmt_execute($stmt)) {
+                        $system_id = mysqli_insert_id($conn);
+                        $_SESSION['message'] = "تم إنشاء النظام بنجاح!";
+                        $_SESSION['message_type'] = "success";
+                    } else {
+                        $_SESSION['message'] = "خطأ في إنشاء النظام: " . mysqli_error($conn);
+                        $_SESSION['message_type'] = "danger";
+                    }
+                }
+            } else {
+                // استخدام نظام موجود
+                $system_id = cleanInput($_POST['target_system']);
+                if (empty($system_id)) {
+                    $_SESSION['message'] = "يرجى اختيار نظام مستهدف.";
+                    $_SESSION['message_type'] = "danger";
+                }
+            }
+
+            // إذا تم تحديد نظام بنجاح، استمر في معالجة ملف PDF
+            if (!empty($system_id)) {
+                // استخراج النص من ملف PDF
+                $text = extractTextFromPdf($file_tmp_path);
+
+                if ($text === false) {
+                    $_SESSION['message'] = "خطأ في قراءة ملف PDF. يرجى التأكد من أن الملف سليم وغير محمي بكلمة مرور.";
+                    $_SESSION['message_type'] = "danger";
+                } else {
+                    // تحليل النص المستخرج وتحويله إلى هيكل منظم
+                    $articles = parsePdfTextToStructure($text);
+
+                    // إضافة البيانات إلى قاعدة البيانات
+                    $result = addPdfDataToDatabase($articles, $system_id, $conn);
+
+                    $_SESSION['message'] = "تم استيراد البيانات بنجاح! تمت إضافة {$result['articles']} مادة، {$result['sections']} جزء، و {$result['subsections']} جزء فرعي.";
+                    $_SESSION['message_type'] = "success";
+                }
+            }
+        }
+    } else {
+        $_SESSION['message'] = "يرجى اختيار ملف PDF صالح.";
+        $_SESSION['message_type'] = "danger";
     }
 }
 
@@ -2555,6 +2796,26 @@ $systems_result = mysqli_query($conn, $sql);
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // التعامل مع خيار إنشاء نظام جديد في مودال رفع PDF
+            const createNewSystemCheckbox = document.getElementById('create_new_system');
+            const targetSystemSelect = document.getElementById('target_system');
+            const newSystemFields = document.getElementById('new_system_fields');
+            const newSystemTitle = document.getElementById('new_system_title');
+
+            if (createNewSystemCheckbox) {
+                createNewSystemCheckbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        targetSystemSelect.disabled = true;
+                        newSystemFields.style.display = 'block';
+                        newSystemTitle.required = true;
+                    } else {
+                        targetSystemSelect.disabled = false;
+                        newSystemFields.style.display = 'none';
+                        newSystemTitle.required = false;
+                    }
+                });
+            }
+
             document.querySelectorAll('.add-section-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const systemId = btn.dataset.system;
