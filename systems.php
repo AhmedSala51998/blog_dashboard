@@ -81,6 +81,16 @@ function processPDFFile($file_path, $system_id) {
         $pdf = $parser->parseFile($file_path);
         $text = $pdf->getText();
         
+        // معالجة النص المستخرج لضمان التنسيق الصحيح
+        // استبدال المسافات المتعددة بمسافة واحدة
+        $text = preg_replace('/\s+/u', ' ', $text);
+        // إضافة أسطر جديدة قبل كلمة "مادة" لتحسين التعرف عليها
+        $text = preg_replace('/(مادة\s+\d+)/i', "\n$1", $text);
+        // إضافة أسطر جديدة قبل كلمة "الجزء" لتحسين التعرف عليها
+        $text = preg_replace('/(الجزء\s+\d+)/i', "\n$1", $text);
+        // إضافة أسطر جديدة قبل كلمة "الجزء الفرعي" لتحسين التعرف عليها
+        $text = preg_replace('/(الجزء\s+الفرعي\s+\d+)/i', "\n$1", $text);
+        
         // تقسيم النص إلى مواد وأجزاء وأجزاء فرعية
         // سنستخدم تعابير منتظمة لتحديد المواد والأجزاء والأجزاء الفرعية
         
@@ -88,8 +98,47 @@ function processPDFFile($file_path, $system_id) {
         $sections_count = 0;
         $subsections_count = 0;
         
-        // استخراج المواد - استخدام تعبير منتظم أفضل للتعرف على المواد
-        preg_match_all('/(مادة\s+(\d+))([\s\S]*?)(?=مادة\s+\d+|$)/i', $text, $articles_matches, PREG_SET_ORDER);
+        // استخراج المواد - استخدام طريقة أفضل للتعرف على المواد
+        // أولاً، نقوم بتقسيم النص إلى أسطر
+        $lines = explode("\n", $text);
+        $articles_matches = [];
+        $current_article = null;
+        $current_content = "";
+        
+        foreach ($lines as $line) {
+            // التحقق إذا كان السطر يبدأ بكلمة "مادة" متبوعة برقم
+            if (preg_match('/^\s*مادة\s+(\d+)/i', $line, $matches)) {
+                // إذا كان هناك مادة سابقة، نضيفها إلى القائمة
+                if ($current_article !== null) {
+                    $articles_matches[] = [
+                        0 => $current_article . "\n" . $current_content,
+                        1 => $current_article,
+                        2 => $current_article_num,
+                        3 => $current_content
+                    ];
+                }
+                
+                // بدء مادة جديدة
+                $current_article = $line;
+                $current_article_num = $matches[1];
+                $current_content = "";
+            } else {
+                // إضافة السطر إلى محتوى المادة الحالية
+                if ($current_article !== null) {
+                    $current_content .= "\n" . $line;
+                }
+            }
+        }
+        
+        // إضافة المادة الأخيرة
+        if ($current_article !== null) {
+            $articles_matches[] = [
+                0 => $current_article . "\n" . $current_content,
+                1 => $current_article,
+                2 => $current_article_num,
+                3 => $current_content
+            ];
+        }
         
         $extracted_data = [
             'articles' => []
@@ -99,8 +148,47 @@ function processPDFFile($file_path, $system_id) {
             $article_title = trim($article_match[1]);
             $article_content = trim($article_match[3]);
             
-            // استخراج الأجزاء من المادة - استخدام تعبير منتظم أفضل
-            preg_match_all('/(الجزء\s+(\d+))([\s\S]*?)(?=الجزء\s+\d+|$)/i', $article_content, $sections_matches, PREG_SET_ORDER);
+            // استخراج الأجزاء من المادة - استخدام طريقة أفضل
+            // تقسيم محتوى المادة إلى أسطر
+            $article_lines = explode("\n", $article_content);
+            $sections_matches = [];
+            $current_section = null;
+            $current_section_content = "";
+            
+            foreach ($article_lines as $line) {
+                // التحقق إذا كان السطر يبدأ بكلمة "الجزء" متبوعة برقم
+                if (preg_match('/^\s*الجزء\s+(\d+)/i', $line, $matches)) {
+                    // إذا كان هناك جزء سابق، نضيفه إلى القائمة
+                    if ($current_section !== null) {
+                        $sections_matches[] = [
+                            0 => $current_section . "\n" . $current_section_content,
+                            1 => $current_section,
+                            2 => $current_section_num,
+                            3 => $current_section_content
+                        ];
+                    }
+                    
+                    // بدء جزء جديد
+                    $current_section = $line;
+                    $current_section_num = $matches[1];
+                    $current_section_content = "";
+                } else {
+                    // إضافة السطر إلى محتوى الجزء الحالي
+                    if ($current_section !== null) {
+                        $current_section_content .= "\n" . $line;
+                    }
+                }
+            }
+            
+            // إضافة الجزء الأخير
+            if ($current_section !== null) {
+                $sections_matches[] = [
+                    0 => $current_section . "\n" . $current_section_content,
+                    1 => $current_section,
+                    2 => $current_section_num,
+                    3 => $current_section_content
+                ];
+            }
             
             $sections = [];
             
@@ -108,8 +196,47 @@ function processPDFFile($file_path, $system_id) {
                 $section_title = trim($section_match[1]);
                 $section_content = trim($section_match[3]);
                 
-                // استخراج الأجزاء الفرعية من الجزء - استخدام تعبير منتظم أفضل
-                preg_match_all('/(الجزء\s+الفرعي\s+(\d+))([\s\S]*?)(?=الجزء\s+الفرعي\s+\d+|$)/i', $section_content, $subsections_matches, PREG_SET_ORDER);
+                // استخراج الأجزاء الفرعية من الجزء - استخدام طريقة أفضل
+                // تقسيم محتوى الجزء إلى أسطر
+                $section_lines = explode("\n", $section_content);
+                $subsections_matches = [];
+                $current_subsection = null;
+                $current_subsection_content = "";
+                
+                foreach ($section_lines as $line) {
+                    // التحقق إذا كان السطر يبدأ بكلمة "الجزء الفرعي" متبوعة برقم
+                    if (preg_match('/^\s*الجزء\s+الفرعي\s+(\d+)/i', $line, $matches)) {
+                        // إذا كان هناك جزء فرعي سابق، نضيفه إلى القائمة
+                        if ($current_subsection !== null) {
+                            $subsections_matches[] = [
+                                0 => $current_subsection . "\n" . $current_subsection_content,
+                                1 => $current_subsection,
+                                2 => $current_subsection_num,
+                                3 => $current_subsection_content
+                            ];
+                        }
+                        
+                        // بدء جزء فرعي جديد
+                        $current_subsection = $line;
+                        $current_subsection_num = $matches[1];
+                        $current_subsection_content = "";
+                    } else {
+                        // إضافة السطر إلى محتوى الجزء الفرعي الحالي
+                        if ($current_subsection !== null) {
+                            $current_subsection_content .= "\n" . $line;
+                        }
+                    }
+                }
+                
+                // إضافة الجزء الفرعي الأخير
+                if ($current_subsection !== null) {
+                    $subsections_matches[] = [
+                        0 => $current_subsection . "\n" . $current_subsection_content,
+                        1 => $current_subsection,
+                        2 => $current_subsection_num,
+                        3 => $current_subsection_content
+                    ];
+                }
                 
                 $subsections = [];
                 
