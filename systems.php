@@ -2996,7 +2996,7 @@ $systems_result = mysqli_query($conn, $sql);
                 <form method="post" enctype="multipart/form-data" id="importPDFForm">
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label for="pdf_file" class="form-label">اختر ملف PDF</label>
+                            <label for="pdf_file" class="form-label">اختر ملف PDF OR DOCX</label>
                             <input type="file" class="form-control" id="pdf_file" name="pdf_file" accept=".pdf,.doc,.docx" required>
                             <div class="form-text">يرجى اختيار ملف PDF يحتوي على بيانات النظام والمواد والأجزاء والأجزاء الفرعية.</div>
                         </div>
