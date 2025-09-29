@@ -83,23 +83,129 @@ function processPDFFile($file_path, $system_id) {
 
         // معالجة النص المستخرج لضمان التنسيق الصحيح
         // إضافة فواصل واضحة بين المواد والأجزاء والأجزاء الفرعية
-        $text = preg_replace('/(مادة\s+\d+)/i', "===ARTICLE===\n$1", $text);
-        $text = preg_replace('/(الجزء\s+\d+)/i', "===SECTION===\n$1", $text);
-        $text = preg_replace('/(الجزء\s+الفرعي\s+\d+)/i', "===SUBSECTION===\n$1", $text);
+        $text = preg_replace('/(\s|^)(مادة\s+\d+)/i', "\n\n===ARTICLE===\n$2", $text);
+        $text = preg_replace('/(\s|^)(الجزء\s+\d+)/i', "\n\n===SECTION===\n$2", $text);
+        $text = preg_replace('/(\s|^)(الجزء\s+الفرعي\s+\d+)/i', "\n\n===SUBSECTION===\n$2", $text);
 
-        // تقسيم النص إلى أسطر
-        $lines = explode("\n", $text);
+        // تقسيم النص إلى مواد
+        $article_parts = explode("===ARTICLE===", $text);
 
         $articles_count = 0;
         $sections_count = 0;
         $subsections_count = 0;
 
-        // متغيرات لتتبع العناصر الحالية
-        $current_article_id = null;
-        $current_section_id = null;
-        $current_article_content = "";
-        $current_section_content = "";
-        $current_subsection_content = "";
+        // معالجة كل مادة على حدة
+        foreach ($article_parts as $article_part) {
+            $article_part = trim($article_part);
+            if (empty($article_part)) continue;
+
+            // استخراج عنوان المادة
+            $article_lines = explode("\n", $article_part);
+            $article_title = trim($article_lines[0]);
+
+            // التحقق إذا كان العنوان يبدأ بكلمة "مادة" متبوعة برقم
+            if (!preg_match('/^مادة\s+\d+/i', $article_title)) continue;
+
+            // إضافة المادة لقاعدة البيانات
+            $article_title = cleanInput($article_title);
+            $article_content = "";
+            $sql = "INSERT INTO articles (system_id, title, content) VALUES (?, ?, ?)";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "iss", $system_id, $article_title, $article_content);
+            mysqli_stmt_execute($stmt);
+
+            $article_id = mysqli_insert_id($conn);
+            $articles_count++;
+
+            // إزالة عنوان المادة من النص
+            array_shift($article_lines);
+            $article_content = implode("\n", $article_lines);
+
+            // تقسيم محتوى المادة إلى أجزاء
+            $section_parts = explode("===SECTION===", $article_content);
+
+            // معالجة كل جزء على حدة
+            foreach ($section_parts as $section_part) {
+                $section_part = trim($section_part);
+                if (empty($section_part)) {
+                    // إذا كان الجزء فارغاً، أضف المحتوى للمادة
+                    $article_content .= "\n" . $section_part;
+                    continue;
+                }
+
+                // استخراج عنوان الجزء
+                $section_lines = explode("\n", $section_part);
+                $section_title = trim($section_lines[0]);
+
+                // التحقق إذا كان العنوان يبدأ بكلمة "الجزء" متبوعة برقم
+                if (!preg_match('/^الجزء\s+\d+/i', $section_title)) {
+                    // إذا لم يكن جزءاً، أضفه كمحتوى للمادة
+                    $article_content .= "\n" . $section_part;
+                    continue;
+                }
+
+                // إضافة الجزء لقاعدة البيانات
+                $section_title = cleanInput($section_title);
+                $section_content = "";
+                $sql = "INSERT INTO sections (article_id, title, content) VALUES (?, ?, ?)";
+                $stmt = mysqli_prepare($conn, $sql);
+                mysqli_stmt_bind_param($stmt, "iss", $article_id, $section_title, $section_content);
+                mysqli_stmt_execute($stmt);
+
+                $section_id = mysqli_insert_id($conn);
+                $sections_count++;
+
+                // إزالة عنوان الجزء من النص
+                array_shift($section_lines);
+                $section_content = implode("\n", $section_lines);
+
+                // تقسيم محتوى الجزء إلى أجزاء فرعية
+                $subsection_parts = explode("===SUBSECTION===", $section_content);
+
+                // معالجة كل جزء فرعي على حدة
+                foreach ($subsection_parts as $subsection_part) {
+                    $subsection_part = trim($subsection_part);
+                    if (empty($subsection_part)) {
+                        // إذا كان الجزء الفرعي فارغاً، أضف المحتوى للجزء
+                        $section_content .= "\n" . $subsection_part;
+                        continue;
+                    }
+
+                    // استخراج عنوان الجزء الفرعي
+                    $subsection_lines = explode("\n", $subsection_part);
+                    $subsection_title = trim($subsection_lines[0]);
+
+                    // التحقق إذا كان العنوان يبدأ بكلمة "الجزء الفرعي" متبوعة برقم
+                    if (!preg_match('/^الجزء\s+الفرعي\s+\d+/i', $subsection_title)) {
+                        // إذا لم يكن جزءاً فرعياً، أضفه كمحتوى للجزء
+                        $section_content .= "\n" . $subsection_part;
+                        continue;
+                    }
+
+                    // إضافة الجزء الفرعي لقاعدة البيانات
+                    $subsection_title = cleanInput($subsection_title);
+                    $subsection_content = trim(implode("\n", array_slice($subsection_lines, 1)));
+                    $sql = "INSERT INTO sections (article_id, title, content, parent_id) VALUES (?, ?, ?, ?)";
+                    $stmt = mysqli_prepare($conn, $sql);
+                    mysqli_stmt_bind_param($stmt, "issi", $article_id, $subsection_title, $subsection_content, $section_id);
+                    mysqli_stmt_execute($stmt);
+
+                    $subsections_count++;
+                }
+
+                // تحديث محتوى الجزء
+                $sql = "UPDATE sections SET content = ? WHERE id = ?";
+                $stmt = mysqli_prepare($conn, $sql);
+                mysqli_stmt_bind_param($stmt, "si", $section_content, $section_id);
+                mysqli_stmt_execute($stmt);
+            }
+
+            // تحديث محتوى المادة
+            $sql = "UPDATE articles SET content = ? WHERE id = ?";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "si", $article_content, $article_id);
+            mysqli_stmt_execute($stmt);
+        }
 
         foreach ($lines as $line) {
             $line = trim($line);
