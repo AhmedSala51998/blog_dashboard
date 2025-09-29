@@ -72,72 +72,105 @@ function getSectionsRecursive($article_id, $parent_id = null, $level = 0) {
 function processPDFFile($file_path, $system_id) {
     global $conn;
     
-    // في بيئة حقيقية، يجب استخدام مكتبة مثل Smalot/PdfParser أو TCPDF لاستخراج النصوص من ملف PDF
-    // هنا سنستخدم دالة وهمية للتوضيح
+    // استخراج النص من ملف PDF
+    require_once 'vendor/autoload.php';
     
-    // محاكاة استخراج النصوص من ملف PDF
-    $pdf_content = file_get_contents($file_path);
-    
-    // في بيئة حقيقية، سيتم استخدام مكتبة PDF Parser هنا
-    // $parser = new \Smalot\PdfParser\Parser();
-    // $pdf = $parser->parseFile($file_path);
-    // $text = $pdf->getText();
-    
-    // تقسيم المحتوى إلى مواد وأجزاء وأجزاء فرعية
-    // هذا مجرد مثال توضيحي، ويجب تعديله حسب هيكل ملفات PDF الفعلية
-    
-    $articles_count = 0;
-    $sections_count = 0;
-    $subsections_count = 0;
-    
-    // مثال على هيكل البيانات المستخرجة من ملف PDF
-    // في بيئة حقيقية، سيتم استخراج هذه البيانات من ملف PDF باستخدام تحليل النص
-    $extracted_data = [
-        'articles' => [
-            [
-                'title' => 'المادة الأولى',
-                'content' => 'نص المادة الأولى المستخرجة من ملف PDF',
+    try {
+        // استخدام مكتبة PDFParser لاستخراج النص من ملف PDF
+        $parser = new \Smalot\PdfParser\Parser();
+        $pdf = $parser->parseFile($file_path);
+        $text = $pdf->getText();
+        
+        // تقسيم النص إلى مواد وأجزاء وأجزاء فرعية
+        // سنستخدم تعابير منتظمة لتحديد المواد والأجزاء والأجزاء الفرعية
+        
+        $articles_count = 0;
+        $sections_count = 0;
+        $subsections_count = 0;
+        
+        // استخراج المواد
+        preg_match_all('/(مادة\s+(\d+))([^مادة]*)/i', $text, $articles_matches, PREG_SET_ORDER);
+        
+        $extracted_data = [
+            'articles' => []
+        ];
+        
+        foreach ($articles_matches as $article_match) {
+            $article_title = trim($article_match[1]);
+            $article_content = trim($article_match[3]);
+            
+            // استخراج الأجزاء من المادة
+            preg_match_all('/(الجزء\s+(\d+))([^الجزء]*)/i', $article_content, $sections_matches, PREG_SET_ORDER);
+            
+            $sections = [];
+            
+            foreach ($sections_matches as $section_match) {
+                $section_title = trim($section_match[1]);
+                $section_content = trim($section_match[3]);
+                
+                // استخراج الأجزاء الفرعية من الجزء
+                preg_match_all('/(الجزء\s+الفرعي\s+(\d+))([^الجزء\s+الفرعي]*)/i', $section_content, $subsections_matches, PREG_SET_ORDER);
+                
+                $subsections = [];
+                
+                foreach ($subsections_matches as $subsection_match) {
+                    $subsection_title = trim($subsection_match[1]);
+                    $subsection_content = trim($subsection_match[3]);
+                    
+                    $subsections[] = [
+                        'title' => $subsection_title,
+                        'content' => $subsection_content,
+                        'entity_id' => null,
+                        'usage_id' => null
+                    ];
+                    
+                    $subsections_count++;
+                }
+                
+                $sections[] = [
+                    'title' => $section_title,
+                    'content' => $section_content,
+                    'entity_id' => null,
+                    'usage_id' => null,
+                    'subsections' => $subsections
+                ];
+                
+                $sections_count++;
+            }
+            
+            $extracted_data['articles'][] = [
+                'title' => $article_title,
+                'content' => $article_content,
                 'entity_id' => null,
                 'usage_id' => null,
-                'sections' => [
-                    [
-                        'title' => 'الجزء الأول',
-                        'content' => 'نص الجزء الأول',
-                        'entity_id' => null,
-                        'usage_id' => null,
-                        'subsections' => [
-                            [
-                                'title' => 'الجزء الفرعي الأول',
-                                'content' => 'نص الجزء الفرعي الأول',
-                                'entity_id' => null,
-                                'usage_id' => null
-                            ],
-                            [
-                                'title' => 'الجزء الفرعي الثاني',
-                                'content' => 'نص الجزء الفرعي الثاني',
-                                'entity_id' => null,
-                                'usage_id' => null
-                            ]
-                        ]
-                    ],
-                    [
-                        'title' => 'الجزء الثاني',
-                        'content' => 'نص الجزء الثاني',
-                        'entity_id' => null,
-                        'usage_id' => null,
-                        'subsections' => []
-                    ]
-                ]
-            ],
-            [
-                'title' => 'المادة الثانية',
-                'content' => 'نص المادة الثانية المستخرجة من ملف PDF',
-                'entity_id' => null,
-                'usage_id' => null,
-                'sections' => []
-            ]
-        ]
-    ];
+                'sections' => $sections
+            ];
+            
+            $articles_count++;
+        }
+        
+        // إذا لم يتم العثور على مواد بالطريقة السابقة، جرب طريقة بديلة
+        if (empty($extracted_data['articles'])) {
+            // تقسيم النص إلى فقرات
+            $paragraphs = preg_split('/\n\s*\n/', $text);
+            
+            foreach ($paragraphs as $paragraph) {
+                $paragraph = trim($paragraph);
+                if (!empty($paragraph)) {
+                    // محاولة تحديد إذا كانت الفقرة مادة
+                    if (preg_match('/^(مادة|المادة|الباب|الفصل)/i', $paragraph)) {
+                        $extracted_data['articles'][] = [
+                            'title' => substr($paragraph, 0, 50),
+                            'content' => $paragraph,
+                            'entity_id' => null,
+                            'usage_id' => null,
+                            'sections' => []
+                        ];
+                        $articles_count++;
+                    }
+                }
+            }
+        }
     
     // معالجة المواد المستخرجة وإضافتها لقاعدة البيانات
     foreach ($extracted_data['articles'] as $article_data) {
@@ -202,6 +235,14 @@ function processPDFFile($file_path, $system_id) {
         'sections_count' => $sections_count,
         'subsections_count' => $subsections_count
     ];
+    
+    } catch (Exception $e) {
+        // في حالة وجود خطأ في معالجة ملف PDF
+        return [
+            'success' => false,
+            'error' => $e->getMessage()
+        ];
+    }
 }
 
 // دالة لعرض الأجزاء بشكل متكرر
