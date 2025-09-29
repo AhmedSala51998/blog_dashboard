@@ -71,16 +71,16 @@ function getSectionsRecursive($article_id, $parent_id = null, $level = 0) {
 // دالة لمعالجة ملف PDF واستخراج البيانات
 function processPDFFile($file_path, $system_id) {
     global $conn;
-
+    
     // استخراج النص من ملف PDF
     require_once 'vendor/autoload.php';
-
+    
     try {
         // استخدام مكتبة PDFParser لاستخراج النص من ملف PDF
         $parser = new \Smalot\PdfParser\Parser();
         $pdf = $parser->parseFile($file_path);
         $text = $pdf->getText();
-
+        
         // معالجة النص المستخرج لضمان التنسيق الصحيح
         // إضافة أسطر جديدة قبل كلمة "مادة" لتحسين التعرف عليها
         $text = preg_replace('/(\s|^)(مادة\s+\d+)/i', "\n\n$2", $text);
@@ -88,139 +88,375 @@ function processPDFFile($file_path, $system_id) {
         $text = preg_replace('/(\s|^)(الجزء\s+\d+)/i', "\n\n$2", $text);
         // إضافة أسطر جديدة قبل كلمة "الجزء الفرعي" لتحسين التعرف عليها
         $text = preg_replace('/(\s|^)(الجزء\s+الفرعي\s+\d+)/i', "\n\n$2", $text);
-
-        // تقسيم النص إلى أسطر
-        $lines = explode("\n", $text);
-
+        // إضافة مسافات حول الأرقام لتحسين التعرف عليها
+        $text = preg_replace('/(\d+)/', ' $1 ', $text);
+        // إزالة المسافات الزائدة
+        $text = preg_replace('/\s+/u', ' ', $text);
+        
+        // تقسيم النص إلى مواد وأجزاء وأجزاء فرعية
+        // سنستخدم تعابير منتظمة لتحديد المواد والأجزاء والأجزاء الفرعية
+        
         $articles_count = 0;
         $sections_count = 0;
         $subsections_count = 0;
-
-        // معالجة المواد مباشرة وإضافتها لقاعدة البيانات
-        $current_article_id = null;
-        $current_section_id = null;
-        $current_article_content = "";
-        $current_section_content = "";
-        $current_subsection_content = "";
-
+        
+        // استخراج المواد والأجزاء والأجزاء الفرعية بشكل هرمي
+        // أولاً، نقوم بتقسيم النص إلى أسطر
+        $lines = explode("\n", $text);
+        
+        $articles = [];
+        $current_article = null;
+        $current_section = null;
+        $current_subsection = null;
+        
         foreach ($lines as $line) {
             $line = trim($line);
             if (empty($line)) continue;
-
+            
             // التحقق إذا كان السطر يبدأ بكلمة "مادة" متبوعة برقم
             if (preg_match('/^مادة\s+(\d+)/i', $line, $matches)) {
-                // إذا كان هناك مادة سابقة، قم بإغلاقها
-                if ($current_article_id !== null) {
-                    // تحديث محتوى المادة الحالية
-                    $sql = "UPDATE articles SET content = ? WHERE id = ?";
-                    $stmt = mysqli_prepare($conn, $sql);
-                    mysqli_stmt_bind_param($stmt, "si", $current_article_content, $current_article_id);
-                    mysqli_stmt_execute($stmt);
+                // إذا كان هناك مادة سابقة، نضيفها إلى القائمة
+                if ($current_article !== null) {
+                    // إذا كان هناك جزء فرعي مفتوح، أضفه للجزء الحالي
+                    if ($current_subsection !== null) {
+                        $current_section['subsections'][] = $current_subsection;
+                        $current_subsection = null;
+                    }
+                    
+                    // إذا كان هناك جزء مفتوح، أضفه للمادة الحالية
+                    if ($current_section !== null) {
+                        $current_article['sections'][] = $current_section;
+                        $current_section = null;
+                    }
+                    
+                    // أضف المادة الحالية للقائمة
+                    $articles[] = $current_article;
                 }
-
-                // إضافة مادة جديدة
-                $article_title = cleanInput($line);
-                $article_content = "";
-                $sql = "INSERT INTO articles (system_id, title, content) VALUES (?, ?, ?)";
-                $stmt = mysqli_prepare($conn, $sql);
-                mysqli_stmt_bind_param($stmt, "iss", $system_id, $article_title, $article_content);
-                mysqli_stmt_execute($stmt);
-
-                $current_article_id = mysqli_insert_id($conn);
-                $current_section_id = null;
-                $current_article_content = "";
-                $current_section_content = "";
-                $current_subsection_content = "";
-                $articles_count++;
-            }
+                
+                // بدء مادة جديدة
+                $article_num = $matches[1];
+                $current_article = [
+                    'title' => $line,
+                    'content' => '',
+                    'entity_id' => null,
+                    'usage_id' => null,
+                    'sections' => []
+                ];
+                $current_section = null;
+                $current_subsection = null;
+            } 
             // التحقق إذا كان السطر يبدأ بكلمة "الجزء" متبوعة برقم
-            else if (preg_match('/^الجزء\s+(\d+)/i', $line, $matches) && $current_article_id !== null) {
-                // إذا كان هناك جزء سابق، قم بإغلاقه
-                if ($current_section_id !== null) {
-                    // تحديث محتوى الجزء الحالي
-                    $sql = "UPDATE sections SET content = ? WHERE id = ?";
-                    $stmt = mysqli_prepare($conn, $sql);
-                    mysqli_stmt_bind_param($stmt, "si", $current_section_content, $current_section_id);
-                    mysqli_stmt_execute($stmt);
+            else if (preg_match('/^الجزء\s+(\d+)/i', $line, $matches) && $current_article !== null) {
+                // إذا كان هناك جزء فرعي مفتوح، أضفه للجزء الحالي
+                if ($current_subsection !== null) {
+                    $current_section['subsections'][] = $current_subsection;
+                    $current_subsection = null;
                 }
-
-                // إضافة جزء جديد
-                $section_title = cleanInput($line);
-                $section_content = "";
-                $sql = "INSERT INTO sections (article_id, title, content) VALUES (?, ?, ?)";
-                $stmt = mysqli_prepare($conn, $sql);
-                mysqli_stmt_bind_param($stmt, "iss", $current_article_id, $section_title, $section_content);
-                mysqli_stmt_execute($stmt);
-
-                $current_section_id = mysqli_insert_id($conn);
-                $current_section_content = "";
-                $current_subsection_content = "";
-                $sections_count++;
+                
+                // إذا كان هناك جزء مفتوح، أضفه للمادة الحالية
+                if ($current_section !== null) {
+                    $current_article['sections'][] = $current_section;
+                }
+                
+                // بدء جزء جديد
+                $section_num = $matches[1];
+                $current_section = [
+                    'title' => $line,
+                    'content' => '',
+                    'entity_id' => null,
+                    'usage_id' => null,
+                    'subsections' => []
+                ];
+                $current_subsection = null;
             }
             // التحقق إذا كان السطر يبدأ بكلمة "الجزء الفرعي" متبوعة برقم
-            else if (preg_match('/^الجزء\s+الفرعي\s+(\d+)/i', $line, $matches) && $current_section_id !== null) {
-                // إذا كان هناك جزء فرعي سابق، قم بإغلاقه
-                if (!empty($current_subsection_content)) {
-                    // إضافة جزء فرعي جديد
-                    $subsection_title = cleanInput($line);
-                    $subsection_content = "";
-                    $sql = "INSERT INTO sections (article_id, title, content, parent_id) VALUES (?, ?, ?, ?)";
-                    $stmt = mysqli_prepare($conn, $sql);
-                    mysqli_stmt_bind_param($stmt, "issi", $current_article_id, $subsection_title, $subsection_content, $current_section_id);
-                    mysqli_stmt_execute($stmt);
-                    $subsections_count++;
+            else if (preg_match('/^الجزء\s+الفرعي\s+(\d+)/i', $line, $matches) && $current_section !== null) {
+                // إذا كان هناك جزء فرعي مفتوح، أضفه للجزء الحالي
+                if ($current_subsection !== null) {
+                    $current_section['subsections'][] = $current_subsection;
                 }
-
+                
                 // بدء جزء فرعي جديد
-                $current_subsection_content = "";
+                $subsection_num = $matches[1];
+                $current_subsection = [
+                    'title' => $line,
+                    'content' => '',
+                    'entity_id' => null,
+                    'usage_id' => null
+                ];
             }
             // إضافة المحتوى للعنصر الحالي
             else {
-                if (!empty($current_subsection_content)) {
-                    $current_subsection_content .= (empty($current_subsection_content) ? '' : "\n") . $line;
-                } else if ($current_section_id !== null) {
-                    $current_section_content .= (empty($current_section_content) ? '' : "\n") . $line;
-                } else if ($current_article_id !== null) {
-                    $current_article_content .= (empty($current_article_content) ? '' : "\n") . $line;
+                if ($current_subsection !== null) {
+                    $current_subsection['content'] .= (empty($current_subsection['content']) ? '' : "\n") . $line;
+                } else if ($current_section !== null) {
+                    $current_section['content'] .= (empty($current_section['content']) ? '' : "\n") . $line;
+                } else if ($current_article !== null) {
+                    $current_article['content'] .= (empty($current_article['content']) ? '' : "\n") . $line;
                 }
             }
         }
-
-        // إغلاق العناصر المتبقية
-        if ($current_article_id !== null) {
-            // تحديث محتوى المادة الحالية
-            $sql = "UPDATE articles SET content = ? WHERE id = ?";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "si", $current_article_content, $current_article_id);
-            mysqli_stmt_execute($stmt);
+        
+        // إضافة العناصر المتبقية
+        if ($current_subsection !== null) {
+            $current_section['subsections'][] = $current_subsection;
         }
-
-        if ($current_section_id !== null) {
-            // تحديث محتوى الجزء الحالي
-            $sql = "UPDATE sections SET content = ? WHERE id = ?";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "si", $current_section_content, $current_section_id);
-            mysqli_stmt_execute($stmt);
+        
+        if ($current_section !== null) {
+            $current_article['sections'][] = $current_section;
         }
-
-        if (!empty($current_subsection_content) && $current_section_id !== null) {
-            // إضافة الجزء الفرعي الأخير
-            $subsection_title = cleanInput("الجزء الفرعي");
-            $subsection_content = $current_subsection_content;
-            $sql = "INSERT INTO sections (article_id, title, content, parent_id) VALUES (?, ?, ?, ?)";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "issi", $current_article_id, $subsection_title, $subsection_content, $current_section_id);
-            mysqli_stmt_execute($stmt);
-            $subsections_count++;
+        
+        if ($current_article !== null) {
+            $articles[] = $current_article;
         }
-
-        return [
-            'success' => true,
-            'articles_count' => $articles_count,
-            'sections_count' => $sections_count,
-            'subsections_count' => $subsections_count
+        
+        // تحويل المصفوفة إلى الشكل المتوقع
+        $articles_matches = [];
+        foreach ($articles as $article) {
+            $articles_matches[] = [
+                0 => $article['title'] . "\n" . $article['content'],
+                1 => $article['title'],
+                2 => preg_replace('/\D/', '', $article['title']),
+                3 => $article['content']
+            ];
+        }
+        
+        $extracted_data = [
+            'articles' => []
         ];
-
+        
+        // استخدام الهيكل الهرمي الذي تم استخراجه مباشرة
+        foreach ($articles as $article) {
+            $article_title = trim($article['title']);
+            $article_content = trim($article['content']);
+            
+            // استخراج الأجزاء من المادة - استخدام طريقة أفضل
+            // تقسيم محتوى المادة إلى أسطر
+            $article_lines = explode("\n", $article_content);
+            $sections_matches = [];
+            $current_section = null;
+            $current_section_content = "";
+            
+            foreach ($article_lines as $line) {
+                // التحقق إذا كان السطر يبدأ بكلمة "الجزء" متبوعة برقم
+                if (preg_match('/^\s*الجزء\s+(\d+)/i', $line, $matches)) {
+                    // إذا كان هناك جزء سابق، نضيفه إلى القائمة
+                    if ($current_section !== null) {
+                        $sections_matches[] = [
+                            0 => $current_section . "\n" . $current_section_content,
+                            1 => $current_section,
+                            2 => $current_section_num,
+                            3 => $current_section_content
+                        ];
+                    }
+                    
+                    // بدء جزء جديد
+                    $current_section = $line;
+                    $current_section_num = $matches[1];
+                    $current_section_content = "";
+                } else {
+                    // إضافة السطر إلى محتوى الجزء الحالي
+                    if ($current_section !== null) {
+                        $current_section_content .= "\n" . $line;
+                    }
+                }
+            }
+            
+            // إضافة الجزء الأخير
+            if ($current_section !== null) {
+                $sections_matches[] = [
+                    0 => $current_section . "\n" . $current_section_content,
+                    1 => $current_section,
+                    2 => $current_section_num,
+                    3 => $current_section_content
+                ];
+            }
+            
+            $sections = [];
+            
+            foreach ($sections_matches as $section_match) {
+                $section_title = trim($section_match[1]);
+                $section_content = trim($section_match[3]);
+                
+                // استخراج الأجزاء الفرعية من الجزء - استخدام طريقة أفضل
+                // تقسيم محتوى الجزء إلى أسطر
+                $section_lines = explode("\n", $section_content);
+                $subsections_matches = [];
+                $current_subsection = null;
+                $current_subsection_content = "";
+                
+                foreach ($section_lines as $line) {
+                    // التحقق إذا كان السطر يبدأ بكلمة "الجزء الفرعي" متبوعة برقم
+                    if (preg_match('/^\s*الجزء\s+الفرعي\s+(\d+)/i', $line, $matches)) {
+                        // إذا كان هناك جزء فرعي سابق، نضيفه إلى القائمة
+                        if ($current_subsection !== null) {
+                            $subsections_matches[] = [
+                                0 => $current_subsection . "\n" . $current_subsection_content,
+                                1 => $current_subsection,
+                                2 => $current_subsection_num,
+                                3 => $current_subsection_content
+                            ];
+                        }
+                        
+                        // بدء جزء فرعي جديد
+                        $current_subsection = $line;
+                        $current_subsection_num = $matches[1];
+                        $current_subsection_content = "";
+                    } else {
+                        // إضافة السطر إلى محتوى الجزء الفرعي الحالي
+                        if ($current_subsection !== null) {
+                            $current_subsection_content .= "\n" . $line;
+                        }
+                    }
+                }
+                
+                // إضافة الجزء الفرعي الأخير
+                if ($current_subsection !== null) {
+                    $subsections_matches[] = [
+                        0 => $current_subsection . "\n" . $current_subsection_content,
+                        1 => $current_subsection,
+                        2 => $current_subsection_num,
+                        3 => $current_subsection_content
+                    ];
+                }
+                
+                $subsections = [];
+                
+                foreach ($subsections_matches as $subsection_match) {
+                    $subsection_title = trim($subsection_match[1]);
+                    $subsection_content = trim($subsection_match[3]);
+                    
+                    $subsections[] = [
+                        'title' => $subsection_title,
+                        'content' => $subsection_content,
+                        'entity_id' => null,
+                        'usage_id' => null
+                    ];
+                    
+                    $subsections_count++;
+                }
+                
+                $sections[] = [
+                    'title' => $section_title,
+                    'content' => $section_content,
+                    'entity_id' => null,
+                    'usage_id' => null,
+                    'subsections' => $subsections
+                ];
+                
+                $sections_count++;
+            }
+            
+            $extracted_data['articles'][] = [
+                'title' => $article_title,
+                'content' => $article_content,
+                'entity_id' => null,
+                'usage_id' => null,
+                'sections' => $sections
+            ];
+            
+            $articles_count++;
+        }
+        
+        // إذا لم يتم العثور على مواد بالطريقة السابقة، جرب طريقة بديلة
+        if (empty($extracted_data['articles'])) {
+            // تقسيم النص إلى فقرات
+            $paragraphs = preg_split('/\n\s*\n/', $text);
+            
+            foreach ($paragraphs as $paragraph) {
+                $paragraph = trim($paragraph);
+                if (!empty($paragraph)) {
+                    // محاولة تحديد إذا كانت الفقرة مادة
+                    if (preg_match('/^(مادة|المادة|الباب|الفصل)/i', $paragraph)) {
+                        $extracted_data['articles'][] = [
+                            'title' => substr($paragraph, 0, 50),
+                            'content' => $paragraph,
+                            'entity_id' => null,
+                            'usage_id' => null,
+                            'sections' => []
+                        ];
+                        $articles_count++;
+                    }
+                }
+            }
+        }
+        
+        // إذا لم يتم العثور على مواد بالطرق السابقة، استخدم النص كاملاً كمادة واحدة
+        if (empty($extracted_data['articles'])) {
+            $extracted_data['articles'][] = [
+                'title' => 'مادة مستوردة من ملف PDF',
+                'content' => $text,
+                'entity_id' => null,
+                'usage_id' => null,
+                'sections' => []
+            ];
+            $articles_count = 1;
+        }
+    
+    // معالجة المواد المستخرجة وإضافتها لقاعدة البيانات
+    foreach ($extracted_data['articles'] as $article_data) {
+        // إضافة المادة
+        $article_title = cleanInput($article_data['title']);
+        $article_content = cleanInput($article_data['content']);
+        $entity_id = !empty($article_data['entity_id']) ? cleanInput($article_data['entity_id']) : null;
+        $usage_id = !empty($article_data['usage_id']) ? cleanInput($article_data['usage_id']) : null;
+        
+        $sql = "INSERT INTO articles (system_id, title, content, entity_id, usage_id) VALUES (?, ?, ?, ?, ?)";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "issii", $system_id, $article_title, $article_content, $entity_id, $usage_id);
+        
+        if (mysqli_stmt_execute($stmt)) {
+            $article_id = mysqli_insert_id($conn);
+            $articles_count++;
+            
+            // معالجة الأجزاء
+            if (!empty($article_data['sections'])) {
+                foreach ($article_data['sections'] as $section_data) {
+                    // إضافة الجزء
+                    $section_title = cleanInput($section_data['title']);
+                    $section_content = cleanInput($section_data['content']);
+                    $section_entity_id = !empty($section_data['entity_id']) ? cleanInput($section_data['entity_id']) : null;
+                    $section_usage_id = !empty($section_data['usage_id']) ? cleanInput($section_data['usage_id']) : null;
+                    
+                    $sql = "INSERT INTO sections (article_id, title, content, entity_id, usage_id) VALUES (?, ?, ?, ?, ?)";
+                    $stmt = mysqli_prepare($conn, $sql);
+                    mysqli_stmt_bind_param($stmt, "issii", $article_id, $section_title, $section_content, $section_entity_id, $section_usage_id);
+                    
+                    if (mysqli_stmt_execute($stmt)) {
+                        $section_id = mysqli_insert_id($conn);
+                        $sections_count++;
+                        
+                        // معالجة الأجزاء الفرعية
+                        if (!empty($section_data['subsections'])) {
+                            foreach ($section_data['subsections'] as $subsection_data) {
+                                // إضافة الجزء الفرعي
+                                $subsection_title = cleanInput($subsection_data['title']);
+                                $subsection_content = cleanInput($subsection_data['content']);
+                                $subsection_entity_id = !empty($subsection_data['entity_id']) ? cleanInput($subsection_data['entity_id']) : null;
+                                $subsection_usage_id = !empty($subsection_data['usage_id']) ? cleanInput($subsection_data['usage_id']) : null;
+                                
+                                $sql = "INSERT INTO sections (article_id, title, content, entity_id, usage_id, parent_id) VALUES (?, ?, ?, ?, ?, ?)";
+                                $stmt = mysqli_prepare($conn, $sql);
+                                mysqli_stmt_bind_param($stmt, "issiii", $article_id, $subsection_title, $subsection_content, $subsection_entity_id, $subsection_usage_id, $section_id);
+                                
+                                if (mysqli_stmt_execute($stmt)) {
+                                    $subsections_count++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    return [
+        'success' => true,
+        'articles_count' => $articles_count,
+        'sections_count' => $sections_count,
+        'subsections_count' => $subsections_count
+    ];
+    
     } catch (Exception $e) {
         // في حالة وجود خطأ في معالجة ملف PDF
         return [
