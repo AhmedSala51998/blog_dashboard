@@ -362,8 +362,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             
             // التحقق من امتداد الملف
             $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-            if ($file_extension != 'pdf' && $file_extension != 'doc' && $file_extension != 'docx') {
-                $_SESSION['message'] = "يرجى اختيار ملف PDF صالح.";
+            if ($file_extension != 'doc' && $file_extension != 'docx') {
+                $_SESSION['message'] = "يرجى اختيار ملف WORD صالح.";
                 $_SESSION['message_type'] = "danger";
             } else {
                 // تحديد ما إذا كان سيتم إنشاء نظام جديد أو استخدام نظام موجود
@@ -409,13 +409,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         $_SESSION['message'] = "تم استيراد البيانات بنجاح! تمت إضافة " . $result['articles_count'] . " مادة و " . $result['sections_count'] . " جزء.";
                         $_SESSION['message_type'] = "success";
                     } else {
-                        $_SESSION['message'] = "خطأ في معالجة ملف PDF: " . $result['error'];
+                        $_SESSION['message'] = "خطأ في معالجة ملف WORD: " . $result['error'];
                         $_SESSION['message_type'] = "danger";
                     }
                 }
             }
         } else {
-            $_SESSION['message'] = "يرجى اختيار ملف PDF للاستيراد.";
+            $_SESSION['message'] = "يرجى اختيار ملف WORD للاستيراد.";
             $_SESSION['message_type'] = "danger";
         }
     }
@@ -1194,7 +1194,7 @@ $systems_result = mysqli_query($conn, $sql);
                             <i class="fas fa-plus"></i> إضافة نظام جديد
                         </button>
                         <button type="button" class="btn btn-success ms-2" data-bs-toggle="modal" data-bs-target="#importPDFModal">
-                            <i class="fas fa-file-pdf"></i> استيراد نظام من ملف PDF
+                            <i class="fas fa-file-word"></i> استيراد نظام من ملف Word
                         </button>
                     </div>
 
@@ -3000,8 +3000,8 @@ $systems_result = mysqli_query($conn, $sql);
                 <form method="post" enctype="multipart/form-data" id="importPDFForm">
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label for="pdf_file" class="form-label">اختر ملف PDF OR DOCX</label>
-                            <input type="file" class="form-control" id="pdf_file" name="pdf_file" accept=".pdf,.doc,.docx" required>
+                            <label for="pdf_file" class="form-label">اختر ملف WORD</label>
+                            <input type="file" class="form-control" id="pdf_file" name="pdf_file" accept=".doc,.docx" required>
                             <div class="form-text">يرجى اختيار ملف PDF يحتوي على بيانات النظام والمواد والأجزاء والأجزاء الفرعية.</div>
                         </div>
                         <div class="mb-3">
