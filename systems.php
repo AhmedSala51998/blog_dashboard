@@ -358,7 +358,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             
             // التحقق من امتداد الملف
             $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-            if ($file_extension != 'pdf' || $file_extension != 'doc' || $file_extension != 'docx') {
+            if ($file_extension != 'pdf' && $file_extension != 'doc' && $file_extension != 'docx') {
                 $_SESSION['message'] = "يرجى اختيار ملف PDF صالح.";
                 $_SESSION['message_type'] = "danger";
             } else {
