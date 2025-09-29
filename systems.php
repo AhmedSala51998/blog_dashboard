@@ -89,37 +89,33 @@ function processPDFFile($file_path, $system_id) {
         $current_article_content = "";
         $current_section_content = "";
         $current_subsection_content = "";
+        $current_subsection_title = null;
 
         foreach ($lines as $line) {
             $line = trim($line);
             if (empty($line)) continue;
 
             // مادة
-            if (preg_match('/^(?:المادة|مادة)\s+(\d+)/u', $line)) {
-                // أغلق أي عناصر مفتوحة قبل بدء مادة جديدة
+            if (preg_match('/^(?:المادة|مادة)\s*(\d+)/u', $line)) {
+                // اغلاق مادة سابقة
                 if ($current_article_id !== null) {
                     if ($current_section_id !== null) {
                         if (!empty($current_subsection_content)) {
                             $sql = "INSERT INTO sections (article_id, title, content, parent_id) VALUES (?, ?, ?, ?)";
                             $stmt = mysqli_prepare($conn, $sql);
-                            $subsection_title = cleanInput("الجزء الفرعي");
-                            $stmt->bind_param("issi", $current_article_id, $subsection_title, $current_subsection_content, $current_section_id);
+                            $stmt->bind_param("issi", $current_article_id, $current_subsection_title, $current_subsection_content, $current_section_id);
                             $stmt->execute();
                             $subsections_count++;
-                            $current_subsection_content = "";
                         }
                         $sql = "UPDATE sections SET content = ? WHERE id = ?";
                         $stmt = mysqli_prepare($conn, $sql);
                         $stmt->bind_param("si", $current_section_content, $current_section_id);
                         $stmt->execute();
-                        $current_section_id = null;
-                        $current_section_content = "";
                     }
                     $sql = "UPDATE articles SET content = ? WHERE id = ?";
                     $stmt = mysqli_prepare($conn, $sql);
                     $stmt->bind_param("si", $current_article_content, $current_article_id);
                     $stmt->execute();
-                    $current_article_content = "";
                 }
 
                 $article_title = cleanInput($line);
@@ -129,20 +125,24 @@ function processPDFFile($file_path, $system_id) {
                 $stmt->execute();
                 $current_article_id = $conn->insert_id;
                 $articles_count++;
+
+                $current_article_content = "";
+                $current_section_id = null;
+                $current_section_content = "";
+                $current_subsection_content = "";
+                $current_subsection_title = null;
             }
 
             // جزء
             else if (preg_match('/^الجزء\s+(\d+)/u', $line) && $current_article_id !== null) {
-                // أغلق أي جزء سابق
+                // اغلاق جزء سابق
                 if ($current_section_id !== null) {
                     if (!empty($current_subsection_content)) {
                         $sql = "INSERT INTO sections (article_id, title, content, parent_id) VALUES (?, ?, ?, ?)";
                         $stmt = mysqli_prepare($conn, $sql);
-                        $subsection_title = cleanInput("الجزء الفرعي");
-                        $stmt->bind_param("issi", $current_article_id, $subsection_title, $current_subsection_content, $current_section_id);
+                        $stmt->bind_param("issi", $current_article_id, $current_subsection_title, $current_subsection_content, $current_section_id);
                         $stmt->execute();
                         $subsections_count++;
-                        $current_subsection_content = "";
                     }
                     $sql = "UPDATE sections SET content = ? WHERE id = ?";
                     $stmt = mysqli_prepare($conn, $sql);
@@ -157,7 +157,10 @@ function processPDFFile($file_path, $system_id) {
                 $stmt->execute();
                 $current_section_id = $conn->insert_id;
                 $sections_count++;
+
                 $current_section_content = "";
+                $current_subsection_content = "";
+                $current_subsection_title = null;
             }
 
             // جزء فرعي
@@ -165,17 +168,17 @@ function processPDFFile($file_path, $system_id) {
                 if (!empty($current_subsection_content)) {
                     $sql = "INSERT INTO sections (article_id, title, content, parent_id) VALUES (?, ?, ?, ?)";
                     $stmt = mysqli_prepare($conn, $sql);
-                    $subsection_title = cleanInput("الجزء الفرعي");
-                    $stmt->bind_param("issi", $current_article_id, $subsection_title, $current_subsection_content, $current_section_id);
+                    $stmt->bind_param("issi", $current_article_id, $current_subsection_title, $current_subsection_content, $current_section_id);
                     $stmt->execute();
                     $subsections_count++;
                 }
+                $current_subsection_title = cleanInput($line);
                 $current_subsection_content = "";
             }
 
-            // محتوى عادي
+            // محتوى
             else {
-                if ($current_section_id !== null && !empty($current_subsection_content)) {
+                if ($current_section_id !== null && $current_subsection_title !== null) {
                     $current_subsection_content .= (empty($current_subsection_content) ? '' : "\n") . $line;
                 } else if ($current_section_id !== null) {
                     $current_section_content .= (empty($current_section_content) ? '' : "\n") . $line;
@@ -185,14 +188,13 @@ function processPDFFile($file_path, $system_id) {
             }
         }
 
-        // إغلاق أي عناصر متبقية
+        // اغلاق العناصر المتبقية
         if ($current_article_id !== null) {
             if ($current_section_id !== null) {
                 if (!empty($current_subsection_content)) {
                     $sql = "INSERT INTO sections (article_id, title, content, parent_id) VALUES (?, ?, ?, ?)";
                     $stmt = mysqli_prepare($conn, $sql);
-                    $subsection_title = cleanInput("الجزء الفرعي");
-                    $stmt->bind_param("issi", $current_article_id, $subsection_title, $current_subsection_content, $current_section_id);
+                    $stmt->bind_param("issi", $current_article_id, $current_subsection_title, $current_subsection_content, $current_section_id);
                     $stmt->execute();
                     $subsections_count++;
                 }
@@ -220,6 +222,7 @@ function processPDFFile($file_path, $system_id) {
         ];
     }
 }
+
 
 
 // دالة لعرض الأجزاء بشكل متكرر
