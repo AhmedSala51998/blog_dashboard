@@ -358,7 +358,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             
             // التحقق من امتداد الملف
             $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-            if ($file_extension != 'pdf') {
+            if ($file_extension != 'pdf' || $file_extension != 'doc' || $file_extension != 'docx') {
                 $_SESSION['message'] = "يرجى اختيار ملف PDF صالح.";
                 $_SESSION['message_type'] = "danger";
             } else {
@@ -2997,7 +2997,7 @@ $systems_result = mysqli_query($conn, $sql);
                     <div class="modal-body">
                         <div class="mb-3">
                             <label for="pdf_file" class="form-label">اختر ملف PDF</label>
-                            <input type="file" class="form-control" id="pdf_file" name="pdf_file" accept=".pdf" required>
+                            <input type="file" class="form-control" id="pdf_file" name="pdf_file" accept=".pdf,.doc,.docx" required>
                             <div class="form-text">يرجى اختيار ملف PDF يحتوي على بيانات النظام والمواد والأجزاء والأجزاء الفرعية.</div>
                         </div>
                         <div class="mb-3">

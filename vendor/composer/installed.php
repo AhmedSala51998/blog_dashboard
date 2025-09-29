@@ -3,7 +3,7 @@
         'name' => 'blog/dashboard',
         'pretty_version' => 'dev-master',
         'version' => 'dev-master',
-        'reference' => '2ffcad1e5d6df65e836e5a7a4be56c91630c90e4',
+        'reference' => 'c0d146b46f08fcc6892551bf6e404425c9d8e047',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         'blog/dashboard' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
-            'reference' => '2ffcad1e5d6df65e836e5a7a4be56c91630c90e4',
+            'reference' => 'c0d146b46f08fcc6892551bf6e404425c9d8e047',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
