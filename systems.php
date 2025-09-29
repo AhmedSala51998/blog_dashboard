@@ -82,16 +82,10 @@ function processPDFFile($file_path, $system_id) {
         $text = $pdf->getText();
         
         // معالجة النص المستخرج لضمان التنسيق الصحيح
-        // إضافة أسطر جديدة قبل كلمة "مادة" لتحسين التعرف عليها
-        $text = preg_replace('/(\s|^)(مادة\s+\d+)/i', "\n\n$2", $text);
-        // إضافة أسطر جديدة قبل كلمة "الجزء" لتحسين التعرف عليها
-        $text = preg_replace('/(\s|^)(الجزء\s+\d+)/i', "\n\n$2", $text);
-        // إضافة أسطر جديدة قبل كلمة "الجزء الفرعي" لتحسين التعرف عليها
-        $text = preg_replace('/(\s|^)(الجزء\s+الفرعي\s+\d+)/i', "\n\n$2", $text);
-        // إضافة مسافات حول الأرقام لتحسين التعرف عليها
-        $text = preg_replace('/(\d+)/', ' $1 ', $text);
-        // إزالة المسافات الزائدة
-        $text = preg_replace('/\s+/u', ' ', $text);
+        // إضافة فواصل واضحة بين المواد والأجزاء والأجزاء الفرعية
+        $text = preg_replace('/(\s|^)(مادة\s+\d+)/i', "\n\n===ARTICLE===\n$2", $text);
+        $text = preg_replace('/(\s|^)(الجزء\s+\d+)/i', "\n\n===SECTION===\n$2", $text);
+        $text = preg_replace('/(\s|^)(الجزء\s+الفرعي\s+\d+)/i', "\n\n===SUBSECTION===\n$2", $text);
         
         // تقسيم النص إلى مواد وأجزاء وأجزاء فرعية
         // سنستخدم تعابير منتظمة لتحديد المواد والأجزاء والأجزاء الفرعية
@@ -100,126 +94,118 @@ function processPDFFile($file_path, $system_id) {
         $sections_count = 0;
         $subsections_count = 0;
         
-        // استخراج المواد والأجزاء والأجزاء الفرعية بشكل هرمي
-        // أولاً، نقوم بتقسيم النص إلى أسطر
-        $lines = explode("\n", $text);
-        
+        // تقسيم النص إلى مواد
         $articles = [];
-        $current_article = null;
-        $current_section = null;
-        $current_subsection = null;
+        $article_parts = explode("===ARTICLE===", $text);
         
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if (empty($line)) continue;
+        // معالجة كل مادة على حدة
+        foreach ($article_parts as $article_part) {
+            $article_part = trim($article_part);
+            if (empty($article_part)) continue;
             
-            // التحقق إذا كان السطر يبدأ بكلمة "مادة" متبوعة برقم
-            if (preg_match('/^مادة\s+(\d+)/i', $line, $matches)) {
-                // إذا كان هناك مادة سابقة، نضيفها إلى القائمة
-                if ($current_article !== null) {
-                    // إذا كان هناك جزء فرعي مفتوح، أضفه للجزء الحالي
-                    if ($current_subsection !== null) {
-                        $current_section['subsections'][] = $current_subsection;
-                        $current_subsection = null;
-                    }
-                    
-                    // إذا كان هناك جزء مفتوح، أضفه للمادة الحالية
-                    if ($current_section !== null) {
-                        $current_article['sections'][] = $current_section;
-                        $current_section = null;
-                    }
-                    
-                    // أضف المادة الحالية للقائمة
-                    $articles[] = $current_article;
+            // استخراج عنوان المادة
+            $article_lines = explode("\n", $article_part);
+            $article_title = trim($article_lines[0]);
+            
+            // التحقق إذا كان العنوان يبدأ بكلمة "مادة" متبوعة برقم
+            if (!preg_match('/^مادة\s+\d+/i', $article_title)) continue;
+            
+            // إنشاء مادة جديدة
+            $current_article = [
+                'title' => $article_title,
+                'content' => '',
+                'entity_id' => null,
+                'usage_id' => null,
+                'sections' => []
+            ];
+            
+            // إزالة عنوان المادة من النص
+            array_shift($article_lines);
+            $article_content = implode("\n", $article_lines);
+            
+            // تقسيم محتوى المادة إلى أجزاء
+            $section_parts = explode("===SECTION===", $article_content);
+            
+            // معالجة كل جزء على حدة
+            foreach ($section_parts as $section_part) {
+                $section_part = trim($section_part);
+                if (empty($section_part)) {
+                    // إذا كان الجزء فارغاً، أضف المحتوى للمادة
+                    $current_article['content'] .= "\n" . $section_part;
+                    continue;
                 }
                 
-                // بدء مادة جديدة
-                $article_num = $matches[1];
-                $current_article = [
-                    'title' => $line,
-                    'content' => '',
-                    'entity_id' => null,
-                    'usage_id' => null,
-                    'sections' => []
-                ];
-                $current_section = null;
-                $current_subsection = null;
-            } 
-            // التحقق إذا كان السطر يبدأ بكلمة "الجزء" متبوعة برقم
-            else if (preg_match('/^الجزء\s+(\d+)/i', $line, $matches) && $current_article !== null) {
-                // إذا كان هناك جزء فرعي مفتوح، أضفه للجزء الحالي
-                if ($current_subsection !== null) {
-                    $current_section['subsections'][] = $current_subsection;
-                    $current_subsection = null;
+                // استخراج عنوان الجزء
+                $section_lines = explode("\n", $section_part);
+                $section_title = trim($section_lines[0]);
+                
+                // التحقق إذا كان العنوان يبدأ بكلمة "الجزء" متبوعة برقم
+                if (!preg_match('/^الجزء\s+\d+/i', $section_title)) {
+                    // إذا لم يكن جزءاً، أضفه كمحتوى للمادة
+                    $current_article['content'] .= "\n" . $section_part;
+                    continue;
                 }
                 
-                // إذا كان هناك جزء مفتوح، أضفه للمادة الحالية
-                if ($current_section !== null) {
-                    $current_article['sections'][] = $current_section;
-                }
-                
-                // بدء جزء جديد
-                $section_num = $matches[1];
+                // إنشاء جزء جديد
                 $current_section = [
-                    'title' => $line,
+                    'title' => $section_title,
                     'content' => '',
                     'entity_id' => null,
                     'usage_id' => null,
                     'subsections' => []
                 ];
-                $current_subsection = null;
-            }
-            // التحقق إذا كان السطر يبدأ بكلمة "الجزء الفرعي" متبوعة برقم
-            else if (preg_match('/^الجزء\s+الفرعي\s+(\d+)/i', $line, $matches) && $current_section !== null) {
-                // إذا كان هناك جزء فرعي مفتوح، أضفه للجزء الحالي
-                if ($current_subsection !== null) {
+                
+                // إزالة عنوان الجزء من النص
+                array_shift($section_lines);
+                $section_content = implode("\n", $section_lines);
+                
+                // تقسيم محتوى الجزء إلى أجزاء فرعية
+                $subsection_parts = explode("===SUBSECTION===", $section_content);
+                
+                // معالجة كل جزء فرعي على حدة
+                foreach ($subsection_parts as $subsection_part) {
+                    $subsection_part = trim($subsection_part);
+                    if (empty($subsection_part)) {
+                        // إذا كان الجزء الفرعي فارغاً، أضف المحتوى للجزء
+                        $current_section['content'] .= "\n" . $subsection_part;
+                        continue;
+                    }
+                    
+                    // استخراج عنوان الجزء الفرعي
+                    $subsection_lines = explode("\n", $subsection_part);
+                    $subsection_title = trim($subsection_lines[0]);
+                    
+                    // التحقق إذا كان العنوان يبدأ بكلمة "الجزء الفرعي" متبوعة برقم
+                    if (!preg_match('/^الجزء\s+الفرعي\s+\d+/i', $subsection_title)) {
+                        // إذا لم يكن جزءاً فرعياً، أضفه كمحتوى للجزء
+                        $current_section['content'] .= "\n" . $subsection_part;
+                        continue;
+                    }
+                    
+                    // إنشاء جزء فرعي جديد
+                    $current_subsection = [
+                        'title' => $subsection_title,
+                        'content' => trim(implode("\n", array_slice($subsection_lines, 1))),
+                        'entity_id' => null,
+                        'usage_id' => null
+                    ];
+                    
+                    // إضافة الجزء الفرعي للجزء
                     $current_section['subsections'][] = $current_subsection;
                 }
                 
-                // بدء جزء فرعي جديد
-                $subsection_num = $matches[1];
-                $current_subsection = [
-                    'title' => $line,
-                    'content' => '',
-                    'entity_id' => null,
-                    'usage_id' => null
-                ];
+                // إضافة الجزء للمادة
+                $current_article['sections'][] = $current_section;
             }
-            // إضافة المحتوى للعنصر الحالي
-            else {
-                if ($current_subsection !== null) {
-                    $current_subsection['content'] .= (empty($current_subsection['content']) ? '' : "\n") . $line;
-                } else if ($current_section !== null) {
-                    $current_section['content'] .= (empty($current_section['content']) ? '' : "\n") . $line;
-                } else if ($current_article !== null) {
-                    $current_article['content'] .= (empty($current_article['content']) ? '' : "\n") . $line;
-                }
-            }
-        }
-        
-        // إضافة العناصر المتبقية
-        if ($current_subsection !== null) {
-            $current_section['subsections'][] = $current_subsection;
-        }
-        
-        if ($current_section !== null) {
-            $current_article['sections'][] = $current_section;
-        }
-        
-        if ($current_article !== null) {
+            
+            // إضافة المادة للقائمة
             $articles[] = $current_article;
         }
         
-        // تحويل المصفوفة إلى الشكل المتوقع
-        $articles_matches = [];
-        foreach ($articles as $article) {
-            $articles_matches[] = [
-                0 => $article['title'] . "\n" . $article['content'],
-                1 => $article['title'],
-                2 => preg_replace('/\D/', '', $article['title']),
-                3 => $article['content']
-            ];
-        }
+
+        
+        // الآن قمنا بالفعل بمعالجة المواد بشكل هرمي صحيح
+        // لا حاجة لتحويل المصفوفة إلى الشكل المتوقع
         
         $extracted_data = [
             'articles' => []
