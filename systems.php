@@ -3000,9 +3000,15 @@ $systems_result = mysqli_query($conn, $sql);
                 <form method="post" enctype="multipart/form-data" id="importPDFForm">
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label for="pdf_file" class="form-label">اختر ملف WORD</label>
-                            <input type="file" class="form-control" id="pdf_file" name="pdf_file" accept=".doc,.docx" required>
-                            <div class="form-text">يرجى اختيار ملف PDF يحتوي على بيانات النظام والمواد والأجزاء والأجزاء الفرعية.</div>
+                            <label for="pdf_file" class="form-label fw-bold">اختر ملف WORD</label>
+                            <div id="pdf_file_drop" class="border border-primary rounded-4 d-flex flex-column justify-content-center align-items-center"
+                                style="height: 180px; background-color: #f8f9fa; cursor: pointer; transition: background-color 0.3s;">
+                                <i class="fas fa-file-word" style="font-size: 50px; color: #0d6efd;"></i>
+                                <p class="mt-2 mb-0 text-center text-muted">اسحب الملف هنا أو اضغط لاختياره</p>
+                                <input type="file" class="form-control" id="pdf_file" name="pdf_file" accept=".doc,.docx" required
+                                    style="position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                            </div>
+                            <div class="form-text text-muted">يرجى اختيار ملف WORD يحتوي على بيانات النظام والمواد والأجزاء والأجزاء الفرعية.</div>
                         </div>
                         <div class="mb-3">
                             <label for="pdf_system_id" class="form-label">اختر النظام الذي تريد إضافة البيانات إليه</label>
@@ -3131,5 +3137,37 @@ $systems_result = mysqli_query($conn, $sql);
             });
         });
     </script>
+    <script>
+const dropArea = document.getElementById('pdf_file_drop');
+const fileInput = document.getElementById('pdf_file');
+
+dropArea.addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', () => {
+    const fileName = fileInput.files[0]?.name || '';
+    if(fileName){
+        dropArea.querySelector('p').innerText = "تم اختيار الملف: " + fileName;
+    }
+});
+
+dropArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropArea.style.backgroundColor = "#e7f1ff";
+});
+
+dropArea.addEventListener('dragleave', () => {
+    dropArea.style.backgroundColor = "#f8f9fa";
+});
+
+dropArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    fileInput.files = e.dataTransfer.files;
+    const fileName = fileInput.files[0]?.name || '';
+    if(fileName){
+        dropArea.querySelector('p').innerText = "تم اختيار الملف: " + fileName;
+    }
+    dropArea.style.backgroundColor = "#f8f9fa";
+});
+</script>
 </body>
 </html>
