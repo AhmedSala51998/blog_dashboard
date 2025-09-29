@@ -4,9 +4,11 @@
  * @file This file is part of the PdfParser library.
  *
  * @author  Dāvis Mosāns <davis.mosans@intelligentsystems.lv>
+ *
  * @date    2019-09-17
  *
  * @license LGPLv3
+ *
  * @url     <https://github.com/smalot/pdfparser>
  *
  *  PdfParser is a pdf library written in PHP, extraction oriented.
@@ -35,13 +37,11 @@ namespace Smalot\PdfParser\Encoding;
 class PostScriptGlyphs
 {
     /**
-     * @return array
-     *
      * The mapping tables have been converted from https://github.com/OpenPrinting/cups-filters/blob/master/fontembed/aglfn13.c,
      * part of the OpenPrinting/cups-filters package, which itself is licensed under the MIT license and lists this specific code part as:
      * Copyright 2008,2012 Tobias Hoffmann under the Expat license (https://www.gnu.org/licenses/license-list.html#Expat)
      */
-    public static function getGlyphs()
+    public static function getGlyphs(): array
     {
         return [
             'space' => '0x00a0',
@@ -1086,7 +1086,7 @@ class PostScriptGlyphs
         ];
     }
 
-    public static function getCodePoint($glyph)
+    public static function getCodePoint($glyph): ?int
     {
         $glyphsMap = static::getGlyphs();
 
@@ -1094,6 +1094,6 @@ class PostScriptGlyphs
             return hexdec($glyphsMap[$glyph]);
         }
 
-        return $glyph;
+        return null;
     }
 }

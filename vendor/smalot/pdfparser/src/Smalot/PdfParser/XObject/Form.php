@@ -5,9 +5,11 @@
  *          This file is part of the PdfParser library.
  *
  * @author  Sébastien MALOT <sebastien@malot.fr>
+ *
  * @date    2017-01-03
  *
  * @license LGPLv3
+ *
  * @url     <https://github.com/smalot/pdfparser>
  *
  *  PdfParser is a pdf library written in PHP, extraction oriented.
@@ -39,15 +41,10 @@ use Smalot\PdfParser\PDFObject;
  */
 class Form extends Page
 {
-    /**
-     * @param Page $page
-     *
-     * @return string
-     */
-    public function getText(Page $page = null)
+    public function getText(?Page $page = null): string
     {
         $header = new Header([], $this->document);
-        $contents = new PDFObject($this->document, $header, $this->content);
+        $contents = new PDFObject($this->document, $header, $this->content, $this->config);
 
         return $contents->getText($this);
     }

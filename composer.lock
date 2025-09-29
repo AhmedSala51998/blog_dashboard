@@ -4,30 +4,27 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a6b0f492c44a777c858b57a35947c74d",
+    "content-hash": "cf490cd4fd9db3fe7c603173918ac3e7",
     "packages": [
         {
             "name": "smalot/pdfparser",
-            "version": "v0.17.1",
+            "version": "v2.12.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/smalot/pdfparser.git",
-                "reference": "dc1e42293e7774353003b754cce9c64dd9546c2d"
+                "reference": "8440edbf58c8596074e78ada38dcb0bd041a5948"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/smalot/pdfparser/zipball/dc1e42293e7774353003b754cce9c64dd9546c2d",
-                "reference": "dc1e42293e7774353003b754cce9c64dd9546c2d",
+                "url": "https://api.github.com/repos/smalot/pdfparser/zipball/8440edbf58c8596074e78ada38dcb0bd041a5948",
+                "reference": "8440edbf58c8596074e78ada38dcb0bd041a5948",
                 "shasum": ""
             },
             "require": {
+                "ext-iconv": "*",
                 "ext-zlib": "*",
-                "php": ">=5.6",
-                "symfony/polyfill-mbstring": "^1.18.1"
-            },
-            "require-dev": {
-                "friendsofphp/php-cs-fixer": "^2.16.3",
-                "symfony/phpunit-bridge": "^4.2.3"
+                "php": ">=7.1",
+                "symfony/polyfill-mbstring": "^1.18"
             },
             "type": "library",
             "autoload": {
@@ -56,9 +53,9 @@
             ],
             "support": {
                 "issues": "https://github.com/smalot/pdfparser/issues",
-                "source": "https://github.com/smalot/pdfparser/tree/v0.17.1"
+                "source": "https://github.com/smalot/pdfparser/tree/v2.12.0"
             },
-            "time": "2020-10-29T20:59:50+00:00"
+            "time": "2025-03-31T13:16:09+00:00"
         },
         {
             "name": "symfony/polyfill-mbstring",

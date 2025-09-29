@@ -1,9 +1,8 @@
-
 {
     "name": "blog/dashboard",
     "description": "Blog Dashboard System",
     "require": {
-        "smalot/pdfparser": "^0.17.1"
+        "smalot/pdfparser": "2.12"
     },
     "autoload": {
         "psr-4": {

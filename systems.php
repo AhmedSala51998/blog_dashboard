@@ -171,6 +171,18 @@ function processPDFFile($file_path, $system_id) {
                 }
             }
         }
+        
+        // إذا لم يتم العثور على مواد بالطرق السابقة، استخدم النص كاملاً كمادة واحدة
+        if (empty($extracted_data['articles'])) {
+            $extracted_data['articles'][] = [
+                'title' => 'مادة مستوردة من ملف PDF',
+                'content' => $text,
+                'entity_id' => null,
+                'usage_id' => null,
+                'sections' => []
+            ];
+            $articles_count = 1;
+        }
     
     // معالجة المواد المستخرجة وإضافتها لقاعدة البيانات
     foreach ($extracted_data['articles'] as $article_data) {

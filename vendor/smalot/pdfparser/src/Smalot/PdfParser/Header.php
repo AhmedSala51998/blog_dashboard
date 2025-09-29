@@ -5,9 +5,11 @@
  *          This file is part of the PdfParser library.
  *
  * @author  Sébastien MALOT <sebastien@malot.fr>
+ *
  * @date    2017-01-03
  *
  * @license LGPLv3
+ *
  * @url     <https://github.com/smalot/pdfparser>
  *
  *  PdfParser is a pdf library written in PHP, extraction oriented.
@@ -41,20 +43,20 @@ use Smalot\PdfParser\Element\ElementXRef;
 class Header
 {
     /**
-     * @var Document
+     * @var Document|null
      */
-    protected $document = null;
+    protected $document;
 
     /**
      * @var Element[]
      */
-    protected $elements = null;
+    protected $elements;
 
     /**
      * @param Element[] $elements list of elements
      * @param Document  $document document
      */
-    public function __construct($elements = [], Document $document = null)
+    public function __construct(array $elements = [], ?Document $document = null)
     {
         $this->elements = $elements;
         $this->document = $document;
@@ -62,8 +64,10 @@ class Header
 
     public function init()
     {
-        foreach ($this->elements as $name => $element) {
-            $element->init();
+        foreach ($this->elements as $element) {
+            if ($element instanceof Element) {
+                $element->init();
+            }
         }
     }
 
@@ -81,10 +85,8 @@ class Header
 
     /**
      * Used only for debug.
-     *
-     * @return array
      */
-    public function getElementTypes()
+    public function getElementTypes(): array
     {
         $types = [];
 
@@ -95,12 +97,7 @@ class Header
         return $types;
     }
 
-    /**
-     * @param bool $deep
-     *
-     * @return array
-     */
-    public function getDetails($deep = true)
+    public function getDetails(bool $deep = true): array
     {
         $values = [];
         $elements = $this->getElements();
@@ -125,24 +122,20 @@ class Header
     /**
      * Indicate if an element name is available in header.
      *
-     * @param string $name The name of the element
-     *
-     * @return bool
+     * @param string $name the name of the element
      */
-    public function has($name)
+    public function has(string $name): bool
     {
         return \array_key_exists($name, $this->elements);
     }
 
     /**
-     * @param string $name
-     *
      * @return Element|PDFObject
      */
-    public function get($name)
+    public function get(string $name)
     {
-        if (\array_key_exists($name, $this->elements)) {
-            return $this->resolveXRef($name);
+        if (\array_key_exists($name, $this->elements) && $element = $this->resolveXRef($name)) {
+            return $element;
         }
 
         return new ElementMissing();
@@ -151,13 +144,11 @@ class Header
     /**
      * Resolve XRef to object.
      *
-     * @param string $name
-     *
      * @return Element|PDFObject
      *
      * @throws \Exception
      */
-    protected function resolveXRef($name)
+    protected function resolveXRef(string $name)
     {
         if (($obj = $this->elements[$name]) instanceof ElementXRef && null !== $this->document) {
             /** @var ElementXRef $obj */
@@ -178,10 +169,8 @@ class Header
      * @param string   $content  The content to parse
      * @param Document $document The document
      * @param int      $position The new position of the cursor after parsing
-     *
-     * @return Header
      */
-    public static function parse($content, Document $document, &$position = 0)
+    public static function parse(string $content, Document $document, int &$position = 0): self
     {
         /* @var Header $header */
         if ('<<' == substr(trim($content), 0, 2)) {
