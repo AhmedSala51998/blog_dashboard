@@ -944,11 +944,18 @@ $systems_result = mysqli_query($conn, $sql);
                 <div class="content">
                     <?php showMessage(); ?>
 
-                    <!-- Add System Button -->
-                    <div class="mb-4">
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSystemModal">
-                            <i class="fas fa-plus"></i> إضافة نظام جديد
-                        </button>
+                    <!-- Add System Button & PDF Upload -->
+                    <div class="mb-4 d-flex justify-content-between align-items-center">
+                        <div>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSystemModal">
+                                <i class="fas fa-plus"></i> إضافة نظام جديد
+                            </button>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#uploadPdfModal">
+                                <i class="fas fa-file-pdf"></i> استيراد بيانات من PDF
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Systems List -->
@@ -1225,6 +1232,70 @@ $systems_result = mysqli_query($conn, $sql);
                         </div>
                     <?php endif; ?>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload PDF Modal -->
+    <div class="modal fade" id="uploadPdfModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">استيراد بيانات من ملف PDF</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" enctype="multipart/form-data" id="uploadPdfForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="pdf_file" class="form-label">اختر ملف PDF</label>
+                            <input type="file" class="form-control" id="pdf_file" name="pdf_file" accept=".pdf" required>
+                            <div class="form-text">يرجى اختيار ملف PDF يحتوي على بيانات النظام والمواد والأجزاء.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="target_system" class="form-label">اختر النظام المستهدف</label>
+                            <select class="form-select" id="target_system" name="target_system" required>
+                                <option value="">-- اختر نظام --</option>
+                                <?php
+                                $systems_result = mysqli_query($conn, "SELECT * FROM systems ORDER BY title ASC");
+                                if (mysqli_num_rows($systems_result) > 0) {
+                                    while ($system = mysqli_fetch_assoc($systems_result)) {
+                                        echo "<option value='" . $system['id'] . "'>" . $system['title'] . "</option>";
+                                    }
+                                }
+                                ?>
+                            </select>
+                            <div class="form-text">سيتم إضافة البيانات المستخرجة إلى النظام المحدد.</div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="create_new_system" name="create_new_system">
+                                <label class="form-check-label" for="create_new_system">
+                                    إنشاء نظام جديد من ملف PDF
+                                </label>
+                            </div>
+                            <div class="form-text">في حال تم تحديد هذا الخيار، سيتم إنشاء نظام جديد بدلاً من الإضافة إلى نظام موجود.</div>
+                        </div>
+                        <div id="new_system_fields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="new_system_title" class="form-label">عنوان النظام الجديد</label>
+                                <input type="text" class="form-control" id="new_system_title" name="new_system_title">
+                            </div>
+                            <div class="mb-3">
+                                <label for="new_system_description" class="form-label">وصف النظام الجديد</label>
+                                <textarea class="form-control" id="new_system_description" name="new_system_description" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="progress" id="upload_progress" style="display: none;">
+                                <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" name="upload_pdf" class="btn btn-success">رفع واستيراد البيانات</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
