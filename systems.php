@@ -3002,11 +3002,11 @@ $systems_result = mysqli_query($conn, $sql);
                         <div class="mb-3">
                             <label for="pdf_file" class="form-label fw-bold">اختر ملف WORD</label>
                             <div id="pdf_file_drop" class="border border-primary rounded-4 d-flex flex-column justify-content-center align-items-center"
-                                style="height: 180px; background-color: #f8f9fa; cursor: pointer; transition: background-color 0.3s;">
+                                style="height: 180px; background-color: #f8f9fa; cursor: pointer; transition: background-color 0.3s; position: relative;">
                                 <i class="fas fa-file-word" style="font-size: 50px; color: #0d6efd;"></i>
                                 <p class="mt-2 mb-0 text-center text-muted">اسحب الملف هنا أو اضغط لاختياره</p>
-                                <input type="file" class="form-control" id="pdf_file" name="pdf_file" accept=".doc,.docx" required
-                                    style="position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                                <!-- Input مخفي -->
+                                <input type="file" id="pdf_file" name="pdf_file" accept=".doc,.docx" required style="display: none;">
                             </div>
                             <div class="form-text text-muted">يرجى اختيار ملف WORD يحتوي على بيانات النظام والمواد والأجزاء والأجزاء الفرعية.</div>
                         </div>
@@ -3066,82 +3066,13 @@ $systems_result = mysqli_query($conn, $sql);
             });
         });
     </script>
-    <!-- Import PDF Modal -->
-    <div class="modal fade" id="importPDFModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">استيراد نظام من ملف PDF</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form method="post" enctype="multipart/form-data" id="importPDFForm">
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="pdf_file" class="form-label">اختر ملف PDF</label>
-                            <input type="file" class="form-control" id="pdf_file" name="pdf_file" accept=".pdf" required>
-                            <div class="form-text">يرجى اختيار ملف PDF يحتوي على بيانات النظام والمواد والأجزاء والأجزاء الفرعية.</div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="pdf_system_id" class="form-label">اختر النظام الذي تريد إضافة البيانات إليه</label>
-                            <select class="form-select" id="pdf_system_id" name="system_id" required>
-                                <option value="">-- اختر نظام --</option>
-                                <?php
-                                $systems_result = mysqli_query($conn, "SELECT * FROM systems ORDER BY title ASC");
-                                while ($system = mysqli_fetch_assoc($systems_result)) {
-                                    echo "<option value='" . $system['id'] . "'>" . $system['title'] . "</option>";
-                                }
-                                ?>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="create_new_system" name="create_new_system">
-                                <label class="form-check-label" for="create_new_system">
-                                    إنشاء نظام جديد من ملف PDF
-                                </label>
-                            </div>
-                        </div>
-                        <div id="new_system_fields" style="display: none;">
-                            <div class="mb-3">
-                                <label for="new_system_title" class="form-label">عنوان النظام الجديد</label>
-                                <input type="text" class="form-control" id="new_system_title" name="new_system_title">
-                            </div>
-                            <div class="mb-3">
-                                <label for="new_system_description" class="form-label">وصف النظام الجديد</label>
-                                <textarea class="form-control" id="new_system_description" name="new_system_description" rows="3"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                        <button type="submit" name="import_pdf" class="btn btn-success">استيراد البيانات</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        $(document).ready(function() {
-            // عند تغيير حالة checkbox إنشاء نظام جديد
-            $('#create_new_system').change(function() {
-                if ($(this).is(':checked')) {
-                    $('#new_system_fields').show();
-                    $('#pdf_system_id').prop('required', false);
-                    $('#new_system_title').prop('required', true);
-                } else {
-                    $('#new_system_fields').hide();
-                    $('#pdf_system_id').prop('required', true);
-                    $('#new_system_title').prop('required', false);
-                }
-            });
-        });
-    </script>
-    <script>
+<script>
 const dropArea = document.getElementById('pdf_file_drop');
 const fileInput = document.getElementById('pdf_file');
 
-dropArea.addEventListener('click', () => fileInput.click());
+dropArea.addEventListener('click', () => {
+    fileInput.click(); // يفتح اختيار الملف مرة واحدة فقط
+});
 
 fileInput.addEventListener('change', () => {
     const fileName = fileInput.files[0]?.name || '';
@@ -3150,6 +3081,7 @@ fileInput.addEventListener('change', () => {
     }
 });
 
+// دعم السحب والإفلات
 dropArea.addEventListener('dragover', (e) => {
     e.preventDefault();
     dropArea.style.backgroundColor = "#e7f1ff";
@@ -3161,10 +3093,9 @@ dropArea.addEventListener('dragleave', () => {
 
 dropArea.addEventListener('drop', (e) => {
     e.preventDefault();
-    fileInput.files = e.dataTransfer.files;
-    const fileName = fileInput.files[0]?.name || '';
-    if(fileName){
-        dropArea.querySelector('p').innerText = "تم اختيار الملف: " + fileName;
+    if(e.dataTransfer.files.length){
+        fileInput.files = e.dataTransfer.files;
+        dropArea.querySelector('p').innerText = "تم اختيار الملف: " + e.dataTransfer.files[0].name;
     }
     dropArea.style.backgroundColor = "#f8f9fa";
 });
