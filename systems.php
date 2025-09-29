@@ -82,14 +82,16 @@ function processPDFFile($file_path, $system_id) {
         $text = $pdf->getText();
         
         // معالجة النص المستخرج لضمان التنسيق الصحيح
-        // استبدال المسافات المتعددة بمسافة واحدة
-        $text = preg_replace('/\s+/u', ' ', $text);
         // إضافة أسطر جديدة قبل كلمة "مادة" لتحسين التعرف عليها
-        $text = preg_replace('/(مادة\s+\d+)/i', "\n$1", $text);
+        $text = preg_replace('/(\s|^)(مادة\s+\d+)/i', "\n\n$2", $text);
         // إضافة أسطر جديدة قبل كلمة "الجزء" لتحسين التعرف عليها
-        $text = preg_replace('/(الجزء\s+\d+)/i', "\n$1", $text);
+        $text = preg_replace('/(\s|^)(الجزء\s+\d+)/i', "\n\n$2", $text);
         // إضافة أسطر جديدة قبل كلمة "الجزء الفرعي" لتحسين التعرف عليها
-        $text = preg_replace('/(الجزء\s+الفرعي\s+\d+)/i', "\n$1", $text);
+        $text = preg_replace('/(\s|^)(الجزء\s+الفرعي\s+\d+)/i', "\n\n$2", $text);
+        // إضافة مسافات حول الأرقام لتحسين التعرف عليها
+        $text = preg_replace('/(\d+)/', ' $1 ', $text);
+        // إزالة المسافات الزائدة
+        $text = preg_replace('/\s+/u', ' ', $text);
         
         // تقسيم النص إلى مواد وأجزاء وأجزاء فرعية
         // سنستخدم تعابير منتظمة لتحديد المواد والأجزاء والأجزاء الفرعية
@@ -99,15 +101,18 @@ function processPDFFile($file_path, $system_id) {
         $subsections_count = 0;
         
         // استخراج المواد - استخدام طريقة أفضل للتعرف على المواد
-        // أولاً، نقوم بتقسيم النص إلى أسطر
-        $lines = explode("\n", $text);
+        // أولاً، نقوم بتقسيم النص إلى فقرات
+        $paragraphs = preg_split('/\n\s*\n/', $text);
         $articles_matches = [];
         $current_article = null;
         $current_content = "";
         
-        foreach ($lines as $line) {
-            // التحقق إذا كان السطر يبدأ بكلمة "مادة" متبوعة برقم
-            if (preg_match('/^\s*مادة\s+(\d+)/i', $line, $matches)) {
+        foreach ($paragraphs as $paragraph) {
+            $paragraph = trim($paragraph);
+            if (empty($paragraph)) continue;
+            
+            // التحقق إذا كانت الفقرة تبدأ بكلمة "مادة" متبوعة برقم
+            if (preg_match('/^(مادة\s+\d+)/i', $paragraph, $matches)) {
                 // إذا كان هناك مادة سابقة، نضيفها إلى القائمة
                 if ($current_article !== null) {
                     $articles_matches[] = [
@@ -119,13 +124,13 @@ function processPDFFile($file_path, $system_id) {
                 }
                 
                 // بدء مادة جديدة
-                $current_article = $line;
-                $current_article_num = $matches[1];
-                $current_content = "";
+                $current_article = $matches[1];
+                $current_article_num = preg_replace('/\D/', '', $matches[1]);
+                $current_content = trim(substr($paragraph, strlen($matches[1])));
             } else {
-                // إضافة السطر إلى محتوى المادة الحالية
+                // إضافة الفقرة إلى محتوى المادة الحالية
                 if ($current_article !== null) {
-                    $current_content .= "\n" . $line;
+                    $current_content .= "\n\n" . $paragraph;
                 }
             }
         }
@@ -138,6 +143,20 @@ function processPDFFile($file_path, $system_id) {
                 2 => $current_article_num,
                 3 => $current_content
             ];
+        }
+        
+        // إذا لم يتم العثور على مواد، حاول مرة أخرى بطريقة مختلفة
+        if (empty($articles_matches)) {
+            // استخدام تعبير منتظم للبحث عن المواد
+            preg_match_all('/(مادة\s+(\d+))([\s\S]*?)(?=مادة\s+\d+|$)/i', $text, $matches, PREG_SET_ORDER);
+            foreach ($matches as $match) {
+                $articles_matches[] = [
+                    0 => $match[0],
+                    1 => $match[1],
+                    2 => $match[2],
+                    3 => $match[3]
+                ];
+            }
         }
         
         $extracted_data = [
