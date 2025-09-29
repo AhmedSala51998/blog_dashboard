@@ -88,8 +88,8 @@ function processPDFFile($file_path, $system_id) {
         $sections_count = 0;
         $subsections_count = 0;
         
-        // استخراج المواد
-        preg_match_all('/(مادة\s+(\d+))([^مادة]*)/i', $text, $articles_matches, PREG_SET_ORDER);
+        // استخراج المواد - استخدام تعبير منتظم أفضل للتعرف على المواد
+        preg_match_all('/(مادة\s+(\d+))([\s\S]*?)(?=مادة\s+\d+|$)/i', $text, $articles_matches, PREG_SET_ORDER);
         
         $extracted_data = [
             'articles' => []
@@ -99,8 +99,8 @@ function processPDFFile($file_path, $system_id) {
             $article_title = trim($article_match[1]);
             $article_content = trim($article_match[3]);
             
-            // استخراج الأجزاء من المادة
-            preg_match_all('/(الجزء\s+(\d+))([^الجزء]*)/i', $article_content, $sections_matches, PREG_SET_ORDER);
+            // استخراج الأجزاء من المادة - استخدام تعبير منتظم أفضل
+            preg_match_all('/(الجزء\s+(\d+))([\s\S]*?)(?=الجزء\s+\d+|$)/i', $article_content, $sections_matches, PREG_SET_ORDER);
             
             $sections = [];
             
@@ -108,8 +108,8 @@ function processPDFFile($file_path, $system_id) {
                 $section_title = trim($section_match[1]);
                 $section_content = trim($section_match[3]);
                 
-                // استخراج الأجزاء الفرعية من الجزء
-                preg_match_all('/(الجزء\s+الفرعي\s+(\d+))([^الجزء\s+الفرعي]*)/i', $section_content, $subsections_matches, PREG_SET_ORDER);
+                // استخراج الأجزاء الفرعية من الجزء - استخدام تعبير منتظم أفضل
+                preg_match_all('/(الجزء\s+الفرعي\s+(\d+))([\s\S]*?)(?=الجزء\s+الفرعي\s+\d+|$)/i', $section_content, $subsections_matches, PREG_SET_ORDER);
                 
                 $subsections = [];
                 
