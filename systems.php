@@ -33,20 +33,48 @@ function parsePdfTextToStructure($text) {
     $current_section = null;
     $current_subsection = null;
     $articles = [];
+    $current_content = ''; // محتوى مؤقت للعنصر الحالي
 
     foreach ($lines as $line) {
         $line = trim($line);
         if (empty($line)) continue;
 
-        // التحقق إذا كان السطر يمثل مادة (مثال: "المادة 1")
-        if (preg_match('/^(المادة|مادة)\s*(\d+)/i', $line, $matches)) {
+        // التحقق إذا كان السطر يمثل مادة (مثال: "المادة 1", "مادة (1)", "1-")
+        if (preg_match('/^(المادة|مادة)\s*(\d+)|^(\d+)[-:\s]|^مادة\s*\(\s*(\d+)\s*\)/i', $line, $matches)) {
             // حفظ المادة الحالية إذا كانت موجودة
             if ($current_article !== null) {
+                // إضافة المحتوى المتبقي
+                if (!empty($current_content)) {
+                    if ($current_subsection !== null) {
+                        $current_subsection['content'] = trim($current_subsection['content'] . "
+" . $current_content);
+                    } elseif ($current_section !== null) {
+                        $current_section['content'] = trim($current_section['content'] . "
+" . $current_content);
+                    } else {
+                        $current_article['content'] = trim($current_article['content'] . "
+" . $current_content);
+                    }
+                    $current_content = '';
+                }
+
+                // حفظ الأجزاء الفرعية الأخيرة
+                if ($current_subsection !== null) {
+                    $current_section['subsections'][] = $current_subsection;
+                    $current_subsection = null;
+                }
+
+                // حفظ الجزء الحالي
+                if ($current_section !== null) {
+                    $current_article['sections'][] = $current_section;
+                    $current_section = null;
+                }
+
                 $articles[] = $current_article;
             }
 
             // بدء مادة جديدة
-            $article_number = $matches[2];
+            $article_number = isset($matches[2]) ? $matches[2] : (isset($matches[3]) ? $matches[3] : $matches[4]);
             $current_article = [
                 'title' => $line,
                 'content' => '',
@@ -54,16 +82,38 @@ function parsePdfTextToStructure($text) {
             ];
             $current_section = null;
             $current_subsection = null;
+            $current_content = '';
         }
-        // التحقق إذا كان السطر يمثل جزءاً (مثال: "الجزء 1-1")
-        elseif (preg_match('/^(الجزء|جزء)\s*(\d+(?:-\d+)*)/i', $line, $matches) && $current_article !== null) {
+        // التحقق إذا كان السطر يمثل جزءاً (مثال: "الجزء 1-1", "أولاً", "ثانياً", "(أ)", "1.")
+        elseif (preg_match('/^(الجزء|جزء)\s*(\d+(?:-\d+)*)|^(أولا|ثانيا|ثالثا|رابعا|خامسا|سادسا|سابعا|ثامنا|تاسعا|عاشرا)|^[(\【](\d+|[أ-إ])[)\】]|^(\d+)[.)\s]/i', $line, $matches) && $current_article !== null) {
+            // حفظ المحتوى المتبقي أولاً
+            if (!empty($current_content)) {
+                if ($current_subsection !== null) {
+                    $current_subsection['content'] = trim($current_subsection['content'] . "
+" . $current_content);
+                } elseif ($current_section !== null) {
+                    $current_section['content'] = trim($current_section['content'] . "
+" . $current_content);
+                } else {
+                    $current_article['content'] = trim($current_article['content'] . "
+" . $current_content);
+                }
+                $current_content = '';
+            }
+
+            // حفظ الجزء الفرعي الحالي إذا كان موجوداً
+            if ($current_subsection !== null) {
+                $current_section['subsections'][] = $current_subsection;
+                $current_subsection = null;
+            }
+
             // حفظ الجزء الحالي إذا كان موجوداً
             if ($current_section !== null) {
                 $current_article['sections'][] = $current_section;
             }
 
             // بدء جزء جديد
-            $section_number = $matches[2];
+            $section_number = isset($matches[2]) ? $matches[2] : (isset($matches[3]) ? $matches[3] : (isset($matches[4]) ? $matches[4] : $matches[5]));
             $current_section = [
                 'title' => $line,
                 'content' => '',
@@ -71,15 +121,27 @@ function parsePdfTextToStructure($text) {
             ];
             $current_subsection = null;
         }
-        // التحقق إذا كان السطر يمثل جزءاً فرعياً (مثال: "الفرع 1-1-أ")
-        elseif (preg_match('/^(الفرع|فرع|البند|بند)\s*(\d+(?:-\d+)*(?:-[أ-إ]+)?)/i', $line, $matches) && $current_section !== null) {
+        // التحقق إذا كان السطر يمثل جزءاً فرعياً (مثال: "الفرع 1-1-أ", "1-1-أ", "(1)", "أ", "ب")
+        elseif (preg_match('/^(الفرع|فرع|البند|بند)\s*(\d+(?:-\d+)*(?:-[أ-إ]+)?)|^[(\【](\d+)[)\】]|^([أ-إ])[\s.)]/i', $line, $matches) && $current_section !== null) {
+            // حفظ المحتوى المتبقي أولاً
+            if (!empty($current_content)) {
+                if ($current_subsection !== null) {
+                    $current_subsection['content'] = trim($current_subsection['content'] . "
+" . $current_content);
+                } elseif ($current_section !== null) {
+                    $current_section['content'] = trim($current_section['content'] . "
+" . $current_content);
+                }
+                $current_content = '';
+            }
+
             // حفظ الجزء الفرعي الحالي إذا كان موجوداً
             if ($current_subsection !== null) {
                 $current_section['subsections'][] = $current_subsection;
             }
 
             // بدء جزء فرعي جديد
-            $subsection_number = $matches[2];
+            $subsection_number = isset($matches[2]) ? $matches[2] : (isset($matches[4]) ? $matches[4] : $matches[5]);
             $current_subsection = [
                 'title' => $line,
                 'content' => ''
@@ -87,16 +149,22 @@ function parsePdfTextToStructure($text) {
         }
         // إضافة المحتوى إلى العنصر الحالي
         else {
-            if ($current_subsection !== null) {
-                $current_subsection['content'] .= $line . "
+            $current_content .= $line . "
 ";
-            } elseif ($current_section !== null) {
-                $current_section['content'] .= $line . "
-";
-            } elseif ($current_article !== null) {
-                $current_article['content'] .= $line . "
-";
-            }
+        }
+    }
+
+    // حفظ المحتوى المتبقي
+    if (!empty($current_content)) {
+        if ($current_subsection !== null) {
+            $current_subsection['content'] = trim($current_subsection['content'] . "
+" . $current_content);
+        } elseif ($current_section !== null) {
+            $current_section['content'] = trim($current_section['content'] . "
+" . $current_content);
+        } elseif ($current_article !== null) {
+            $current_article['content'] = trim($current_article['content'] . "
+" . $current_content);
         }
     }
 
@@ -788,6 +856,7 @@ if (isset($_POST['upload_pdf'])) {
         } else {
             // التحقق من خيار إنشاء نظام جديد أو الإضافة إلى نظام موجود
             $create_new_system = isset($_POST['create_new_system']) && $_POST['create_new_system'] == 'on';
+            $system_id = null;
 
             if ($create_new_system) {
                 // إنشاء نظام جديد
@@ -832,11 +901,17 @@ if (isset($_POST['upload_pdf'])) {
                     // تحليل النص المستخرج وتحويله إلى هيكل منظم
                     $articles = parsePdfTextToStructure($text);
 
-                    // إضافة البيانات إلى قاعدة البيانات
-                    $result = addPdfDataToDatabase($articles, $system_id, $conn);
+                    // التحقق من وجود مواد
+                    if (empty($articles)) {
+                        $_SESSION['message'] = "لم يتم العثور على مواد في ملف PDF. يرجى التحقق من هيكل الملف.";
+                        $_SESSION['message_type'] = "warning";
+                    } else {
+                        // إضافة البيانات إلى قاعدة البيانات
+                        $result = addPdfDataToDatabase($articles, $system_id, $conn);
 
-                    $_SESSION['message'] = "تم استيراد البيانات بنجاح! تمت إضافة {$result['articles']} مادة، {$result['sections']} جزء، و {$result['subsections']} جزء فرعي.";
-                    $_SESSION['message_type'] = "success";
+                        $_SESSION['message'] = "تم استيراد البيانات بنجاح! تمت إضافة {$result['articles']} مادة، {$result['sections']} جزء، و {$result['subsections']} جزء فرعي.";
+                        $_SESSION['message_type'] = "success";
+                    }
                 }
             }
         }
