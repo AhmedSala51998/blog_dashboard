@@ -746,7 +746,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                             </div>
 
                                                             <?php foreach ($section['subsections'] as $sub): ?>
-                                                                <div class="blog-meta-item ps-7 mb-2" style="padding-right: 70px;">
+                                                                <div class="blog-meta-item ps-7 mb-2" style="padding-right: 90px;">
                                                                     <i class="fas fa-list"></i>
                                                                     <strong>الجزء الفرعي:</strong>
                                                                     <span class="badge bg-warning text-dark me-1 mb-1"><?php echo htmlspecialchars($sub); ?></span>
@@ -912,7 +912,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                                         </div>
 
                                                                         <?php foreach ($section['subsections'] as $sub): ?>
-                                                                            <div class="blog-meta-item ps-7 mb-2" style="padding-right: 70px;">
+                                                                            <div class="blog-meta-item ps-7 mb-2" style="padding-right: 90px;">
                                                                                 <i class="fas fa-list"></i>
                                                                                 <strong>الجزء الفرعي:</strong>
                                                                                 <span class="badge bg-warning text-dark me-1 mb-1"><?php echo htmlspecialchars($sub); ?></span>
