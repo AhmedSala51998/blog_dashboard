@@ -1069,6 +1069,50 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                                 ?>
                                                             </select>
                                                         </div>
+                                                        <div class="mb-3">
+                                                            <label for="edit_reference_article<?php echo $blog['id']; ?>" class="form-label">اختر مادة</label>
+                                                            <select class="form-select" id="edit_reference_article<?php echo $blog['id']; ?>" name="reference_article_id[]" multiple>
+                                                                <option value="">-- اختر مادة --</option>
+                                                                <?php 
+                                                                if (!empty($blog['reference_system_id'])) {
+                                                                    // التعامل مع الاختيارات المتعددة للأنظمة
+                                                                    $system_ids = explode(',', $blog['reference_system_id']);
+                                                                    $placeholders = implode(',', array_fill(0, count($system_ids), '?'));
+
+                                                                    // جلب المواد مع عنوان النظام
+                                                                    $articles_sql = "
+                                                                        SELECT a.id, a.title AS article_title, s.title AS system_title
+                                                                        FROM articles a
+                                                                        INNER JOIN systems s ON a.system_id = s.id
+                                                                        WHERE a.system_id IN ($placeholders)
+                                                                        ORDER BY s.title, a.title
+                                                                    ";
+
+                                                                    $stmt = mysqli_prepare($conn, $articles_sql);
+
+                                                                    // ربط المعلمات
+                                                                    $types = str_repeat('i', count($system_ids));
+                                                                    mysqli_stmt_bind_param($stmt, $types, ...$system_ids);
+                                                                    mysqli_stmt_execute($stmt);
+                                                                    $articles_result = mysqli_stmt_get_result($stmt);
+
+                                                                    while ($article = mysqli_fetch_assoc($articles_result)) {
+                                                                        // التحقق مما إذا كانت المادة الحالية مختارة
+                                                                        $selected_article_ids = explode(',', $blog['reference_article_id']);
+                                                                        $selected = in_array($article['id'], $selected_article_ids) ? 'selected' : '';
+                                                                        
+                                                                        // عرض المادة + النظام جنب بعض
+                                                                        echo "<option value='{$article['id']}' {$selected}>" 
+                                                                            . htmlspecialchars($article['article_title']) 
+                                                                            . " — " 
+                                                                            . htmlspecialchars($article['system_title']) 
+                                                                            . "</option>";
+                                                                    }
+                                                                }
+                                                                ?>
+                                                            </select>
+                                                        </div>
+
 
                                                         <div class="mb-3">
                                                             <label for="edit_reference_section<?php echo $blog['id']; ?>" class="form-label">اختر جزء</label>
@@ -1078,10 +1122,22 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                                 if (!empty($blog['reference_article_id'])) {
                                                                     // التعامل مع الاختيارات المتعددة للمواد
                                                                     $article_ids = explode(',', $blog['reference_article_id']);
-                                                                    // إنشاء علامات استفهام للاستعلام
                                                                     $placeholders = implode(',', array_fill(0, count($article_ids), '?'));
-                                                                    $sections_sql = "SELECT id, title FROM sections WHERE article_id IN ($placeholders) ORDER BY title";
+
+                                                                    // جلب الأجزاء مع المادة والنظام
+                                                                    $sections_sql = "
+                                                                        SELECT sec.id, sec.title AS section_title, 
+                                                                            art.title AS article_title, 
+                                                                            sys.title AS system_title
+                                                                        FROM sections sec
+                                                                        INNER JOIN articles art ON sec.article_id = art.id
+                                                                        INNER JOIN systems sys ON art.system_id = sys.id
+                                                                        WHERE sec.article_id IN ($placeholders)
+                                                                        ORDER BY sys.title, art.title, sec.title
+                                                                    ";
+
                                                                     $stmt = mysqli_prepare($conn, $sections_sql);
+
                                                                     // ربط المعلمات
                                                                     $types = str_repeat('i', count($article_ids));
                                                                     mysqli_stmt_bind_param($stmt, $types, ...$article_ids);
@@ -1092,12 +1148,18 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                                         // التحقق مما إذا كان الجزء الحالي مختارًا
                                                                         $selected_section_ids = explode(',', $blog['reference_section_id']);
                                                                         $selected = in_array($section['id'], $selected_section_ids) ? 'selected' : '';
-                                                                        echo "<option value='{$section['id']}' {$selected}>" . htmlspecialchars($section['title']) . "</option>";
+                                                                        
+                                                                        echo "<option value='{$section['id']}' {$selected}>"
+                                                                            . htmlspecialchars($section['section_title']) . " — "
+                                                                            . htmlspecialchars($section['article_title']) . " — "
+                                                                            . htmlspecialchars($section['system_title'])
+                                                                            . "</option>";
                                                                     }
                                                                 }
                                                                 ?>
                                                             </select>
                                                         </div>
+
                                                         <div class="mb-3">
                                                             <label for="edit_reference_sub_section<?php echo $blog['id']; ?>" class="form-label">اختر جزء فرعي</label>
                                                             <select class="form-select" id="edit_reference_sub_section<?php echo $blog['id']; ?>" name="reference_subsection_id[]" multiple>
@@ -1108,8 +1170,20 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                                     $section_ids = explode(',', $blog['reference_section_id']);
                                                                     $placeholders = implode(',', array_fill(0, count($section_ids), '?'));
 
-                                                                    // جلب الأجزاء الفرعية (اللي ليها parent_id = section_id)
-                                                                    $sub_sections_sql = "SELECT id, title FROM sections WHERE parent_id IN ($placeholders) ORDER BY title";
+                                                                    // جلب الأجزاء الفرعية مع بيانات الجزء والمادة والنظام
+                                                                    $sub_sections_sql = "
+                                                                        SELECT sub.id, sub.title AS sub_title,
+                                                                            parent.title AS parent_title,
+                                                                            art.title AS article_title,
+                                                                            sys.title AS system_title
+                                                                        FROM sections sub
+                                                                        INNER JOIN sections parent ON sub.parent_id = parent.id
+                                                                        INNER JOIN articles art ON parent.article_id = art.id
+                                                                        INNER JOIN systems sys ON art.system_id = sys.id
+                                                                        WHERE sub.parent_id IN ($placeholders)
+                                                                        ORDER BY sys.title, art.title, parent.title, sub.title
+                                                                    ";
+
                                                                     $stmt = mysqli_prepare($conn, $sub_sections_sql);
 
                                                                     // ربط المعاملات
@@ -1118,18 +1192,26 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                                     mysqli_stmt_execute($stmt);
                                                                     $sub_sections_result = mysqli_stmt_get_result($stmt);
 
+                                                                    // الأجزاء الفرعية المختارة مسبقًا
+                                                                    $selected_sub_section_ids = !empty($blog['reference_subsection_id']) 
+                                                                        ? explode(',', $blog['reference_subsection_id']) 
+                                                                        : [];
+
                                                                     while ($sub_section = mysqli_fetch_assoc($sub_sections_result)) {
-                                                                        // التحقق إذا كان الجزء الفرعي مختار مسبقًا
-                                                                        $selected_sub_section_ids = !empty($blog['reference_subsection_id']) 
-                                                                            ? explode(',', $blog['reference_subsection_id']) 
-                                                                            : [];
                                                                         $selected = in_array($sub_section['id'], $selected_sub_section_ids) ? 'selected' : '';
-                                                                        echo "<option value='{$sub_section['id']}' {$selected}>" . htmlspecialchars($sub_section['title']) . "</option>";
+
+                                                                        echo "<option value='{$sub_section['id']}' {$selected}>"
+                                                                            . htmlspecialchars($sub_section['sub_title']) . " — "
+                                                                            . htmlspecialchars($sub_section['parent_title']) . " — "
+                                                                            . htmlspecialchars($sub_section['article_title']) . " — "
+                                                                            . htmlspecialchars($sub_section['system_title'])
+                                                                            . "</option>";
                                                                     }
                                                                 }
                                                                 ?>
                                                             </select>
                                                         </div>
+
 
                                                     </div>
 
