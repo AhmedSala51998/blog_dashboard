@@ -83,7 +83,6 @@ function processWordFile($file_path, $system_id) {
         foreach ($phpWord->getSections() as $section) {
             $elements = $section->getElements();
             foreach ($elements as $element) {
-                // استخراج النصوص فقط
                 if (method_exists($element, 'getText')) {
                     $text .= $element->getText() . "\n";
                 }
@@ -98,16 +97,27 @@ function processWordFile($file_path, $system_id) {
 
         $current_article_id = null;
         $current_section_id = null;
+
         $current_article_content = "";
         $current_section_content = "";
         $current_subsection_content = "";
         $current_subsection_title = null;
 
+        // 🔹 متغيرات الاستخدامات والجهات
+        $current_article_usage = null;
+        $current_article_entity = null;
+
+        $current_section_usage = null;
+        $current_section_entity = null;
+
+        $current_subsection_usage = null;
+        $current_subsection_entity = null;
+
         foreach ($lines as $line) {
             $line = trim($line);
             if (empty($line)) continue;
 
-            // 🔹 Normalize line (تحويل "1مادة" -> "مادة 1" وهكذا)
+            // 🔹 Normalize line
             $line = preg_replace('/^(\d+)\s*مادة$/u', 'مادة $1', $line);
             $line = preg_replace('/^مادة(\d+)/u', 'مادة $1', $line);
             $line = preg_replace('/^(\d+)\s*الجزء$/u', 'الجزء $1', $line);
@@ -115,87 +125,127 @@ function processWordFile($file_path, $system_id) {
             $line = preg_replace('/^(\d+)\s*الجزء\s*الفرعي$/u', 'الجزء الفرعي $1', $line);
             $line = preg_replace('/^الجزء\s*الفرعي(\d+)/u', 'الجزء الفرعي $1', $line);
 
-            // مادة
+            // 🔹 مادة
             if (preg_match('/^(?:المادة|مادة)\s*(\d+)/u', $line)) {
                 // اغلاق مادة سابقة
                 if ($current_article_id !== null) {
                     if ($current_section_id !== null) {
                         if (!empty($current_subsection_content)) {
-                            $sql = "INSERT INTO sections (article_id, title, content, parent_id) VALUES (?, ?, ?, ?)";
+                            $sql = "INSERT INTO sections (article_id, title, content, parent_id, usage_id, entity_id) 
+                                    VALUES (?, ?, ?, ?, ?, ?)";
                             $stmt = mysqli_prepare($conn, $sql);
-                            $stmt->bind_param("issi", $current_article_id, $current_subsection_title, $current_subsection_content, $current_section_id);
+                            $stmt->bind_param("ississ", $current_article_id, $current_subsection_title, $current_subsection_content, $current_section_id, $current_subsection_usage, $current_subsection_entity);
                             $stmt->execute();
                             $subsections_count++;
                         }
-                        $sql = "UPDATE sections SET content = ? WHERE id = ?";
+                        $sql = "UPDATE sections SET content = ?, usage_id = ?, entity_id = ? WHERE id = ?";
                         $stmt = mysqli_prepare($conn, $sql);
-                        $stmt->bind_param("si", $current_section_content, $current_section_id);
+                        $stmt->bind_param("sssi", $current_section_content, $current_section_usage, $current_section_entity, $current_section_id);
                         $stmt->execute();
                     }
-                    $sql = "UPDATE articles SET content = ? WHERE id = ?";
+                    $sql = "UPDATE articles SET content = ?, usage_id = ?, entity_id = ? WHERE id = ?";
                     $stmt = mysqli_prepare($conn, $sql);
-                    $stmt->bind_param("si", $current_article_content, $current_article_id);
+                    $stmt->bind_param("sssi", $current_article_content, $current_article_usage, $current_article_entity, $current_article_id);
                     $stmt->execute();
                 }
 
                 $article_title = cleanInput($line);
-                $sql = "INSERT INTO articles (system_id, title, content) VALUES (?, ?, ?)";
+                $sql = "INSERT INTO articles (system_id, title, content, usage_id, entity_id) 
+                        VALUES (?, ?, ?, ?, ?)";
                 $stmt = mysqli_prepare($conn, $sql);
-                $stmt->bind_param("iss", $system_id, $article_title, $current_article_content);
+                $stmt->bind_param("issss", $system_id, $article_title, $current_article_content, $current_article_usage, $current_article_entity);
                 $stmt->execute();
                 $current_article_id = $conn->insert_id;
                 $articles_count++;
 
+                // reset
                 $current_article_content = "";
                 $current_section_id = null;
                 $current_section_content = "";
                 $current_subsection_content = "";
                 $current_subsection_title = null;
+
+                $current_article_usage = null;
+                $current_article_entity = null;
             }
 
-            // جزء
+            // 🔹 جزء
             else if (preg_match('/^الجزء\s*(\d+)/u', $line) && $current_article_id !== null) {
                 if ($current_section_id !== null) {
                     if (!empty($current_subsection_content)) {
-                        $sql = "INSERT INTO sections (article_id, title, content, parent_id) VALUES (?, ?, ?, ?)";
+                        $sql = "INSERT INTO sections (article_id, title, content, parent_id, usage_id, entity_id) 
+                                VALUES (?, ?, ?, ?, ?, ?)";
                         $stmt = mysqli_prepare($conn, $sql);
-                        $stmt->bind_param("issi", $current_article_id, $current_subsection_title, $current_subsection_content, $current_section_id);
+                        $stmt->bind_param("ississ", $current_article_id, $current_subsection_title, $current_subsection_content, $current_section_id, $current_subsection_usage, $current_subsection_entity);
                         $stmt->execute();
                         $subsections_count++;
                     }
-                    $sql = "UPDATE sections SET content = ? WHERE id = ?";
+                    $sql = "UPDATE sections SET content = ?, usage_id = ?, entity_id = ? WHERE id = ?";
                     $stmt = mysqli_prepare($conn, $sql);
-                    $stmt->bind_param("si", $current_section_content, $current_section_id);
+                    $stmt->bind_param("sssi", $current_section_content, $current_section_usage, $current_section_entity, $current_section_id);
                     $stmt->execute();
                 }
 
                 $section_title = cleanInput($line);
-                $sql = "INSERT INTO sections (article_id, title, content) VALUES (?, ?, ?)";
+                $sql = "INSERT INTO sections (article_id, title, content, usage_id, entity_id) 
+                        VALUES (?, ?, ?, ?, ?)";
                 $stmt = mysqli_prepare($conn, $sql);
-                $stmt->bind_param("iss", $current_article_id, $section_title, $current_section_content);
+                $stmt->bind_param("issss", $current_article_id, $section_title, $current_section_content, $current_section_usage, $current_section_entity);
                 $stmt->execute();
                 $current_section_id = $conn->insert_id;
                 $sections_count++;
 
+                // reset
                 $current_section_content = "";
                 $current_subsection_content = "";
                 $current_subsection_title = null;
+                $current_section_usage = null;
+                $current_section_entity = null;
             }
 
-            // جزء فرعي
+            // 🔹 جزء فرعي
             else if (preg_match('/^الجزء\s*الفرعي\s*(\d+)/u', $line) && $current_section_id !== null) {
                 if (!empty($current_subsection_content)) {
-                    $sql = "INSERT INTO sections (article_id, title, content, parent_id) VALUES (?, ?, ?, ?)";
+                    $sql = "INSERT INTO sections (article_id, title, content, parent_id, usage_id, entity_id) 
+                            VALUES (?, ?, ?, ?, ?, ?)";
                     $stmt = mysqli_prepare($conn, $sql);
-                    $stmt->bind_param("issi", $current_article_id, $current_subsection_title, $current_subsection_content, $current_section_id);
+                    $stmt->bind_param("ississ", $current_article_id, $current_subsection_title, $current_subsection_content, $current_section_id, $current_subsection_usage, $current_subsection_entity);
                     $stmt->execute();
                     $subsections_count++;
                 }
                 $current_subsection_title = cleanInput($line);
                 $current_subsection_content = "";
+                $current_subsection_usage = null;
+                $current_subsection_entity = null;
             }
 
-            // محتوى
+            // 🔹 الاستخدامات
+            else if (preg_match('/^الاستخدامات[:：]?\s*(.+)$/u', $line, $m)) {
+                $values = array_map('trim', preg_split('/[,،]/u', $m[1]));
+                $ids = implode(',', $values);
+                if ($current_subsection_title !== null) {
+                    $current_subsection_usage = $ids;
+                } else if ($current_section_id !== null) {
+                    $current_section_usage = $ids;
+                } else if ($current_article_id !== null) {
+                    $current_article_usage = $ids;
+                }
+            }
+
+            // 🔹 الجهات المعنية
+            else if (preg_match('/^الجهات\s*المعنية[:：]?\s*(.+)$/u', $line, $m)) {
+                $values = array_map('trim', preg_split('/[,،]/u', $m[1]));
+                $ids = implode(',', $values);
+                if ($current_subsection_title !== null) {
+                    $current_subsection_entity = $ids;
+                } else if ($current_section_id !== null) {
+                    $current_section_entity = $ids;
+                } else if ($current_article_id !== null) {
+                    $current_article_entity = $ids;
+                }
+            }
+
+            // 🔹 محتوى عادي
             else {
                 if ($current_section_id !== null && $current_subsection_title !== null) {
                     $current_subsection_content .= (empty($current_subsection_content) ? '' : "\n") . $line;
@@ -207,24 +257,25 @@ function processWordFile($file_path, $system_id) {
             }
         }
 
-        // اغلاق العناصر المتبقية
+        // 🔹 اغلاق العناصر المتبقية
         if ($current_article_id !== null) {
             if ($current_section_id !== null) {
                 if (!empty($current_subsection_content)) {
-                    $sql = "INSERT INTO sections (article_id, title, content, parent_id) VALUES (?, ?, ?, ?)";
+                    $sql = "INSERT INTO sections (article_id, title, content, parent_id, usage_id, entity_id) 
+                            VALUES (?, ?, ?, ?, ?, ?)";
                     $stmt = mysqli_prepare($conn, $sql);
-                    $stmt->bind_param("issi", $current_article_id, $current_subsection_title, $current_subsection_content, $current_section_id);
+                    $stmt->bind_param("ississ", $current_article_id, $current_subsection_title, $current_subsection_content, $current_section_id, $current_subsection_usage, $current_subsection_entity);
                     $stmt->execute();
                     $subsections_count++;
                 }
-                $sql = "UPDATE sections SET content = ? WHERE id = ?";
+                $sql = "UPDATE sections SET content = ?, usage_id = ?, entity_id = ? WHERE id = ?";
                 $stmt = mysqli_prepare($conn, $sql);
-                $stmt->bind_param("si", $current_section_content, $current_section_id);
+                $stmt->bind_param("sssi", $current_section_content, $current_section_usage, $current_section_entity, $current_section_id);
                 $stmt->execute();
             }
-            $sql = "UPDATE articles SET content = ? WHERE id = ?";
+            $sql = "UPDATE articles SET content = ?, usage_id = ?, entity_id = ? WHERE id = ?";
             $stmt = mysqli_prepare($conn, $sql);
-            $stmt->bind_param("si", $current_article_content, $current_article_id);
+            $stmt->bind_param("sssi", $current_article_content, $current_article_usage, $current_article_entity, $current_article_id);
             $stmt->execute();
         }
 
@@ -242,8 +293,6 @@ function processWordFile($file_path, $system_id) {
         ];
     }
 }
-
-
 
 
 // دالة لعرض الأجزاء بشكل متكرر
