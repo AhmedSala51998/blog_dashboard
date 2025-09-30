@@ -1049,34 +1049,6 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                                 if (!empty($blog['reference_system_id'])) {
                                                                     // التعامل مع الاختيارات المتعددة للأنظمة
                                                                     $system_ids = explode(',', $blog['reference_system_id']);
-                                                                    // إنشاء علامات استفهام للاستعلام
-                                                                    $placeholders = implode(',', array_fill(0, count($system_ids), '?'));
-                                                                    $articles_sql = "SELECT id, title FROM articles WHERE system_id IN ($placeholders) ORDER BY title";
-                                                                    $stmt = mysqli_prepare($conn, $articles_sql);
-                                                                    // ربط المعلمات
-                                                                    $types = str_repeat('i', count($system_ids));
-                                                                    mysqli_stmt_bind_param($stmt, $types, ...$system_ids);
-                                                                    mysqli_stmt_execute($stmt);
-                                                                    $articles_result = mysqli_stmt_get_result($stmt);
-
-                                                                    while ($article = mysqli_fetch_assoc($articles_result)) {
-                                                                        // التحقق مما إذا كانت المادة الحالية مختارة
-                                                                        $selected_article_ids = explode(',', $blog['reference_article_id']);
-                                                                        $selected = in_array($article['id'], $selected_article_ids) ? 'selected' : '';
-                                                                        echo "<option value='{$article['id']}' {$selected}>" . htmlspecialchars($article['title']) . "</option>";
-                                                                    }
-                                                                }
-                                                                ?>
-                                                            </select>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label for="edit_reference_article<?php echo $blog['id']; ?>" class="form-label">اختر مادة</label>
-                                                            <select class="form-select" id="edit_reference_article<?php echo $blog['id']; ?>" name="reference_article_id[]" multiple>
-                                                                <option value="">-- اختر مادة --</option>
-                                                                <?php 
-                                                                if (!empty($blog['reference_system_id'])) {
-                                                                    // التعامل مع الاختيارات المتعددة للأنظمة
-                                                                    $system_ids = explode(',', $blog['reference_system_id']);
                                                                     $placeholders = implode(',', array_fill(0, count($system_ids), '?'));
 
                                                                     // جلب المواد مع عنوان النظام
