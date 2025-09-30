@@ -266,56 +266,75 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // الحصول على المواد عند اختيار نظام
-    if (isset($_POST['get_sections']) && !empty($_POST['article_ids'])) {
-        $article_ids = $_POST['article_ids'];
-        $placeholders = implode(',', array_fill(0, count($article_ids), '?'));
+    if (isset($_POST['get_articles'])) {
+        $system_ids = array_map('intval', $_POST['system_ids']);
+        $system_ids_str = implode(',', $system_ids);
+
+        $sql = "SELECT a.id, a.title, s.title AS system_title
+                FROM articles a
+                INNER JOIN systems s ON a.system_id = s.id
+                WHERE a.system_id IN ($system_ids_str)
+                ORDER BY a.title";
+        $result = mysqli_query($conn, $sql);
+
+        $articles = [];
+        while ($row = mysqli_fetch_assoc($result)) {
+            $row['title_full'] = $row['title'] . " — " . $row['system_title'];
+            $articles[] = $row;
+        }
+
+        echo json_encode($articles);
+        exit();
+    }
+
+
+    // الحصول على الأجزاء عند اختيار مادة
+    if (isset($_POST['get_sections'])) {
+        $article_ids = array_map('intval', $_POST['article_ids']);
+        $article_ids_str = implode(',', $article_ids);
+
         $sql = "SELECT sec.id, sec.title, a.title AS article_title, s.title AS system_title
                 FROM sections sec
                 INNER JOIN articles a ON sec.article_id = a.id
                 INNER JOIN systems s ON a.system_id = s.id
-                WHERE sec.article_id IN ($placeholders)
+                WHERE sec.article_id IN ($article_ids_str)
                 ORDER BY sec.title";
-        $stmt = mysqli_prepare($conn, $sql);
-        $types = str_repeat('i', count($article_ids));
-        mysqli_stmt_bind_param($stmt, $types, ...$article_ids);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
+        $result = mysqli_query($conn, $sql);
 
         $sections = [];
         while ($row = mysqli_fetch_assoc($result)) {
             $row['title_full'] = $row['title'] . " — " . $row['article_title'] . " — " . $row['system_title'];
             $sections[] = $row;
         }
+
         echo json_encode($sections);
-        exit;
+        exit();
     }
 
 
     // الحصول على الأجزاء الفرعية عند اختيار جزء
-    if (isset($_POST['get_subsections']) && !empty($_POST['section_ids'])) {
-        $section_ids = $_POST['section_ids'];
-        $placeholders = implode(',', array_fill(0, count($section_ids), '?'));
-        $sql = "SELECT sub.id, sub.title, parent.title AS parent_title,
+    if (isset($_POST['get_subsections'])) {
+        $section_ids = array_map('intval', $_POST['section_ids']);
+        $section_ids_str = implode(',', $section_ids);
+
+        $sql = "SELECT sub.id, sub.title, parent.title AS parent_title, 
                     a.title AS article_title, s.title AS system_title
                 FROM sections sub
                 INNER JOIN sections parent ON sub.parent_id = parent.id
                 INNER JOIN articles a ON parent.article_id = a.id
                 INNER JOIN systems s ON a.system_id = s.id
-                WHERE sub.parent_id IN ($placeholders)
+                WHERE sub.parent_id IN ($section_ids_str)
                 ORDER BY sub.title";
-        $stmt = mysqli_prepare($conn, $sql);
-        $types = str_repeat('i', count($section_ids));
-        mysqli_stmt_bind_param($stmt, $types, ...$section_ids);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
+        $result = mysqli_query($conn, $sql);
 
         $subsections = [];
         while ($row = mysqli_fetch_assoc($result)) {
             $row['title_full'] = $row['title'] . " — " . $row['parent_title'] . " — " . $row['article_title'] . " — " . $row['system_title'];
             $subsections[] = $row;
         }
+
         echo json_encode($subsections);
-        exit;
+        exit();
     }
 
 }
@@ -1364,14 +1383,12 @@ $systems_result = mysqli_query($conn, $systems_sql);
             });
 
             // تحميل المواد عند اختيار نظام
-            // تحميل المواد عند اختيار نظام
             $('#reference_system').change(function() {
                 const system_ids = $(this).val() || [];
                 const article_select = $('#reference_article');
                 const section_select = $('#reference_section');
                 const subsection_select = $('#reference_subsection');
 
-                // إعادة التهيئة
                 article_select.html('<option value="">-- اختر مادة --</option>');
                 section_select.html('<option value="">-- اختر جزء --</option>');
                 subsection_select.html('<option value="">-- اختر جزء فرعي --</option>');
