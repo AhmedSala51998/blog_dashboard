@@ -76,7 +76,6 @@ function processWordFile($file_path, $system_id) {
     global $conn;
 
     try {
-        // 🔹 تحميل ملف Word
         $phpWord = IOFactory::load($file_path);
         $text = '';
 
@@ -103,7 +102,6 @@ function processWordFile($file_path, $system_id) {
         $current_subsection_content = "";
         $current_subsection_title = null;
 
-        // 🔹 متغيرات الاستخدامات والجهات
         $current_article_usage = null;
         $current_article_entity = null;
 
@@ -117,7 +115,7 @@ function processWordFile($file_path, $system_id) {
             $line = trim($line);
             if (empty($line)) continue;
 
-            // 🔹 Normalize line
+            // Normalize line
             $line = preg_replace('/^(\d+)\s*مادة$/u', 'مادة $1', $line);
             $line = preg_replace('/^مادة(\d+)/u', 'مادة $1', $line);
             $line = preg_replace('/^(\d+)\s*الجزء$/u', 'الجزء $1', $line);
@@ -125,7 +123,7 @@ function processWordFile($file_path, $system_id) {
             $line = preg_replace('/^(\d+)\s*الجزء\s*الفرعي$/u', 'الجزء الفرعي $1', $line);
             $line = preg_replace('/^الجزء\s*الفرعي(\d+)/u', 'الجزء الفرعي $1', $line);
 
-            // 🔹 مادة
+            // مادة
             if (preg_match('/^(?:المادة|مادة)\s*(\d+)/u', $line)) {
                 // اغلاق مادة سابقة
                 if ($current_article_id !== null) {
@@ -164,12 +162,11 @@ function processWordFile($file_path, $system_id) {
                 $current_section_content = "";
                 $current_subsection_content = "";
                 $current_subsection_title = null;
-
                 $current_article_usage = null;
                 $current_article_entity = null;
             }
 
-            // 🔹 جزء
+            // جزء
             else if (preg_match('/^الجزء\s*(\d+)/u', $line) && $current_article_id !== null) {
                 if ($current_section_id !== null) {
                     if (!empty($current_subsection_content)) {
@@ -195,7 +192,6 @@ function processWordFile($file_path, $system_id) {
                 $current_section_id = $conn->insert_id;
                 $sections_count++;
 
-                // reset
                 $current_section_content = "";
                 $current_subsection_content = "";
                 $current_subsection_title = null;
@@ -203,7 +199,7 @@ function processWordFile($file_path, $system_id) {
                 $current_section_entity = null;
             }
 
-            // 🔹 جزء فرعي
+            // جزء فرعي
             else if (preg_match('/^الجزء\s*الفرعي\s*(\d+)/u', $line) && $current_section_id !== null) {
                 if (!empty($current_subsection_content)) {
                     $sql = "INSERT INTO sections (article_id, title, content, parent_id, usage_id, entity_id) 
@@ -219,7 +215,7 @@ function processWordFile($file_path, $system_id) {
                 $current_subsection_entity = null;
             }
 
-            // 🔹 الاستخدامات
+            // الاستخدامات
             else if (preg_match('/^الاستخدامات[:：]?\s*(.+)$/u', $line, $m)) {
                 $values = array_map('trim', preg_split('/[,،]/u', $m[1]));
                 $ids = implode(',', $values);
@@ -232,7 +228,7 @@ function processWordFile($file_path, $system_id) {
                 }
             }
 
-            // 🔹 الجهات المعنية
+            // الجهات المعنية
             else if (preg_match('/^الجهات\s*المعنية[:：]?\s*(.+)$/u', $line, $m)) {
                 $values = array_map('trim', preg_split('/[,،]/u', $m[1]));
                 $ids = implode(',', $values);
@@ -245,7 +241,34 @@ function processWordFile($file_path, $system_id) {
                 }
             }
 
-            // 🔹 محتوى عادي
+            // المواد المرتبطة
+            else if (preg_match('/^المواد\s*المرتبطة[:：]?\s*(.+)$/u', $line, $m)) {
+                $values = array_map('trim', preg_split('/[,،]/u', $m[1]));
+                if ($current_subsection_title !== null && $current_section_id !== null) {
+                    foreach ($values as $ref) {
+                        $sql = "INSERT INTO section_references (section_id, referenced_section_id) VALUES (?, ?)";
+                        $stmt = mysqli_prepare($conn, $sql);
+                        $stmt->bind_param("ii", $current_section_id, $ref);
+                        $stmt->execute();
+                    }
+                } else if ($current_section_id !== null) {
+                    foreach ($values as $ref) {
+                        $sql = "INSERT INTO section_references (section_id, referenced_section_id) VALUES (?, ?)";
+                        $stmt = mysqli_prepare($conn, $sql);
+                        $stmt->bind_param("ii", $current_section_id, $ref);
+                        $stmt->execute();
+                    }
+                } else if ($current_article_id !== null) {
+                    foreach ($values as $ref) {
+                        $sql = "INSERT INTO article_references (article_id, referenced_article_id) VALUES (?, ?)";
+                        $stmt = mysqli_prepare($conn, $sql);
+                        $stmt->bind_param("ii", $current_article_id, $ref);
+                        $stmt->execute();
+                    }
+                }
+            }
+
+            // محتوى عادي
             else {
                 if ($current_section_id !== null && $current_subsection_title !== null) {
                     $current_subsection_content .= (empty($current_subsection_content) ? '' : "\n") . $line;
@@ -257,7 +280,7 @@ function processWordFile($file_path, $system_id) {
             }
         }
 
-        // 🔹 اغلاق العناصر المتبقية
+        // اغلاق العناصر المتبقية
         if ($current_article_id !== null) {
             if ($current_section_id !== null) {
                 if (!empty($current_subsection_content)) {
