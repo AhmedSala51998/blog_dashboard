@@ -1252,6 +1252,10 @@ $systems_result = mysqli_query($conn, $systems_sql);
             dropdownParent: $('#addBlogModal .modal-content'),
             width: '100%'
         });
+        $('#reference_subsection').prop('disabled', false).select2({
+            dropdownParent: $('#addBlogModal .modal-content'),
+            width: '100%'
+        });
     });
 
  </script>
