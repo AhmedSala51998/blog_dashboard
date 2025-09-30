@@ -724,7 +724,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
                                                 ?>
 
-                                               <?php foreach ($hierarchy as $system): ?>
+                                                <?php foreach ($hierarchy as $system): ?>
                                                     <div class="blog-meta-item mb-2">
                                                         <i class="fas fa-gavel"></i>
                                                         <strong>النظام:</strong>
@@ -732,21 +732,21 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                     </div>
 
                                                     <?php foreach ($system['articles'] as $article): ?>
-                                                        <div class="blog-meta-item ms-3 mb-2">
+                                                        <div class="blog-meta-item ps-3 mb-2">
                                                             <i class="fas fa-file-alt"></i>
                                                             <strong>المادة:</strong>
                                                             <span class="badge bg-success me-1 mb-1"><?php echo htmlspecialchars($article['title']); ?></span>
                                                         </div>
 
                                                         <?php foreach ($article['sections'] as $section): ?>
-                                                            <div class="blog-meta-item ms-5 mb-2">
+                                                            <div class="blog-meta-item ps-5 mb-2">
                                                                 <i class="fas fa-list"></i>
                                                                 <strong>الجزء:</strong>
                                                                 <span class="badge bg-warning text-dark me-1 mb-1"><?php echo htmlspecialchars($section['title']); ?></span>
                                                             </div>
 
                                                             <?php foreach ($section['subsections'] as $sub): ?>
-                                                                <div class="blog-meta-item ms-7 mb-2">
+                                                                <div class="blog-meta-item ps-7 mb-2">
                                                                     <i class="fas fa-list"></i>
                                                                     <strong>الجزء الفرعي:</strong>
                                                                     <span class="badge bg-warning text-dark me-1 mb-1"><?php echo htmlspecialchars($sub); ?></span>
@@ -755,6 +755,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                         <?php endforeach; ?>
                                                     <?php endforeach; ?>
                                                 <?php endforeach; ?>
+
 
 
 
@@ -889,7 +890,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                             ?>
                                                             <h6><i class="fas fa-link"></i> الاستدلال من الأنظمة والقوانين:</h6>
 
-                                                            <?php foreach ($hierarchy as $system): ?>
+                                                           <?php foreach ($hierarchy as $system): ?>
                                                                 <div class="blog-meta-item mb-2">
                                                                     <i class="fas fa-gavel"></i>
                                                                     <strong>النظام:</strong>
@@ -897,21 +898,21 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                                 </div>
 
                                                                 <?php foreach ($system['articles'] as $article): ?>
-                                                                    <div class="blog-meta-item ms-3 mb-2">
+                                                                    <div class="blog-meta-item ps-3 mb-2">
                                                                         <i class="fas fa-file-alt"></i>
                                                                         <strong>المادة:</strong>
                                                                         <span class="badge bg-success me-1 mb-1"><?php echo htmlspecialchars($article['title']); ?></span>
                                                                     </div>
 
                                                                     <?php foreach ($article['sections'] as $section): ?>
-                                                                        <div class="blog-meta-item ms-5 mb-2">
+                                                                        <div class="blog-meta-item ps-5 mb-2">
                                                                             <i class="fas fa-list"></i>
                                                                             <strong>الجزء:</strong>
                                                                             <span class="badge bg-warning text-dark me-1 mb-1"><?php echo htmlspecialchars($section['title']); ?></span>
                                                                         </div>
 
                                                                         <?php foreach ($section['subsections'] as $sub): ?>
-                                                                            <div class="blog-meta-item ms-7 mb-2">
+                                                                            <div class="blog-meta-item ps-7 mb-2">
                                                                                 <i class="fas fa-list"></i>
                                                                                 <strong>الجزء الفرعي:</strong>
                                                                                 <span class="badge bg-warning text-dark me-1 mb-1"><?php echo htmlspecialchars($sub); ?></span>
@@ -920,6 +921,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                                     <?php endforeach; ?>
                                                                 <?php endforeach; ?>
                                                             <?php endforeach; ?>
+
 
 
 
