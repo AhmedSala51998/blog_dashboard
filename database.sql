@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS blogs (
     reference_system_id TEXT,
     reference_article_id TEXT,
     reference_section_id TEXT,
+    reference_subsection_id TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

@@ -33,6 +33,17 @@ function getReferenceArticleById($id) {
 function getReferenceSectionById($id) {
     global $conn;
     $id = cleanInput($id);
+    $sql = "SELECT * FROM sections WHERE parent_id = $id";
+    $result = $conn->query($sql);
+    if ($result && $result->num_rows > 0) {
+        return $result->fetch_assoc();
+    }
+    return null;
+}
+
+function getReferenceSubSectionById($id) {
+    global $conn;
+    $id = cleanInput($id);
     $sql = "SELECT * FROM sections WHERE id = $id";
     $result = $conn->query($sql);
     if ($result && $result->num_rows > 0) {
@@ -313,6 +324,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         echo json_encode($sections);
+        exit();
+    }
+
+    // الحصول على الأجزاء الفرعية عند اختيار جزء
+    if (isset($_POST['get_subsections'])) {
+        // التحقق من وجود معرفات الأجزاء المتعددة
+        if (isset($_POST['section_ids']) && is_array($_POST['section_ids'])) {
+            // تحويل مصفوفة المعرفات إلى نص مفصول بفواصل للاستخدام مع استعلام IN
+            $section_ids = array_map('intval', $_POST['section_ids']);
+            $section_ids_str = implode(',', $section_ids);
+
+            $sql = "SELECT id, title FROM sections WHERE parent_id IN ($section_ids_str) ORDER BY title";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+        } else {
+            // التعامل مع الحالة القديمة لمعرف واحد
+            $section_id = cleanInput($_POST['section_id']);
+
+            $sql = "SELECT id, title FROM sections WHERE parent_id = ? ORDER BY title";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "i", $section_id);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+        }
+
+        $subsections = [];
+        while ($row = mysqli_fetch_assoc($result)) {
+            $subsections[] = $row;
+        }
+
+        echo json_encode($subsections);
         exit();
     }
 }
@@ -679,6 +722,16 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                         }
                                                     }
                                                 }
+                                                $subsection_names = [];
+                                                if (!empty($blog['reference_subsection_id'])) {
+                                                    $section_ids = explode(',', $blog['reference_subsection_id']);
+                                                    foreach ($section_ids as $section_id) {
+                                                        $section = getReferenceSubSectionById($section_id);
+                                                        if ($section) {
+                                                            $subsection_names[] = $section['title'];
+                                                        }
+                                                    }
+                                                }
                                                 ?>
 
                                                <?php if (!empty($system_names)): ?>
@@ -707,6 +760,16 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                     <strong>الأجزاء:</strong><br>
                                                     <?php foreach ($section_names as $sec): ?>
                                                         <span class="badge bg-warning text-dark me-1 mb-1"><?php echo htmlspecialchars($sec); ?></span>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($subsection_names)): ?>
+                                                <div class="blog-meta-item mb-2">
+                                                    <i class="fas fa-list"></i>
+                                                    <strong>الأجزاء الفرعيه:</strong><br>
+                                                    <?php foreach ($subsection_names as $sec1): ?>
+                                                        <span class="badge bg-warning text-dark me-1 mb-1"><?php echo htmlspecialchars($sec1); ?></span>
                                                     <?php endforeach; ?>
                                                 </div>
                                             <?php endif; ?>
@@ -820,6 +883,16 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                                     }
                                                                 }
                                                             }
+                                                            $subsection_names = [];
+                                                            if (!empty($blog['reference_subsection_id'])) {
+                                                                $section_ids = explode(',', $blog['reference_subsection_id']);
+                                                                foreach ($section_ids as $section_id) {
+                                                                    $section = getReferenceSubSectionById($section_id);
+                                                                    if ($section) {
+                                                                        $subsection_names[] = $section['title'];
+                                                                    }
+                                                                }
+                                                            }
                                                             ?>
                                                             <h6><i class="fas fa-link"></i> الاستدلال من الأنظمة والقوانين:</h6>
 
@@ -851,6 +924,17 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                                     <div class="d-flex flex-wrap gap-1 mt-1">
                                                                         <?php foreach ($section_names as $sec): ?>
                                                                             <span class="badge bg-warning text-dark"><?php echo htmlspecialchars($sec); ?></span>
+                                                                        <?php endforeach; ?>
+                                                                    </div>
+                                                                </div>
+                                                            <?php endif; ?>
+
+                                                            <?php if (!empty($subsection_names)): ?>
+                                                                <div class="mb-2">
+                                                                    <strong>الأجزاء الفرعية:</strong><br>
+                                                                    <div class="d-flex flex-wrap gap-1 mt-1">
+                                                                        <?php foreach ($subsection_names as $sec1): ?>
+                                                                            <span class="badge bg-warning text-dark"><?php echo htmlspecialchars($sec1); ?></span>
                                                                         <?php endforeach; ?>
                                                                     </div>
                                                                 </div>
@@ -1125,6 +1209,13 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                     <option disabled value="">-- اختر جزء --</option>
                                 </select>
                             </div>
+
+                            <div class="mb-3">
+                                <label for="reference_subsection" class="form-label">اختر جزء فرعي</label>
+                                <select class="form-select" id="reference_subsection" name="reference_subsection_id[]" multiple disabled>
+                                    <option disabled value="">-- اختر جزء فرعي --</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="modal-footer">
@@ -1262,9 +1353,11 @@ $systems_result = mysqli_query($conn, $systems_sql);
             $('#reference_article').change(function() {
                 const article_ids = $(this).val() || [];
                 const section_select = $('#reference_section');
+                const subsection_select = $('#reference_subsection');
 
-                // إعادة تعيين حقل الجزء
+                // إعادة تعيين حقول الجزء والجزء الفرعي
                 section_select.html('<option value="">-- اختر جزء --</option>');
+                subsection_select.html('<option value="">-- اختر جزء فرعي --</option>');
 
                 if (article_ids.length > 0) {
                     section_select.prop('disabled', false);
@@ -1293,6 +1386,45 @@ $systems_result = mysqli_query($conn, $systems_sql);
                     });
                 } else {
                     section_select.prop('disabled', true);
+                    subsection_select.prop('disabled', true);
+                }
+            });
+
+            // تحميل الأجزاء الفرعية عند اختيار جزء
+            $('#reference_section').change(function() {
+                const section_ids = $(this).val() || [];
+                const subsection_select = $('#reference_subsection');
+
+                // إعادة تعيين حقل الجزء الفرعي
+                subsection_select.html('<option value="">-- اختر جزء فرعي --</option>');
+
+                if (section_ids.length > 0) {
+                    subsection_select.prop('disabled', false);
+
+                    // جلب الأجزاء الفرعية عبر AJAX
+                    $.ajax({
+                        url: 'blogs.php',
+                        type: 'POST',
+                        data: {
+                            get_subsections: 1,
+                            section_ids: section_ids
+                        },
+                        dataType: 'json',
+                        success: function(data) {
+                            if (data.length > 0) {
+                                $.each(data, function(index, subsection) {
+                                    subsection_select.append('<option value="' + subsection.id + '">' + subsection.title + '</option>');
+                                });
+                            } else {
+                                subsection_select.append('<option value="">-- لا توجد أجزاء فرعية --</option>');
+                            }
+                        },
+                        error: function() {
+                            subsection_select.append('<option value="">-- خطأ في تحميل الأجزاء الفرعية --</option>');
+                        }
+                    });
+                } else {
+                    subsection_select.prop('disabled', true);
                 }
             });
 
@@ -1369,9 +1501,11 @@ $systems_result = mysqli_query($conn, $systems_sql);
                     $('#edit_reference_article' + blogId).change(function() {
                         const article_ids = $(this).val() || [];
                         const section_select = $('#edit_reference_section' + blogId);
+                        const subsection_select = $('#edit_reference_subsection' + blogId);
 
-                        // إعادة تعيين حقل الجزء
+                        // إعادة تعيين حقول الجزء والجزء الفرعي
                         section_select.html('<option value="">-- اختر جزء --</option>');
+                        subsection_select.html('<option value="">-- اختر جزء فرعي --</option>');
 
                         if (article_ids.length > 0) {
                             section_select.prop('disabled', false);
@@ -1400,6 +1534,45 @@ $systems_result = mysqli_query($conn, $systems_sql);
                             });
                         } else {
                             section_select.prop('disabled', true);
+                            subsection_select.prop('disabled', true);
+                        }
+                    });
+
+                    // تحميل الأجزاء الفرعية عند اختيار جزء
+                    $('#edit_reference_section' + blogId).change(function() {
+                        const section_ids = $(this).val() || [];
+                        const subsection_select = $('#edit_reference_subsection' + blogId);
+
+                        // إعادة تعيين حقل الجزء الفرعي
+                        subsection_select.html('<option value="">-- اختر جزء فرعي --</option>');
+
+                        if (section_ids.length > 0) {
+                            subsection_select.prop('disabled', false);
+
+                            // جلب الأجزاء الفرعية عبر AJAX
+                            $.ajax({
+                                url: 'blogs.php',
+                                type: 'POST',
+                                data: {
+                                    get_subsections: 1,
+                                    section_ids: section_ids
+                                },
+                                dataType: 'json',
+                                success: function(data) {
+                                    if (data.length > 0) {
+                                        $.each(data, function(index, subsection) {
+                                            subsection_select.append('<option value="' + subsection.id + '">' + subsection.title + '</option>');
+                                        });
+                                    } else {
+                                        subsection_select.append('<option value="">-- لا توجد أجزاء فرعية --</option>');
+                                    }
+                                },
+                                error: function() {
+                                    subsection_select.append('<option value="">-- خطأ في تحميل الأجزاء الفرعية --</option>');
+                                }
+                            });
+                        } else {
+                            subsection_select.prop('disabled', true);
                         }
                     });
                 }
