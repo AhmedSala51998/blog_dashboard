@@ -119,7 +119,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         $sql = "INSERT INTO blogs (title, content, pdf_path, video_url, image_url, external_link, reference_system_id, reference_article_id, reference_section_id , reference_subsection_id) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ? , ?)";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "ssssssssss", $title, $content, $pdf_path, $video_url, $image_url, $external_link, $reference_system_id, $reference_article_id, $reference_section_id , $reference_subsection_id);
 
