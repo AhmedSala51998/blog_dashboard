@@ -118,10 +118,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
 
-        $sql = "INSERT INTO blogs (title, content, pdf_path, video_url, image_url, external_link, reference_system_id, reference_article_id, reference_section_id ,  reference_subsection_id) 
+        $sql = "INSERT INTO blogs (title, content, pdf_path, video_url, image_url, external_link, reference_system_id, reference_article_id, reference_section_id , reference_subsection_id) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "sssssssss", $title, $content, $pdf_path, $video_url, $image_url, $external_link, $reference_system_id, $reference_article_id, $reference_section_id , $reference_subsection_id);
+        mysqli_stmt_bind_param($stmt, "ssssssssss", $title, $content, $pdf_path, $video_url, $image_url, $external_link, $reference_system_id, $reference_article_id, $reference_section_id , $reference_subsection_id);
 
         if (mysqli_stmt_execute($stmt)) {
             $_SESSION['message'] = "تم إضافة المدونة بنجاح!";
@@ -253,7 +253,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $sql = "UPDATE blogs SET title = ?, content = ?, pdf_path = ?, video_url = ?, image_url = ?, external_link = ?, 
                 reference_system_id = ?, reference_article_id = ?, reference_section_id = ? , reference_subsection_id = ? WHERE id = ?";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "sssssssssi", $title, $content, $pdf_path, $video_url, $image_url, $external_link, 
+        mysqli_stmt_bind_param($stmt, "ssssssssssi", $title, $content, $pdf_path, $video_url, $image_url, $external_link, 
                               $reference_system_id, $reference_article_id, $reference_section_id , $reference_subsection_id , $blog_id);
 
         if (mysqli_stmt_execute($stmt)) {
