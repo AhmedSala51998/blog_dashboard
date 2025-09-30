@@ -63,6 +63,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $reference_system_id = !empty($_POST['reference_system_id']) ? implode(',', array_map('cleanInput', $_POST['reference_system_id'])) : null;
         $reference_article_id = !empty($_POST['reference_article_id']) ? implode(',', array_map('cleanInput', $_POST['reference_article_id'])) : null;
         $reference_section_id = !empty($_POST['reference_section_id']) ? implode(',', array_map('cleanInput', $_POST['reference_section_id'])) : null;
+        $reference_subsection_id = !empty($_POST['reference_subsection_id']) ? implode(',', array_map('cleanInput', $_POST['reference_subsection_id'])) : null;
 
         // معالجة رفع الصورة
         $image_url = '';
@@ -117,10 +118,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
 
-        $sql = "INSERT INTO blogs (title, content, pdf_path, video_url, image_url, external_link, reference_system_id, reference_article_id, reference_section_id) 
+        $sql = "INSERT INTO blogs (title, content, pdf_path, video_url, image_url, external_link, reference_system_id, reference_article_id, reference_section_id ,  reference_subsection_id) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "sssssssss", $title, $content, $pdf_path, $video_url, $image_url, $external_link, $reference_system_id, $reference_article_id, $reference_section_id);
+        mysqli_stmt_bind_param($stmt, "sssssssss", $title, $content, $pdf_path, $video_url, $image_url, $external_link, $reference_system_id, $reference_article_id, $reference_section_id , $reference_subsection_id);
 
         if (mysqli_stmt_execute($stmt)) {
             $_SESSION['message'] = "تم إضافة المدونة بنجاح!";
@@ -176,6 +177,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $reference_system_id = !empty($_POST['reference_system_id']) ? implode(',', array_map('cleanInput', $_POST['reference_system_id'])) : null;
         $reference_article_id = !empty($_POST['reference_article_id']) ? implode(',', array_map('cleanInput', $_POST['reference_article_id'])) : null;
         $reference_section_id = !empty($_POST['reference_section_id']) ? implode(',', array_map('cleanInput', $_POST['reference_section_id'])) : null;
+        $reference_subsection_id = !empty($_POST['reference_subsection_id']) ? implode(',', array_map('cleanInput', $_POST['reference_subsection_id'])) : null;
 
         // الحصول على معلومات المدونة الحالية
         $sql = "SELECT * FROM blogs WHERE id = ?";
@@ -249,10 +251,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         $sql = "UPDATE blogs SET title = ?, content = ?, pdf_path = ?, video_url = ?, image_url = ?, external_link = ?, 
-                reference_system_id = ?, reference_article_id = ?, reference_section_id = ? WHERE id = ?";
+                reference_system_id = ?, reference_article_id = ?, reference_section_id = ? , reference_subsection_id = ? WHERE id = ?";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "sssssssssi", $title, $content, $pdf_path, $video_url, $image_url, $external_link, 
-                              $reference_system_id, $reference_article_id, $reference_section_id, $blog_id);
+                              $reference_system_id, $reference_article_id, $reference_section_id , $reference_subsection_id , $blog_id);
 
         if (mysqli_stmt_execute($stmt)) {
             $_SESSION['message'] = "تم تعديل المدونة بنجاح!";
@@ -1096,6 +1098,39 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                                 ?>
                                                             </select>
                                                         </div>
+                                                        <div class="mb-3">
+                                                            <label for="edit_reference_sub_section<?php echo $blog['id']; ?>" class="form-label">اختر جزء فرعي</label>
+                                                            <select class="form-select" id="edit_reference_sub_section<?php echo $blog['id']; ?>" name="reference_subsection_id[]" multiple>
+                                                                <option value="">-- اختر جزء فرعي --</option>
+                                                                <?php 
+                                                                if (!empty($blog['reference_section_id'])) {
+                                                                    // الأجزاء المختارة مسبقًا
+                                                                    $section_ids = explode(',', $blog['reference_section_id']);
+                                                                    $placeholders = implode(',', array_fill(0, count($section_ids), '?'));
+
+                                                                    // جلب الأجزاء الفرعية (اللي ليها parent_id = section_id)
+                                                                    $sub_sections_sql = "SELECT id, title FROM sections WHERE parent_id IN ($placeholders) ORDER BY title";
+                                                                    $stmt = mysqli_prepare($conn, $sub_sections_sql);
+
+                                                                    // ربط المعاملات
+                                                                    $types = str_repeat('i', count($section_ids));
+                                                                    mysqli_stmt_bind_param($stmt, $types, ...$section_ids);
+                                                                    mysqli_stmt_execute($stmt);
+                                                                    $sub_sections_result = mysqli_stmt_get_result($stmt);
+
+                                                                    while ($sub_section = mysqli_fetch_assoc($sub_sections_result)) {
+                                                                        // التحقق إذا كان الجزء الفرعي مختار مسبقًا
+                                                                        $selected_sub_section_ids = !empty($blog['reference_sub_section_id']) 
+                                                                            ? explode(',', $blog['reference_sub_section_id']) 
+                                                                            : [];
+                                                                        $selected = in_array($sub_section['id'], $selected_sub_section_ids) ? 'selected' : '';
+                                                                        echo "<option value='{$sub_section['id']}' {$selected}>" . htmlspecialchars($sub_section['title']) . "</option>";
+                                                                    }
+                                                                }
+                                                                ?>
+                                                            </select>
+                                                        </div>
+
                                                     </div>
 
                                                     <div class="modal-footer">
@@ -1278,6 +1313,10 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
         // الأجزاء
         $('#edit_reference_section' + blogId).select2({
+            dropdownParent: $('#editBlogModal' + blogId + ' .modal-content'),
+            width: '100%'
+        });
+        $('#edit_reference_sub_section' + blogId).select2({
             dropdownParent: $('#editBlogModal' + blogId + ' .modal-content'),
             width: '100%'
         });
