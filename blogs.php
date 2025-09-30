@@ -732,7 +732,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                     </div>
 
                                                     <?php foreach ($system['articles'] as $article): ?>
-                                                        <div class="blog-meta-item ps-3 mb-2" style="padding-right: 100px;">
+                                                        <div class="blog-meta-item ps-3 mb-2">
                                                             <i class="fas fa-file-alt"></i>
                                                             <strong>المادة:</strong>
                                                             <span class="badge bg-success me-1 mb-1"><?php echo htmlspecialchars($article['title']); ?></span>
@@ -898,7 +898,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                                                 </div>
 
                                                                 <?php foreach ($system['articles'] as $article): ?>
-                                                                    <div class="blog-meta-item ps-3 mb-2" style="padding-right: 100px;">
+                                                                    <div class="blog-meta-item ps-3 mb-2">
                                                                         <i class="fas fa-file-alt"></i>
                                                                         <strong>المادة:</strong>
                                                                         <span class="badge bg-success me-1 mb-1"><?php echo htmlspecialchars($article['title']); ?></span>
