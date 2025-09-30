@@ -1511,38 +1511,31 @@ $systems_result = mysqli_query($conn, $systems_sql);
                     });
 
                     // تحميل المواد عند اختيار نظام
+                    // تحميل المواد عند اختيار نظام (في التعديل)
                     $('#edit_reference_system' + blogId).change(function() {
                         const system_ids = $(this).val() || [];
                         const article_select = $('#edit_reference_article' + blogId);
                         const section_select = $('#edit_reference_section' + blogId);
 
-                        // إعادة تعيين حقول المادة والجزء
                         article_select.html('<option value="">-- اختر مادة --</option>');
                         section_select.html('<option value="">-- اختر جزء --</option>');
 
                         if (system_ids.length > 0) {
                             article_select.prop('disabled', false);
 
-                            // جلب المواد عبر AJAX
                             $.ajax({
                                 url: 'blogs.php',
                                 type: 'POST',
-                                data: {
-                                    get_articles: 1,
-                                    system_ids: system_ids
-                                },
+                                data: { get_articles: 1, system_ids: system_ids },
                                 dataType: 'json',
                                 success: function(data) {
                                     if (data.length > 0) {
                                         $.each(data, function(index, article) {
-                                            article_select.append('<option value="' + article.id + '">' + article.title + '</option>');
+                                            article_select.append('<option value="' + article.id + '">' + article.title_full + '</option>');
                                         });
                                     } else {
                                         article_select.append('<option value="">-- لا توجد مواد --</option>');
                                     }
-                                },
-                                error: function() {
-                                    article_select.append('<option value="">-- خطأ في تحميل المواد --</option>');
                                 }
                             });
                         } else {
@@ -1557,33 +1550,25 @@ $systems_result = mysqli_query($conn, $systems_sql);
                         const section_select = $('#edit_reference_section' + blogId);
                         const subsection_select = $('#edit_reference_subsection' + blogId);
 
-                        // إعادة تعيين حقول الجزء والجزء الفرعي
                         section_select.html('<option value="">-- اختر جزء --</option>');
                         subsection_select.html('<option value="">-- اختر جزء فرعي --</option>');
 
                         if (article_ids.length > 0) {
                             section_select.prop('disabled', false);
 
-                            // جلب الأجزاء عبر AJAX
                             $.ajax({
                                 url: 'blogs.php',
                                 type: 'POST',
-                                data: {
-                                    get_sections: 1,
-                                    article_ids: article_ids
-                                },
+                                data: { get_sections: 1, article_ids: article_ids },
                                 dataType: 'json',
                                 success: function(data) {
                                     if (data.length > 0) {
                                         $.each(data, function(index, section) {
-                                            section_select.append('<option value="' + section.id + '">' + section.title + '</option>');
+                                            section_select.append('<option value="' + section.id + '">' + section.title_full + '</option>');
                                         });
                                     } else {
                                         section_select.append('<option value="">-- لا توجد أجزاء --</option>');
                                     }
-                                },
-                                error: function() {
-                                    section_select.append('<option value="">-- خطأ في تحميل الأجزاء --</option>');
                                 }
                             });
                         } else {
@@ -1597,38 +1582,31 @@ $systems_result = mysqli_query($conn, $systems_sql);
                         const section_ids = $(this).val() || [];
                         const subsection_select = $('#edit_reference_subsection' + blogId);
 
-                        // إعادة تعيين حقل الجزء الفرعي
                         subsection_select.html('<option value="">-- اختر جزء فرعي --</option>');
 
                         if (section_ids.length > 0) {
                             subsection_select.prop('disabled', false);
 
-                            // جلب الأجزاء الفرعية عبر AJAX
                             $.ajax({
                                 url: 'blogs.php',
                                 type: 'POST',
-                                data: {
-                                    get_subsections: 1,
-                                    section_ids: section_ids
-                                },
+                                data: { get_subsections: 1, section_ids: section_ids },
                                 dataType: 'json',
                                 success: function(data) {
                                     if (data.length > 0) {
                                         $.each(data, function(index, subsection) {
-                                            subsection_select.append('<option value="' + subsection.id + '">' + subsection.title + '</option>');
+                                            subsection_select.append('<option value="' + subsection.id + '">' + subsection.title_full + '</option>');
                                         });
                                     } else {
                                         subsection_select.append('<option value="">-- لا توجد أجزاء فرعية --</option>');
                                     }
-                                },
-                                error: function() {
-                                    subsection_select.append('<option value="">-- خطأ في تحميل الأجزاء الفرعية --</option>');
                                 }
                             });
                         } else {
                             subsection_select.prop('disabled', true);
                         }
                     });
+
                 }
             });
         });
