@@ -266,100 +266,58 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // الحصول على المواد عند اختيار نظام
-    if (isset($_POST['get_articles'])) {
-        // التحقق من وجود معرفات الأنظمة المتعددة
-        if (isset($_POST['system_ids']) && is_array($_POST['system_ids'])) {
-            // تحويل مصفوفة المعرفات إلى نص مفصول بفواصل للاستخدام مع استعلام IN
-            $system_ids = array_map('intval', $_POST['system_ids']);
-            $system_ids_str = implode(',', $system_ids);
-            
-            $sql = "SELECT id, title FROM articles WHERE system_id IN ($system_ids_str) ORDER BY title";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_execute($stmt);
-            $result = mysqli_stmt_get_result($stmt);
-        } else {
-            // التعامل مع الحالة القديمة لمعرف واحد
-            $system_id = cleanInput($_POST['system_id']);
-            
-            $sql = "SELECT id, title FROM articles WHERE system_id = ? ORDER BY title";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "i", $system_id);
-            mysqli_stmt_execute($stmt);
-            $result = mysqli_stmt_get_result($stmt);
-        }
-
-        $articles = [];
-        while ($row = mysqli_fetch_assoc($result)) {
-            $articles[] = $row;
-        }
-
-        echo json_encode($articles);
-        exit();
-    }
-
-    // الحصول على الأجزاء عند اختيار مادة
-    if (isset($_POST['get_sections'])) {
-        // التحقق من وجود معرفات المواد المتعددة
-        if (isset($_POST['article_ids']) && is_array($_POST['article_ids'])) {
-            // تحويل مصفوفة المعرفات إلى نص مفصول بفواصل للاستخدام مع استعلام IN
-            $article_ids = array_map('intval', $_POST['article_ids']);
-            $article_ids_str = implode(',', $article_ids);
-            
-            $sql = "SELECT id, title FROM sections WHERE article_id IN ($article_ids_str) ORDER BY title";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_execute($stmt);
-            $result = mysqli_stmt_get_result($stmt);
-        } else {
-            // التعامل مع الحالة القديمة لمعرف واحد
-            $article_id = cleanInput($_POST['article_id']);
-            
-            $sql = "SELECT id, title FROM sections WHERE article_id = ? ORDER BY title";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "i", $article_id);
-            mysqli_stmt_execute($stmt);
-            $result = mysqli_stmt_get_result($stmt);
-        }
+    if (isset($_POST['get_sections']) && !empty($_POST['article_ids'])) {
+        $article_ids = $_POST['article_ids'];
+        $placeholders = implode(',', array_fill(0, count($article_ids), '?'));
+        $sql = "SELECT sec.id, sec.title, a.title AS article_title, s.title AS system_title
+                FROM sections sec
+                INNER JOIN articles a ON sec.article_id = a.id
+                INNER JOIN systems s ON a.system_id = s.id
+                WHERE sec.article_id IN ($placeholders)
+                ORDER BY sec.title";
+        $stmt = mysqli_prepare($conn, $sql);
+        $types = str_repeat('i', count($article_ids));
+        mysqli_stmt_bind_param($stmt, $types, ...$article_ids);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
 
         $sections = [];
         while ($row = mysqli_fetch_assoc($result)) {
+            $row['title_full'] = $row['title'] . " — " . $row['article_title'] . " — " . $row['system_title'];
             $sections[] = $row;
         }
-
         echo json_encode($sections);
-        exit();
+        exit;
     }
 
+
     // الحصول على الأجزاء الفرعية عند اختيار جزء
-    if (isset($_POST['get_subsections'])) {
-        // التحقق من وجود معرفات الأجزاء المتعددة
-        if (isset($_POST['section_ids']) && is_array($_POST['section_ids'])) {
-            // تحويل مصفوفة المعرفات إلى نص مفصول بفواصل للاستخدام مع استعلام IN
-            $section_ids = array_map('intval', $_POST['section_ids']);
-            $section_ids_str = implode(',', $section_ids);
-
-            $sql = "SELECT id, title FROM sections WHERE parent_id IN ($section_ids_str) ORDER BY title";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_execute($stmt);
-            $result = mysqli_stmt_get_result($stmt);
-        } else {
-            // التعامل مع الحالة القديمة لمعرف واحد
-            $section_id = cleanInput($_POST['section_id']);
-
-            $sql = "SELECT id, title FROM sections WHERE parent_id = ? ORDER BY title";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "i", $section_id);
-            mysqli_stmt_execute($stmt);
-            $result = mysqli_stmt_get_result($stmt);
-        }
+    if (isset($_POST['get_subsections']) && !empty($_POST['section_ids'])) {
+        $section_ids = $_POST['section_ids'];
+        $placeholders = implode(',', array_fill(0, count($section_ids), '?'));
+        $sql = "SELECT sub.id, sub.title, parent.title AS parent_title,
+                    a.title AS article_title, s.title AS system_title
+                FROM sections sub
+                INNER JOIN sections parent ON sub.parent_id = parent.id
+                INNER JOIN articles a ON parent.article_id = a.id
+                INNER JOIN systems s ON a.system_id = s.id
+                WHERE sub.parent_id IN ($placeholders)
+                ORDER BY sub.title";
+        $stmt = mysqli_prepare($conn, $sql);
+        $types = str_repeat('i', count($section_ids));
+        mysqli_stmt_bind_param($stmt, $types, ...$section_ids);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
 
         $subsections = [];
         while ($row = mysqli_fetch_assoc($result)) {
+            $row['title_full'] = $row['title'] . " — " . $row['parent_title'] . " — " . $row['article_title'] . " — " . $row['system_title'];
             $subsections[] = $row;
         }
-
         echo json_encode($subsections);
-        exit();
+        exit;
     }
+
 }
 
 // استعلام لجلب المدونات
@@ -1406,43 +1364,40 @@ $systems_result = mysqli_query($conn, $systems_sql);
             });
 
             // تحميل المواد عند اختيار نظام
+            // تحميل المواد عند اختيار نظام
             $('#reference_system').change(function() {
                 const system_ids = $(this).val() || [];
                 const article_select = $('#reference_article');
                 const section_select = $('#reference_section');
+                const subsection_select = $('#reference_subsection');
 
-                // إعادة تعيين حقول المادة والجزء
+                // إعادة التهيئة
                 article_select.html('<option value="">-- اختر مادة --</option>');
                 section_select.html('<option value="">-- اختر جزء --</option>');
+                subsection_select.html('<option value="">-- اختر جزء فرعي --</option>');
 
                 if (system_ids.length > 0) {
                     article_select.prop('disabled', false);
 
-                    // جلب المواد عبر AJAX
                     $.ajax({
                         url: 'blogs.php',
                         type: 'POST',
-                        data: {
-                            get_articles: 1,
-                            system_ids: system_ids
-                        },
+                        data: { get_articles: 1, system_ids: system_ids },
                         dataType: 'json',
                         success: function(data) {
                             if (data.length > 0) {
                                 $.each(data, function(index, article) {
-                                    article_select.append('<option value="' + article.id + '">' + article.title + '</option>');
+                                    article_select.append('<option value="' + article.id + '">' + article.title_full + '</option>');
                                 });
                             } else {
                                 article_select.append('<option value="">-- لا توجد مواد --</option>');
                             }
-                        },
-                        error: function() {
-                            article_select.append('<option value="">-- خطأ في تحميل المواد --</option>');
                         }
                     });
                 } else {
                     article_select.prop('disabled', true);
                     section_select.prop('disabled', true);
+                    subsection_select.prop('disabled', true);
                 }
             });
 
@@ -1452,33 +1407,25 @@ $systems_result = mysqli_query($conn, $systems_sql);
                 const section_select = $('#reference_section');
                 const subsection_select = $('#reference_subsection');
 
-                // إعادة تعيين حقول الجزء والجزء الفرعي
                 section_select.html('<option value="">-- اختر جزء --</option>');
                 subsection_select.html('<option value="">-- اختر جزء فرعي --</option>');
 
                 if (article_ids.length > 0) {
                     section_select.prop('disabled', false);
 
-                    // جلب الأجزاء عبر AJAX
                     $.ajax({
                         url: 'blogs.php',
                         type: 'POST',
-                        data: {
-                            get_sections: 1,
-                            article_ids: article_ids
-                        },
+                        data: { get_sections: 1, article_ids: article_ids },
                         dataType: 'json',
                         success: function(data) {
                             if (data.length > 0) {
                                 $.each(data, function(index, section) {
-                                    section_select.append('<option value="' + section.id + '">' + section.title + '</option>');
+                                    section_select.append('<option value="' + section.id + '">' + section.title_full + '</option>');
                                 });
                             } else {
                                 section_select.append('<option value="">-- لا توجد أجزاء --</option>');
                             }
-                        },
-                        error: function() {
-                            section_select.append('<option value="">-- خطأ في تحميل الأجزاء --</option>');
                         }
                     });
                 } else {
@@ -1492,38 +1439,31 @@ $systems_result = mysqli_query($conn, $systems_sql);
                 const section_ids = $(this).val() || [];
                 const subsection_select = $('#reference_subsection');
 
-                // إعادة تعيين حقل الجزء الفرعي
                 subsection_select.html('<option value="">-- اختر جزء فرعي --</option>');
 
                 if (section_ids.length > 0) {
                     subsection_select.prop('disabled', false);
 
-                    // جلب الأجزاء الفرعية عبر AJAX
                     $.ajax({
                         url: 'blogs.php',
                         type: 'POST',
-                        data: {
-                            get_subsections: 1,
-                            section_ids: section_ids
-                        },
+                        data: { get_subsections: 1, section_ids: section_ids },
                         dataType: 'json',
                         success: function(data) {
                             if (data.length > 0) {
                                 $.each(data, function(index, subsection) {
-                                    subsection_select.append('<option value="' + subsection.id + '">' + subsection.title + '</option>');
+                                    subsection_select.append('<option value="' + subsection.id + '">' + subsection.title_full + '</option>');
                                 });
                             } else {
                                 subsection_select.append('<option value="">-- لا توجد أجزاء فرعية --</option>');
                             }
-                        },
-                        error: function() {
-                            subsection_select.append('<option value="">-- خطأ في تحميل الأجزاء الفرعية --</option>');
                         }
                     });
                 } else {
                     subsection_select.prop('disabled', true);
                 }
             });
+
 
             // نفس الوظائف لنماذج التعديل
             $('.modal').on('show.bs.modal', function() {
