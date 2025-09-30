@@ -667,91 +667,95 @@ $systems_result = mysqli_query($conn, $systems_sql);
                                             <div class="blog-meta">
                                                 <?php 
                                                 // استخراج الأنظمة
-                                                $system_names = [];
+                                                $hierarchy = [];
+
+                                                // الأنظمة
                                                 if (!empty($blog['reference_system_id'])) {
                                                     $system_ids = explode(',', $blog['reference_system_id']);
                                                     foreach ($system_ids as $system_id) {
                                                         $system = getReferenceSystemById($system_id);
                                                         if ($system) {
-                                                            $system_names[] = $system['title'];
+                                                            $hierarchy[$system_id] = [
+                                                                'title' => $system['title'],
+                                                                'articles' => []
+                                                            ];
+
+                                                            // المواد المرتبطة بالنظام
+                                                            if (!empty($blog['reference_article_id'])) {
+                                                                $article_ids = explode(',', $blog['reference_article_id']);
+                                                                foreach ($article_ids as $article_id) {
+                                                                    $article = getReferenceArticleById($article_id);
+                                                                    if ($article && $article['system_id'] == $system_id) { 
+                                                                        $hierarchy[$system_id]['articles'][$article_id] = [
+                                                                            'title' => $article['title'],
+                                                                            'sections' => []
+                                                                        ];
+
+                                                                        // الأجزاء المرتبطة بالمادة
+                                                                        if (!empty($blog['reference_section_id'])) {
+                                                                            $section_ids = explode(',', $blog['reference_section_id']);
+                                                                            foreach ($section_ids as $section_id) {
+                                                                                $section = getReferenceSectionById($section_id);
+                                                                                if ($section && $section['article_id'] == $article_id) {
+                                                                                    $hierarchy[$system_id]['articles'][$article_id]['sections'][$section_id] = [
+                                                                                        'title' => $section['title'],
+                                                                                        'subsections' => []
+                                                                                    ];
+
+                                                                                    // الأجزاء الفرعية المرتبطة بالجزء
+                                                                                    if (!empty($blog['reference_subsection_id'])) {
+                                                                                        $subsection_ids = explode(',', $blog['reference_subsection_id']);
+                                                                                        foreach ($subsection_ids as $sub_id) {
+                                                                                            $subsection = getReferenceSubSectionById($sub_id);
+                                                                                            if ($subsection && $subsection['parent_id'] == $section_id) {
+                                                                                                $hierarchy[$system_id]['articles'][$article_id]['sections'][$section_id]['subsections'][$sub_id] = $subsection['title'];
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
                                                         }
                                                     }
                                                 }
 
-                                                // استخراج المواد
-                                                $article_names = [];
-                                                if (!empty($blog['reference_article_id'])) {
-                                                    $article_ids = explode(',', $blog['reference_article_id']);
-                                                    foreach ($article_ids as $article_id) {
-                                                        $article = getReferenceArticleById($article_id);
-                                                        if ($article) {
-                                                            $article_names[] = $article['title'];
-                                                        }
-                                                    }
-                                                }
-
-                                                // استخراج الأجزاء
-                                                $section_names = [];
-                                                if (!empty($blog['reference_section_id'])) {
-                                                    $section_ids = explode(',', $blog['reference_section_id']);
-                                                    foreach ($section_ids as $section_id) {
-                                                        $section = getReferenceSectionById($section_id);
-                                                        if ($section) {
-                                                            $section_names[] = $section['title'];
-                                                        }
-                                                    }
-                                                }
-                                                $subsection_names = [];
-                                                if (!empty($blog['reference_subsection_id'])) {
-                                                    $section_ids = explode(',', $blog['reference_subsection_id']);
-                                                    foreach ($section_ids as $section_id) {
-                                                        $section = getReferenceSubSectionById($section_id);
-                                                        if ($section) {
-                                                            $subsection_names[] = $section['title'];
-                                                        }
-                                                    }
-                                                }
                                                 ?>
 
-                                               <?php if (!empty($system_names)): ?>
-                                                <div class="blog-meta-item mb-2">
-                                                    <i class="fas fa-gavel"></i>
-                                                    <strong>الأنظمة:</strong><br>
-                                                    <?php foreach ($system_names as $sys): ?>
-                                                        <span class="badge bg-primary me-1 mb-1"><?php echo htmlspecialchars($sys); ?></span>
-                                                    <?php endforeach; ?>
-                                                </div>
-                                            <?php endif; ?>
+                                               <?php foreach ($hierarchy as $system): ?>
+                                                    <div class="blog-meta-item mb-2">
+                                                        <i class="fas fa-gavel"></i>
+                                                        <strong>النظام:</strong>
+                                                        <span class="badge bg-primary me-1 mb-1"><?php echo htmlspecialchars($system['title']); ?></span>
+                                                    </div>
 
-                                            <?php if (!empty($article_names)): ?>
-                                                <div class="blog-meta-item mb-2">
-                                                    <i class="fas fa-file-alt"></i>
-                                                    <strong>المواد:</strong><br>
-                                                    <?php foreach ($article_names as $art): ?>
-                                                        <span class="badge bg-success me-1 mb-1"><?php echo htmlspecialchars($art); ?></span>
-                                                    <?php endforeach; ?>
-                                                </div>
-                                            <?php endif; ?>
+                                                    <?php foreach ($system['articles'] as $article): ?>
+                                                        <div class="blog-meta-item ms-3 mb-2">
+                                                            <i class="fas fa-file-alt"></i>
+                                                            <strong>المادة:</strong>
+                                                            <span class="badge bg-success me-1 mb-1"><?php echo htmlspecialchars($article['title']); ?></span>
+                                                        </div>
 
-                                            <?php if (!empty($section_names)): ?>
-                                                <div class="blog-meta-item mb-2">
-                                                    <i class="fas fa-list"></i>
-                                                    <strong>الأجزاء:</strong><br>
-                                                    <?php foreach ($section_names as $sec): ?>
-                                                        <span class="badge bg-warning text-dark me-1 mb-1"><?php echo htmlspecialchars($sec); ?></span>
-                                                    <?php endforeach; ?>
-                                                </div>
-                                            <?php endif; ?>
+                                                        <?php foreach ($article['sections'] as $section): ?>
+                                                            <div class="blog-meta-item ms-5 mb-2">
+                                                                <i class="fas fa-list"></i>
+                                                                <strong>الجزء:</strong>
+                                                                <span class="badge bg-warning text-dark me-1 mb-1"><?php echo htmlspecialchars($section['title']); ?></span>
+                                                            </div>
 
-                                            <?php if (!empty($subsection_names)): ?>
-                                                <div class="blog-meta-item mb-2">
-                                                    <i class="fas fa-list"></i>
-                                                    <strong>الأجزاء الفرعيه:</strong><br>
-                                                    <?php foreach ($subsection_names as $sec1): ?>
-                                                        <span class="badge bg-warning text-dark me-1 mb-1"><?php echo htmlspecialchars($sec1); ?></span>
+                                                            <?php foreach ($section['subsections'] as $sub): ?>
+                                                                <div class="blog-meta-item ms-7 mb-2">
+                                                                    <i class="fas fa-list"></i>
+                                                                    <strong>الجزء الفرعي:</strong>
+                                                                    <span class="badge bg-warning text-dark me-1 mb-1"><?php echo htmlspecialchars($sub); ?></span>
+                                                                </div>
+                                                            <?php endforeach; ?>
+                                                        <?php endforeach; ?>
                                                     <?php endforeach; ?>
-                                                </div>
-                                            <?php endif; ?>
+                                                <?php endforeach; ?>
+
 
 
 
