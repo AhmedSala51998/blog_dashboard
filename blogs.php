@@ -1120,8 +1120,8 @@ $systems_result = mysqli_query($conn, $systems_sql);
 
                                                                     while ($sub_section = mysqli_fetch_assoc($sub_sections_result)) {
                                                                         // التحقق إذا كان الجزء الفرعي مختار مسبقًا
-                                                                        $selected_sub_section_ids = !empty($blog['reference_sub_section_id']) 
-                                                                            ? explode(',', $blog['reference_sub_section_id']) 
+                                                                        $selected_sub_section_ids = !empty($blog['reference_subsection_id']) 
+                                                                            ? explode(',', $blog['reference_subsection_id']) 
                                                                             : [];
                                                                         $selected = in_array($sub_section['id'], $selected_sub_section_ids) ? 'selected' : '';
                                                                         echo "<option value='{$sub_section['id']}' {$selected}>" . htmlspecialchars($sub_section['title']) . "</option>";
