@@ -1507,7 +1507,7 @@ $systems_result = mysqli_query($conn, $systems_sql);
                         }
                     });
 
-تى ةوظ                    // عرض اسم ملف PDF عند اختياره
+                    // عرض اسم ملف PDF عند اختياره
                     $('#edit_blog_pdf' + blogId).change(function() {
                         const file = this.files[0];
                         if (file) {
