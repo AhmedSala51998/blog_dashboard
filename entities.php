@@ -272,6 +272,7 @@ $result = mysqli_query($conn, "SELECT * FROM concerned_entities ORDER BY created
       <table class="table table-hover">
         <thead>
           <tr>
+            <th>رقم المعرف</th>
             <th>الاسم</th>
             <th>تاريخ الإضافة</th>
             <th>إجراءات</th>
@@ -280,6 +281,7 @@ $result = mysqli_query($conn, "SELECT * FROM concerned_entities ORDER BY created
         <tbody>
           <?php while($row = mysqli_fetch_assoc($result)): ?>
           <tr>
+           <td><?= htmlspecialchars($row['id']); ?></td>
             <td><?= htmlspecialchars($row['title']); ?></td>
             <td><?= date('Y/m/d H:i', strtotime($row['created_at'])); ?></td>
             <td>
